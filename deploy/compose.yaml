@@ -1,0 +1,17 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: knoventra
+      POSTGRES_PASSWORD: knoventra
+      POSTGRES_DB: knoventra
+    ports:
+      - "55432:5432"
+    volumes:
+      - knv_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U knoventra"]
+      interval: 3s
+      retries: 20
+volumes:
+  knv_pgdata:

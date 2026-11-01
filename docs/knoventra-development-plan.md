@@ -6,7 +6,7 @@
 
 上游参考：[nageoffer/ragent@c3b6157](https://github.com/nageoffer/ragent/commit/c3b6157730ac1f66a312bcd286c47d3ee6aaac42)。v1.0（Java 模块扩展）与 v2.0（Python 全量重建）可通过 Git 历史回溯。
 
-**当前实际状态：仓库仍是导入的 Java 上游源码与设计文档，尚无 Python 实现。下文的目录、接口、表结构与指标均为计划，没有经过安装、构建或评测验证。**
+**当前实际状态（2026-11-01）：后端（检索、Agent、SSE 聊天、转交）、前端三页面与 60 例评测集已实现，并有检索层与端到端的实测结果，见 [evaluation-report.md](evaluation-report.md)；未完成：Rerank 实测、回答支持度人工抽查、录屏。下文第 4–11 节保留为设计，与实现不一致处以 [DECISIONS.md](DECISIONS.md) 和代码为准（例如证据闸门最终使用稠密 / 稀疏分数而非 RRF 分）。**
 
 ## 1. 一句话定位
 

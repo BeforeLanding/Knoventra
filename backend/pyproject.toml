@@ -1,0 +1,52 @@
+[project]
+name = "knoventra"
+version = "0.1.0"
+description = "Knoventra: permission-aware enterprise knowledge QA (MVP)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+  "pydantic>=2.8",
+  "pydantic-settings>=2.4",
+  "sqlalchemy>=2.0",
+  "psycopg[binary]>=3.2",
+  "alembic>=1.13",
+  "pgvector>=0.3.6",
+  "pymupdf>=1.24",
+  "opencc-python-reimplemented>=0.1.7",
+  "pyjwt>=2.9",
+  "bcrypt>=4.2",
+  "numpy>=1.26",
+  "python-multipart>=0.0.9",
+  "langgraph>=1.2.19",
+  "langchain-core>=1.7.3",
+  "langchain-openai>=1.7.3",
+  "langgraph-checkpoint-postgres>=3.2.0",
+  "psycopg-pool>=3.2",
+]
+
+[project.optional-dependencies]
+ml = ["torch>=2.7", "FlagEmbedding>=1.3"]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "httpx>=0.27"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/knoventra"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["src", "tests"]

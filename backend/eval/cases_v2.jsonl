@@ -1,0 +1,28 @@
+{"id": "v2-ops-01", "split": "val2", "category": "ops", "user": "sg-ops", "question": "E17-07 报警是什么原因", "expect": {"title": "E17 系列设备故障手册", "pages": [2], "revision": 1}}
+{"id": "v2-ops-02", "split": "val2", "category": "ops", "user": "sg-ops", "question": "P03-11 报警含义", "expect": {"title": "泵组维护手册", "pages": [1, 2], "revision": 1}}
+{"id": "v2-ops-03", "split": "val2", "category": "ops", "user": "cn-ops", "question": "C21-05 是什么故障", "expect": {"title": "校准流程（仅限中国区）", "pages": [1], "revision": 1}}
+{"id": "v2-ops-04", "split": "val2", "category": "ops", "user": "tw-ops", "question": "S5-19 是什麼故障", "expect": {"title": "感測器故障手冊", "pages": [1, 2], "revision": 1}}
+{"id": "v2-ops-05", "split": "val2", "category": "ops", "user": "tw-ops", "question": "SNS-5B 用在哪裡", "expect": {"title": "感測器故障手冊", "pages": [2], "revision": 1}}
+{"id": "v2-ops-06", "split": "val2", "category": "ops", "user": "tw-ops", "question": "K08-03 是什麼警報", "expect": {"title": "冷卻系統維護手冊", "pages": [1], "revision": 1}}
+{"id": "v2-ops-07", "split": "val2", "category": "ops", "user": "tw-ops", "question": "W12-30 是什麼故障碼", "expect": {"title": "電源模組排障手冊", "pages": [1], "revision": 1}}
+{"id": "v2-ops-08", "split": "val2", "category": "ops", "user": "tw-ops", "question": "15A 慢熔型保險絲", "expect": {"title": "電源模組排障手冊", "pages": [1], "revision": 1}}
+{"id": "v2-ops-09", "split": "val2", "category": "ops", "user": "sg-ops", "question": "SEAL-9X", "expect": {"title": "泵组维护手册", "pages": [2], "revision": 1}}
+{"id": "v2-ops-10", "split": "val2", "category": "ops", "user": "sg-ops", "question": "E17-42", "expect": {"title": "E17 系列设备故障手册", "pages": [1, 2], "revision": 1}}
+{"id": "v2-ops-11", "split": "val2", "category": "ops", "user": "sg-ops", "question": "P03-11", "expect": {"title": "泵组维护手册", "pages": [1, 2], "revision": 1}}
+{"id": "v2-ops-12", "split": "val2", "category": "ops", "user": "sg-ops", "question": "35 摄氏度 E17 环境温度", "expect": {"title": "E17 系列设备故障手册", "pages": [2], "revision": 1}}
+{"id": "v2-ops-13", "split": "val2", "category": "ops", "user": "hr", "question": "年假 15 天 提前几天申请", "expect": {"title": "休假制度", "pages": [1], "revision": 1}}
+{"id": "v2-ops-14", "split": "val2", "category": "ops", "user": "fin", "question": "5000 元 审批 报销", "expect": {"title": "费用报销办法", "pages": [1], "revision": 1}}
+{"id": "v2-ops-15", "split": "val2", "category": "ops", "user": "hr", "question": "4 月 调薪 评审", "expect": {"title": "薪酬调整办法", "pages": [1], "revision": 1}}
+{"id": "v2-ops-16", "split": "val2", "category": "ops", "user": "sg-ops", "question": "VPN 客户端", "expect": {"title": "VPN 使用说明", "pages": [1], "revision": 1}}
+{"id": "v2-no_basis-17", "split": "val2", "category": "no_basis", "user": "sg-ops", "question": "E17-99 报警是什么原因", "expect": {"refuse": true}}
+{"id": "v2-no_basis-18", "split": "val2", "category": "no_basis", "user": "sg-ops", "question": "P03-12 是什么故障", "expect": {"refuse": true}}
+{"id": "v2-no_basis-19", "split": "val2", "category": "no_basis", "user": "tw-ops", "question": "S5-20 怎么处理", "expect": {"refuse": true}}
+{"id": "v2-no_basis-20", "split": "val2", "category": "no_basis", "user": "tw-ops", "question": "K08-04 冷却液温度", "expect": {"refuse": true}}
+{"id": "v2-no_basis-21", "split": "val2", "category": "no_basis", "user": "tw-ops", "question": "W12-31 过载怎么办", "expect": {"refuse": true}}
+{"id": "v2-no_basis-22", "split": "val2", "category": "no_basis", "user": "sg-ops", "question": "SEAL-9Y 是什么备件", "expect": {"refuse": true}}
+{"id": "v2-no_basis-23", "split": "val2", "category": "no_basis", "user": "sg-ops", "question": "E18-42 主轴温度异常", "expect": {"refuse": true}}
+{"id": "v2-no_basis-24", "split": "val2", "category": "no_basis", "user": "cn-ops", "question": "C21-06 校准过期", "expect": {"refuse": true}}
+{"id": "v2-no_basis-25", "split": "val2", "category": "no_basis", "user": "sg-ops", "question": "公司股票代码是多少", "expect": {"refuse": true}}
+{"id": "v2-no_basis-26", "split": "val2", "category": "no_basis", "user": "sg-ops", "question": "下周班车时间表", "expect": {"refuse": true}}
+{"id": "v2-no_basis-27", "split": "val2", "category": "no_basis", "user": "sg-ops", "question": "如何申请出差签证", "expect": {"refuse": true}}
+{"id": "v2-no_basis-28", "split": "val2", "category": "no_basis", "user": "sg-ops", "question": "Python 怎么读取文件", "expect": {"refuse": true}}
