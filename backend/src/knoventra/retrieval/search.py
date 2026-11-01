@@ -22,6 +22,7 @@ class Evidence:
     text: str
     lang: str
     score: float
+    rerank_score: float | None = None
     channels: dict[str, int] = field(default_factory=dict)  # channel -> rank (1-based)
 
 
@@ -36,12 +37,13 @@ SELECT c.id, d.id AS doc_id, d.title, r.version, c.page, c.section_path, c.text,
 FROM knv_chunk c
 JOIN knv_revision r ON r.id = c.revision_id AND r.status = 'PUBLISHED'
 JOIN knv_document d ON d.id = r.document_id
-WHERE c.kb_id = ANY(:readable)
+WHERE c.kb_id = ANY(:readable){extra}
 ORDER BY {order}
 LIMIT :k
 """
-_DENSE = text(_BASE.format(order="c.dense <=> CAST(:q AS vector)"))
-_SPARSE = text(_BASE.format(order="c.sparse <#> CAST(:q AS sparsevec)"))
+_DENSE = text(_BASE.format(order="c.dense <=> CAST(:q AS vector)", extra=""))
+_SPARSE = text(_BASE.format(order="c.sparse <#> CAST(:q AS sparsevec)",
+                         extra=" AND (c.sparse <#> CAST(:q AS sparsevec)) < 0"))  # no lexical overlap -> no candidate)
 
 
 def rrf(rankings: dict[str, list[str]], k: int) -> dict[str, float]:

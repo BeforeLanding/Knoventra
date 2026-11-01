@@ -16,6 +16,16 @@ class Settings(BaseSettings):
     recall_top_k: int = 20
     final_top_k: int = 5
     rrf_k: int = 60
+    rerank: str = "off"  # off | bge
+    rerank_candidates: int = 10
+    # Evidence gate: best score below this -> INSUFFICIENT_EVIDENCE. 0 disables; tuned on the dev split.
+    gate_threshold: float = 0.0
+    max_tool_calls_per_turn: int = 4
+    confirm_ttl_minutes: int = 30
+    llm_base_url: str = ""
+    llm_api_key: str = ""
+    llm_model: str = ""
+    llm_timeout_s: float = 60.0
 
 
 settings = Settings()

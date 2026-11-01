@@ -1,8 +1,6 @@
-# Knoventra backend (MVP, week 1: permission-aware retrieval)
+# Knoventra backend (MVP)
 
-Implemented: schema + Alembic migration, AccessScope (fail-closed), Markdown/PDF chunking with page and
-section, dense + sparse (`sparsevec`) hybrid recall with RRF, atomic revision publish, login, `/debug/search`,
-admin upload/publish. Not implemented yet: rerank/evidence gate, LangGraph agent, SSE chat, escalation, frontend, eval.
+Implemented: week 1 retrieval (schema, AccessScope, chunking, hybrid recall, publish) and week 2 agent (LangGraph, cite_check, SSE chat, interrupt-confirmed escalation, evidence preview). Not yet: frontend, eval set/report. Real BGE-M3 and a real LLM are NOT yet exercised; tests use an offline hash encoder and a scripted model.
 
 ```bash
 docker compose -f deploy/compose.yaml up -d
