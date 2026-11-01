@@ -66,3 +66,19 @@ KNV_ENCODER=bge-m3 uv run python -m knoventra.db.seed
 KNV_ENCODER=bge-m3 uv run python eval/run_eval.py --split dev            # 可反复运行
 KNV_ENCODER=bge-m3 uv run python eval/run_eval.py --split holdout --confirm-final
 ```
+
+## 7. 端到端（调参集，deepseek-flash，2026-11-01）
+
+18 例（转交 2 例含在内），配置同第 1 节，LLM 为 `deepseek-flash`（OpenAI 兼容接口），Rerank 关闭。原始结果：`backend/eval/results/dev-agent-full.json`。
+
+| 指标 | 结果 |
+|---|---|
+| 引用正确（来源指向正确文档、页码、生效修订） | 10 / 10 |
+| 越权泄露（来源、回答、工具返回中出现受限文档标题） | 0 / 5 例 |
+| 无依据正确拒答 | 2 / 3 |
+| 转交记录数符合预期 | 2 / 2 |
+| 单例耗时 | 约 3–7 秒（含远程模型调用） |
+
+- “引用正确”只检查来源卡是否指向期望文档、页码、修订，**不检查回答是否真的被该来源支持**，后者需人工抽查，尚未做。
+- 无依据未拒答的是 no_basis-02（“E17 设备的保修期是多长”）。原因未证实：检索层单独评测时它是被拒的（相似度 0.594），推测是模型自行改写查询后相似度超过了 0.60，但本次运行没有保存回答和查询，无法确认。评测运行器现已改为保存回答、检索查询和错误码，复现需要再调用一次模型。
+- 这是调参集结果，没有据此改动任何阈值或提示词。

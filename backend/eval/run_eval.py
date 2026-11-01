@@ -127,6 +127,10 @@ def eval_agent(graph, db, users, cases) -> list[dict]:
                 r["leaked"] = bad
             else:
                 r["refused"] = st.get("error_code") in ("INSUFFICIENT_EVIDENCE", "NO_ACCESS") and not srcs
+        r["queries"] = [tc["args"].get("query") for m in st["messages"] if isinstance(m, AIMessage)
+                        for tc in m.tool_calls if tc["name"] == "search_knowledge"]
+        r["answer"] = next((m.content for m in reversed(st["messages"]) if isinstance(m, AIMessage) and not m.tool_calls), "")
+        r["error_code"] = st.get("error_code")
         r["latency_ms"] = round((time.perf_counter() - t0) * 1000, 1)
         out.append(r)
     return out
