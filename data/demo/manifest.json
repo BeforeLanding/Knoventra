@@ -1,0 +1,32 @@
+{
+  "password": "demo-pass-1",
+  "users": [
+    {"email": "sg-ops@example.test", "region": "SG", "department": "Ops", "role": "user"},
+    {"email": "tw-ops@example.test", "region": "TW", "department": "Ops", "role": "user"},
+    {"email": "cn-ops@example.test", "region": "CN", "department": "Ops", "role": "user"},
+    {"email": "hr@example.test", "region": "SG", "department": "HR", "role": "user"},
+    {"email": "fin@example.test", "region": "CN", "department": "FIN", "role": "user"},
+    {"email": "admin@example.test", "region": null, "department": "IT", "role": "admin"}
+  ],
+  "kbs": [
+    {"name": "ops-global", "description": "三地 Ops 故障手册", "grants": [{"department": "Ops"}]},
+    {"name": "ops-cn", "description": "中国区限定 Ops 资料", "grants": [{"region": "CN", "department": "Ops"}]},
+    {"name": "hr", "description": "HR 制度", "grants": [{"department": "HR"}]},
+    {"name": "fin", "description": "FIN 制度", "grants": [{"department": "FIN"}]},
+    {"name": "it-public", "description": "全员 IT 指南", "grants": [{}]}
+  ],
+  "documents": [
+    {"kb": "ops-global", "title": "E17 系列设备故障手册", "lang": "zh-Hans", "files": ["ops-e17.v1.md", "ops-e17.v2.md"], "publish": 1},
+    {"kb": "ops-global", "title": "泵组维护手册", "lang": "zh-Hans", "files": ["ops-pump.md"], "publish": 1},
+    {"kb": "ops-cn", "title": "校准流程（仅限中国区）", "lang": "zh-Hans", "files": ["ops-calibration.cn.md"], "publish": 1},
+    {"kb": "ops-global", "title": "感測器故障手冊", "lang": "zh-Hant", "files": ["ops-sensor.zh-Hant.md"], "publish": 1},
+    {"kb": "ops-global", "title": "冷卻系統維護手冊", "lang": "zh-Hant", "files": ["ops-cooling.zh-Hant.md"], "publish": 1},
+    {"kb": "ops-global", "title": "電源模組排障手冊", "lang": "zh-Hant", "files": ["ops-power.zh-Hant.md"], "publish": 1},
+    {"kb": "hr", "title": "休假制度", "lang": "zh-Hans", "files": ["hr-leave.md"], "publish": 1},
+    {"kb": "hr", "title": "薪酬调整办法", "lang": "zh-Hans", "files": ["hr-comp.md"], "publish": 1},
+    {"kb": "fin", "title": "费用报销办法", "lang": "zh-Hans", "files": ["fin-expense.md"], "publish": 1},
+    {"kb": "fin", "title": "年度预算说明", "lang": "zh-Hans", "files": ["fin-budget.md"], "publish": 1},
+    {"kb": "it-public", "title": "IT 入职指南", "lang": "zh-Hans", "files": ["it-onboarding.md"], "publish": 1},
+    {"kb": "it-public", "title": "VPN 使用说明", "lang": "zh-Hans", "files": ["it-vpn.md"], "publish": 1}
+  ]
+}
