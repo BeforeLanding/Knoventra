@@ -19,4 +19,6 @@ The upstream snapshot contains a root LICENSE and no root NOTICE file. This file
 
 On 2026-10-27, the development plan was revised to target Python, FastAPI, LangChain and LangGraph while retaining the imported Java baseline for provenance and behavioral reference. The root README and development plan describe planned work, not an implemented Python backend. This documentation update does not change application behavior or remove upstream notices.
 
+On 2026-11-01, the plan was narrowed to a three-week MVP (v3.0): a permission-aware knowledge Q&A service on Python, FastAPI, LangGraph and PostgreSQL / pgvector, with a new lightweight frontend that may port selected components from the upstream `frontend/`. This documentation update likewise does not change application behavior or remove upstream notices.
+
 Any copied or modified upstream code remains subject to its applicable license and attribution requirements. New dependencies and assets will be reviewed under their respective licenses when introduced.
