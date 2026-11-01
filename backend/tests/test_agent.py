@@ -21,7 +21,7 @@ def saver(engine):
 
 @pytest.fixture(autouse=True)
 def gate(monkeypatch):
-    monkeypatch.setattr(settings, "gate_threshold", 0.6)
+    monkeypatch.setattr(settings, "gate_threshold", 0.1)  # hash-encoder cosine scale; BGE-M3 default is in config
 
 
 def make_graph(db, enc, saver, script):

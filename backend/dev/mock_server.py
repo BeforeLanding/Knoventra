@@ -35,7 +35,7 @@ def script(msgs):
     return call("search_knowledge", {"query": human})
 
 
-settings.gate_threshold = settings.gate_threshold or 0.6  # hash encoder: require a hit in both channels
+settings.gate_threshold = 0.1  # hash-encoder cosine scale (the BGE-M3 default is 0.60)
 saver, _ = make_checkpointer(settings.database_url)
 graph = build_graph(AgentDeps(_session, get_encoder(), None, ScriptedModel(script=script), saver))
 app.dependency_overrides[get_graph] = lambda: graph

@@ -22,10 +22,14 @@ class Outcome:
 
 
 def gate_score(e: Evidence) -> float:
-    """Rerank score when available; otherwise RRF normalised so that rank 1 in both channels = 1."""
+    """Rerank score when a reranker ran; else the dense cosine similarity.
+
+    RRF is rank-based, so with BGE-M3 sparse (which matches any shared token) every query puts some chunk
+    at rank 1 in both channels and the fused score cannot tell an answerable query from an unanswerable one.
+    """
     if e.rerank_score is not None:
         return e.rerank_score
-    return e.score * (settings.rrf_k + 1) / 2
+    return e.dense_sim if e.dense_sim is not None else 0.0
 
 
 def retrieve(db: Session, enc: Encoder, rr: Reranker | None, user: User, query: str, *,

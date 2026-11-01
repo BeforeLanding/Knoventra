@@ -23,6 +23,7 @@ class Evidence:
     lang: str
     score: float
     rerank_score: float | None = None
+    dense_sim: float | None = None  # cosine similarity from the dense channel, if it was a dense candidate
     channels: dict[str, int] = field(default_factory=dict)  # channel -> rank (1-based)
 
 
@@ -33,7 +34,7 @@ class SearchResult:
 
 
 _BASE = """
-SELECT c.id, d.id AS doc_id, d.title, r.version, c.page, c.section_path, c.text, d.source_lang
+SELECT c.id, {dist} AS dist, d.id AS doc_id, d.title, r.version, c.page, c.section_path, c.text, d.source_lang
 FROM knv_chunk c
 JOIN knv_revision r ON r.id = c.revision_id AND r.status = 'PUBLISHED'
 JOIN knv_document d ON d.id = r.document_id
@@ -41,8 +42,8 @@ WHERE c.kb_id = ANY(:readable){extra}
 ORDER BY {order}
 LIMIT :k
 """
-_DENSE = text(_BASE.format(order="c.dense <=> CAST(:q AS vector)", extra=""))
-_SPARSE = text(_BASE.format(order="c.sparse <#> CAST(:q AS sparsevec)",
+_DENSE = text(_BASE.format(order="c.dense <=> CAST(:q AS vector)", extra="", dist="c.dense <=> CAST(:q AS vector)"))
+_SPARSE = text(_BASE.format(order="c.sparse <#> CAST(:q AS sparsevec)", dist="0.0",
                          extra=" AND (c.sparse <#> CAST(:q AS sparsevec)) < 0"))  # no lexical overlap -> no candidate)
 
 
@@ -69,6 +70,7 @@ def search(db: Session, enc: Encoder, scope: AccessScope, query: str, *,
 
     db.execute(text("SET LOCAL hnsw.iterative_scan = relaxed_order"))
     rows: dict[str, tuple] = {}
+    dense_sims: dict[str, float] = {}
     rankings: dict[str, list[str]] = {}
 
     def run(name, stmt, q):
@@ -76,6 +78,8 @@ def search(db: Session, enc: Encoder, scope: AccessScope, query: str, *,
         rankings[name] = [r.id for r in got]
         for r in got:
             rows.setdefault(r.id, r)
+            if name == "dense":
+                dense_sims[r.id] = 1.0 - float(r.dist)
 
     run("dense", _DENSE, "[" + ",".join(f"{x:.6f}" for x in dense_q) + "]")
     if use_sparse and sparse_q:
@@ -89,7 +93,7 @@ def search(db: Session, enc: Encoder, scope: AccessScope, query: str, *,
         evidence.append(Evidence(
             chunk_id=cid, document_id=r.doc_id, document_title=r.title, revision=r.version,
             page=r.page, section_path=r.section_path, text=r.text, lang=r.source_lang,
-            score=fused[cid],
+            score=fused[cid], dense_sim=dense_sims.get(cid),
             channels={n: ids.index(cid) + 1 for n, ids in rankings.items() if cid in ids},
         ))
     return SearchResult(evidence, {**rankings, "fused": order})

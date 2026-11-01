@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     rrf_k: int = 60
     rerank: str = "off"  # off | bge
     rerank_candidates: int = 10
-    # Evidence gate: best score below this -> INSUFFICIENT_EVIDENCE. 0 disables; tuned on the dev split.
-    gate_threshold: float = 0.0
+    # Evidence gate on dense cosine (or rerank score). 0.60 is tuned on the BGE-M3 dev split only (see eval report).
+    gate_threshold: float = 0.60
     max_tool_calls_per_turn: int = 4
     confirm_ttl_minutes: int = 30
     llm_base_url: str = ""
