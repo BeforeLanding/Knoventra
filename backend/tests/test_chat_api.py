@@ -30,6 +30,7 @@ def script(msgs):
 
 @pytest.fixture
 def client(db, enc, engine, monkeypatch):
+    monkeypatch.setattr(settings, "gate_sparse_threshold", 1e9)  # dense-only gate for the hash encoder
     monkeypatch.setattr(settings, "gate_threshold", 0.1)  # hash-encoder cosine scale; BGE-M3 default is in config
     saver, pool = make_checkpointer(settings.database_url)
     g = build_graph(AgentDeps(session_factory_for(db), enc, None, ScriptedModel(script=script), saver))

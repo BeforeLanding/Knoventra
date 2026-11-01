@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     rerank_candidates: int = 10
     # Evidence gate on dense cosine (or rerank score). 0.60 is tuned on the BGE-M3 dev split only (see eval report).
     gate_threshold: float = 0.60
+    gate_sparse_threshold: float = 0.03  # sparse inner-product arm; calibrated on dev + val2 (in-sample)
     max_tool_calls_per_turn: int = 4
     confirm_ttl_minutes: int = 30
     llm_base_url: str = ""

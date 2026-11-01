@@ -21,11 +21,14 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 CASES = HERE / "cases.jsonl"
+CASES_V2 = HERE / "cases_v2.jsonl"
+CASES_V3 = HERE / "cases_v3.jsonl"
 
 
 def load_cases(split: str) -> list[dict]:
-    rows = [json.loads(line) for line in CASES.read_text(encoding="utf-8").splitlines() if line.strip()]
-    return rows if split == "all" else [c for c in rows if c["split"] == split]
+    src = {"val2": CASES_V2, "val3": CASES_V3}.get(split, CASES)
+    rows = [json.loads(line) for line in src.read_text(encoding="utf-8").splitlines() if line.strip()]
+    return rows if split in ("all", "val2", "val3") else [c for c in rows if c["split"] == split]
 
 
 def matches(e, exp: dict) -> bool:
@@ -123,8 +126,11 @@ def eval_agent(graph, db, users, cases) -> list[dict]:
                 r["cited_ok"] = any(s["document_title"] == exp["title"] and s["page"] in exp["pages"]
                                     and s["revision"] == exp["revision"] for s in srcs)
             elif c["category"] == "access":
-                bad = [t for t in exp["forbidden_titles"] if t in tool_text or t in answer or any(s["document_title"] == t for s in srcs)]
-                r["leaked"] = bad
+                # v2 rule: a title counts only if it was RETURNED (tool output lists "《title》") or shown as a
+                # source. v1 also matched the title as a substring of the model's prose, which gave a false
+                # positive on holdout (access-06); v1 numbers stay in the report as measured.
+                r["leaked"] = [t for t in exp["forbidden_titles"]
+                               if f"《{t}》" in tool_text or any(s["document_title"] == t for s in srcs)]
             else:
                 r["refused"] = st.get("error_code") in ("INSUFFICIENT_EVIDENCE", "NO_ACCESS") and not srcs
         r["queries"] = [tc["args"].get("query") for m in st["messages"] if isinstance(m, AIMessage)
@@ -155,7 +161,7 @@ def summarize_agent(rs: list[dict]) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--split", choices=["dev", "holdout", "all"], default="dev")
+    ap.add_argument("--split", choices=["dev", "holdout", "all", "val2", "val3"], default="dev")
     ap.add_argument("--mode", choices=["retrieval", "agent"], default="retrieval")
     ap.add_argument("--no-sparse", action="store_true")
     ap.add_argument("--no-opencc", action="store_true")
@@ -164,7 +170,7 @@ def main() -> None:
     ap.add_argument("--confirm-final", action="store_true", help="required for holdout/all")
     ap.add_argument("--out", type=Path)
     a = ap.parse_args()
-    if a.split != "dev" and not a.confirm_final:
+    if a.split in ("holdout", "all", "val3") and not a.confirm_final:
         sys.exit("holdout/all are for final reporting only; pass --confirm-final to proceed")
 
     import os

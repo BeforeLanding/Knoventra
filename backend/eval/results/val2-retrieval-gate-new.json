@@ -1,0 +1,292 @@
+{
+ "date": "2026-11-01",
+ "split": "val2",
+ "mode": "retrieval",
+ "n_cases": 28,
+ "config": {
+  "encoder": "bge-m3",
+  "rerank": "off",
+  "sparse": true,
+  "opencc": true,
+  "gate_threshold": 0.6,
+  "llm_model": "deepseek-flash"
+ },
+ "env": {
+  "python": "3.12.10",
+  "platform": "Windows-11-10.0.26200-SP0"
+ },
+ "metrics": {
+  "ops": {
+   "n": 16,
+   "recall@5": 0.938,
+   "mrr": 0.807,
+   "gated_out_of_hits": 0
+  },
+  "no_basis": {
+   "n": 12,
+   "refusal_rate": 0.25
+  },
+  "latency_ms": {
+   "p50": 202.4,
+   "max": 1965.1
+  }
+ },
+ "cases": [
+  {
+   "id": "v2-ops-01",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 1965.1,
+   "status": "OK",
+   "hit": true,
+   "rank": 3,
+   "gated_out": false
+  },
+  {
+   "id": "v2-ops-02",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 228.3,
+   "status": "OK",
+   "hit": true,
+   "rank": 1,
+   "gated_out": false
+  },
+  {
+   "id": "v2-ops-03",
+   "category": "ops",
+   "user": "cn-ops",
+   "latency_ms": 188.4,
+   "status": "OK",
+   "hit": false,
+   "rank": null,
+   "gated_out": false
+  },
+  {
+   "id": "v2-ops-04",
+   "category": "ops",
+   "user": "tw-ops",
+   "latency_ms": 205.9,
+   "status": "OK",
+   "hit": true,
+   "rank": 1,
+   "gated_out": false
+  },
+  {
+   "id": "v2-ops-05",
+   "category": "ops",
+   "user": "tw-ops",
+   "latency_ms": 208.7,
+   "status": "OK",
+   "hit": true,
+   "rank": 1,
+   "gated_out": false
+  },
+  {
+   "id": "v2-ops-06",
+   "category": "ops",
+   "user": "tw-ops",
+   "latency_ms": 217.9,
+   "status": "OK",
+   "hit": true,
+   "rank": 3,
+   "gated_out": false
+  },
+  {
+   "id": "v2-ops-07",
+   "category": "ops",
+   "user": "tw-ops",
+   "latency_ms": 202.7,
+   "status": "OK",
+   "hit": true,
+   "rank": 4,
+   "gated_out": false
+  },
+  {
+   "id": "v2-ops-08",
+   "category": "ops",
+   "user": "tw-ops",
+   "latency_ms": 204.4,
+   "status": "OK",
+   "hit": true,
+   "rank": 1,
+   "gated_out": false
+  },
+  {
+   "id": "v2-ops-09",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 159.5,
+   "status": "OK",
+   "hit": true,
+   "rank": 1,
+   "gated_out": false
+  },
+  {
+   "id": "v2-ops-10",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 208.1,
+   "status": "OK",
+   "hit": true,
+   "rank": 1,
+   "gated_out": false
+  },
+  {
+   "id": "v2-ops-11",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 213.3,
+   "status": "OK",
+   "hit": true,
+   "rank": 1,
+   "gated_out": false
+  },
+  {
+   "id": "v2-ops-12",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 191.9,
+   "status": "OK",
+   "hit": true,
+   "rank": 1,
+   "gated_out": false
+  },
+  {
+   "id": "v2-ops-13",
+   "category": "ops",
+   "user": "hr",
+   "latency_ms": 192.1,
+   "status": "OK",
+   "hit": true,
+   "rank": 1,
+   "gated_out": false
+  },
+  {
+   "id": "v2-ops-14",
+   "category": "ops",
+   "user": "fin",
+   "latency_ms": 232.4,
+   "status": "OK",
+   "hit": true,
+   "rank": 1,
+   "gated_out": false
+  },
+  {
+   "id": "v2-ops-15",
+   "category": "ops",
+   "user": "hr",
+   "latency_ms": 192.2,
+   "status": "OK",
+   "hit": true,
+   "rank": 1,
+   "gated_out": false
+  },
+  {
+   "id": "v2-ops-16",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 188.6,
+   "status": "OK",
+   "hit": true,
+   "rank": 1,
+   "gated_out": false
+  },
+  {
+   "id": "v2-no_basis-17",
+   "category": "no_basis",
+   "user": "sg-ops",
+   "latency_ms": 200.0,
+   "status": "OK",
+   "refused": false
+  },
+  {
+   "id": "v2-no_basis-18",
+   "category": "no_basis",
+   "user": "sg-ops",
+   "latency_ms": 192.2,
+   "status": "OK",
+   "refused": false
+  },
+  {
+   "id": "v2-no_basis-19",
+   "category": "no_basis",
+   "user": "tw-ops",
+   "latency_ms": 199.7,
+   "status": "OK",
+   "refused": false
+  },
+  {
+   "id": "v2-no_basis-20",
+   "category": "no_basis",
+   "user": "tw-ops",
+   "latency_ms": 182.4,
+   "status": "OK",
+   "refused": false
+  },
+  {
+   "id": "v2-no_basis-21",
+   "category": "no_basis",
+   "user": "tw-ops",
+   "latency_ms": 215.9,
+   "status": "OK",
+   "refused": false
+  },
+  {
+   "id": "v2-no_basis-22",
+   "category": "no_basis",
+   "user": "sg-ops",
+   "latency_ms": 202.0,
+   "status": "OK",
+   "refused": false
+  },
+  {
+   "id": "v2-no_basis-23",
+   "category": "no_basis",
+   "user": "sg-ops",
+   "latency_ms": 202.4,
+   "status": "OK",
+   "refused": false
+  },
+  {
+   "id": "v2-no_basis-24",
+   "category": "no_basis",
+   "user": "cn-ops",
+   "latency_ms": 194.6,
+   "status": "OK",
+   "refused": false
+  },
+  {
+   "id": "v2-no_basis-25",
+   "category": "no_basis",
+   "user": "sg-ops",
+   "latency_ms": 202.7,
+   "status": "OK",
+   "refused": false
+  },
+  {
+   "id": "v2-no_basis-26",
+   "category": "no_basis",
+   "user": "sg-ops",
+   "latency_ms": 192.0,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "refused": true
+  },
+  {
+   "id": "v2-no_basis-27",
+   "category": "no_basis",
+   "user": "sg-ops",
+   "latency_ms": 208.5,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "refused": true
+  },
+  {
+   "id": "v2-no_basis-28",
+   "category": "no_basis",
+   "user": "sg-ops",
+   "latency_ms": 200.8,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "refused": true
+  }
+ ]
+}

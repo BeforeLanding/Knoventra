@@ -23,6 +23,7 @@ class Evidence:
     lang: str
     score: float
     rerank_score: float | None = None
+    sparse_ip: float | None = None  # sparse inner product, if it was a sparse candidate
     dense_sim: float | None = None  # cosine similarity from the dense channel, if it was a dense candidate
     channels: dict[str, int] = field(default_factory=dict)  # channel -> rank (1-based)
 
@@ -43,7 +44,7 @@ ORDER BY {order}
 LIMIT :k
 """
 _DENSE = text(_BASE.format(order="c.dense <=> CAST(:q AS vector)", extra="", dist="c.dense <=> CAST(:q AS vector)"))
-_SPARSE = text(_BASE.format(order="c.sparse <#> CAST(:q AS sparsevec)", dist="0.0",
+_SPARSE = text(_BASE.format(order="c.sparse <#> CAST(:q AS sparsevec)", dist="c.sparse <#> CAST(:q AS sparsevec)",
                          extra=" AND (c.sparse <#> CAST(:q AS sparsevec)) < 0"))  # no lexical overlap -> no candidate)
 
 
@@ -71,6 +72,7 @@ def search(db: Session, enc: Encoder, scope: AccessScope, query: str, *,
     db.execute(text("SET LOCAL hnsw.iterative_scan = relaxed_order"))
     rows: dict[str, tuple] = {}
     dense_sims: dict[str, float] = {}
+    sparse_ips: dict[str, float] = {}
     rankings: dict[str, list[str]] = {}
 
     def run(name, stmt, q):
@@ -80,6 +82,8 @@ def search(db: Session, enc: Encoder, scope: AccessScope, query: str, *,
             rows.setdefault(r.id, r)
             if name == "dense":
                 dense_sims[r.id] = 1.0 - float(r.dist)
+            else:
+                sparse_ips[r.id] = -float(r.dist)  # pgvector's <#> is the negative inner product
 
     run("dense", _DENSE, "[" + ",".join(f"{x:.6f}" for x in dense_q) + "]")
     if use_sparse and sparse_q:
@@ -93,7 +97,7 @@ def search(db: Session, enc: Encoder, scope: AccessScope, query: str, *,
         evidence.append(Evidence(
             chunk_id=cid, document_id=r.doc_id, document_title=r.title, revision=r.version,
             page=r.page, section_path=r.section_path, text=r.text, lang=r.source_lang,
-            score=fused[cid], dense_sim=dense_sims.get(cid),
+            score=fused[cid], dense_sim=dense_sims.get(cid), sparse_ip=sparse_ips.get(cid),
             channels={n: ids.index(cid) + 1 for n, ids in rankings.items() if cid in ids},
         ))
     return SearchResult(evidence, {**rankings, "fused": order})

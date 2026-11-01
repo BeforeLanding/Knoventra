@@ -21,6 +21,7 @@ def saver(engine):
 
 @pytest.fixture(autouse=True)
 def gate(monkeypatch):
+    monkeypatch.setattr(settings, "gate_sparse_threshold", 1e9)  # dense-only gate for the hash encoder
     monkeypatch.setattr(settings, "gate_threshold", 0.1)  # hash-encoder cosine scale; BGE-M3 default is in config
 
 
@@ -109,3 +110,15 @@ def test_escalation_rejected_creates_nothing(db, enc, saver, users):
     _, cfg = run(g, user, "转人工")
     out = g.invoke(Command(resume={"approve": False}), cfg)
     assert esc_count(db, user) == 0 and "已取消" in out["messages"][-2].content
+
+
+def test_model_declared_refusal_hides_sources(db, enc, saver, users):
+    def script(msgs):
+        if isinstance(msgs[-1], ToolMessage):
+            return AIMessage("【无依据】资料里没有保修期信息 [S1]，请联系 Ops 团队。")
+        return call("search_knowledge", {"query": "E17-42 排查"})
+
+    out, _ = run(make_graph(db, enc, saver, script), users["sg-ops"], "E17 保修期多长")
+    assert out["sources"] == [] and out["error_code"] == "INSUFFICIENT_EVIDENCE"
+    final = out["messages"][-1].content
+    assert "【无依据】" not in final and "[S1]" not in final and "保修期" in final

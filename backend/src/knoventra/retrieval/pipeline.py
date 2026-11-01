@@ -21,15 +21,18 @@ class Outcome:
     evidence: list[Evidence] = field(default_factory=list)
 
 
-def gate_score(e: Evidence) -> float:
-    """Rerank score when a reranker ran; else the dense cosine similarity.
+def gate_passes(e: Evidence, threshold: float) -> bool:
+    """Evidence gate.
 
-    RRF is rank-based, so with BGE-M3 sparse (which matches any shared token) every query puts some chunk
-    at rank 1 in both channels and the fused score cannot tell an answerable query from an unanswerable one.
+    With a reranker: its score must reach `threshold`. Without one: dense cosine >= `threshold` OR sparse
+    inner product >= `gate_sparse_threshold`. The sparse arm exists because exact fault codes / part numbers
+    score low on dense similarity but hit the lexical channel (holdout: 3 answerable questions were refused).
+    A score gate cannot tell a real code from a near-miss (E17-42 vs E18-42 share every token), so near-misses
+    pass and are refused by the model, not the gate.
     """
     if e.rerank_score is not None:
-        return e.rerank_score
-    return e.dense_sim if e.dense_sim is not None else 0.0
+        return e.rerank_score >= threshold
+    return (e.dense_sim or 0.0) >= threshold or (e.sparse_ip or 0.0) >= settings.gate_sparse_threshold
 
 
 def retrieve(db: Session, enc: Encoder, rr: Reranker | None, user: User, query: str, *,
@@ -43,6 +46,6 @@ def retrieve(db: Session, enc: Encoder, rr: Reranker | None, user: User, query: 
     if rr:
         ev = rerank(rr, query, ev, settings.final_top_k)
     th = settings.gate_threshold if threshold is None else threshold
-    if not ev or max(gate_score(e) for e in ev) < th:
+    if not ev or not any(gate_passes(e, th) for e in ev):
         return Outcome(INSUFFICIENT)
     return Outcome(OK, ev)

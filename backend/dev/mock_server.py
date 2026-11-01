@@ -36,6 +36,7 @@ def script(msgs):
 
 
 settings.gate_threshold = 0.1  # hash-encoder cosine scale (the BGE-M3 default is 0.60)
+settings.gate_sparse_threshold = 1e9
 saver, _ = make_checkpointer(settings.database_url)
 graph = build_graph(AgentDeps(_session, get_encoder(), None, ScriptedModel(script=script), saver))
 app.dependency_overrides[get_graph] = lambda: graph

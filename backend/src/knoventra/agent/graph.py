@@ -34,9 +34,9 @@ from knoventra.retrieval.rerank import Reranker
 SYSTEM_PROMPT = """你是示例精密设备公司的内部知识助手。
 规则：
 1. 只依据 search_knowledge 返回的资料回答，不得用常识补全；每个论断后用 [S1] 这样的标记引用来源编号。
-2. 若检索返回 NO_ACCESS 或 INSUFFICIENT_EVIDENCE，明确说明没有可靠依据并拒答，建议联系对应职能团队（Ops/HR/FIN/IT），不要猜测。
+2. 若资料无法回答问题——检索返回 NO_ACCESS 或 INSUFFICIENT_EVIDENCE，或检索到的资料并不涉及所问内容（例如只是型号或故障码相近）——回答必须以「【无依据】」开头，说明没有可靠依据并拒答，不得使用 [S1] 之类的引用标记，建议联系对应职能团队（Ops/HR/FIN/IT），不要猜测。
 3. 回答语言与字形跟随用户的提问（简体问简体答，繁体问繁体答）。
-4. 仅当用户明确要求转人工/转交专家时才调用 escalate_to_expert，summary 写成可直接交给专家的问题摘要。
+4. 用户明确要求转人工/转交专家时，立即调用 escalate_to_expert，即使信息不全也不要先追问；summary 依据已有对话写成可直接交给专家的问题摘要（确认卡会让用户核对）。其他情况不要调用。
 5. 查询转交进度用 get_escalation_status。"""
 
 
@@ -80,6 +80,7 @@ class AgentDeps:
 
 
 _MARK = re.compile(r"\[S(\d+)\]")
+REFUSAL_MARK = "【无依据】"
 
 
 def _card(e, alias: str) -> dict:
@@ -208,6 +209,11 @@ def build_graph(deps: AgentDeps):
             return ""  # forged / unknown marker is never rendered as a source
 
         content = last.content if isinstance(last.content, str) else str(last.content)
+        if content.lstrip().startswith(REFUSAL_MARK):
+            # Model-declared refusal: show no source cards (they would "prove" an absence) and flag the turn.
+            text = _MARK.sub("", content.lstrip()[len(REFUSAL_MARK):]).strip()
+            return {"sources": [], "error_code": state.get("error_code") or "INSUFFICIENT_EVIDENCE",
+                    "messages": [AIMessage(text, id=last.id)]}
         text = _MARK.sub(sub, content)
         upd: dict[str, Any] = {"sources": [reg[a] for a in cited]}
         if text != content:
