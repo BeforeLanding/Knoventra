@@ -22,3 +22,7 @@ On 2026-10-27, the development plan was revised to target Python, FastAPI, LangC
 On 2026-11-01, the plan was narrowed to a three-week MVP (v3.0): a permission-aware knowledge Q&A service on Python, FastAPI, LangGraph and PostgreSQL / pgvector, with a new lightweight frontend that may port selected components from the upstream `frontend/`. This documentation update likewise does not change application behavior or remove upstream notices.
 
 Any copied or modified upstream code remains subject to its applicable license and attribution requirements. New dependencies and assets will be reviewed under their respective licenses when introduced.
+
+## Python implementation (2026-11-01)
+
+The Python backend (`backend/`) and the new frontend (`web/`, scaffolded from the Vite React-TypeScript template) were written independently for Knoventra; no source code from the imported Ragent tree was copied or ported into them. They follow design ideas from Ragent (layering, citation and retrieval flow), which is acknowledged here as a reference. The imported Java sources, `frontend/` and upstream notices are unchanged. New runtime dependencies (FastAPI, SQLAlchemy, LangGraph, pgvector, PyMuPDF, OpenCC, FlagEmbedding / BGE-M3 weights, React, Vite, etc.) remain under their own licenses; the BGE-M3 model weights are downloaded from Hugging Face at runtime and are not redistributed in this repository.
