@@ -1,0 +1,60 @@
+{"id": "ops-01", "category": "ops", "split": "dev", "user": "sg-ops", "question": "E17 设备报代码 42 先查什么", "expect": {"title": "E17 系列设备故障手册", "pages": [2], "revision": 1}}
+{"id": "ops-02", "category": "ops", "split": "dev", "user": "sg-ops", "question": "E17-42 主轴温度异常怎么处理", "expect": {"title": "E17 系列设备故障手册", "pages": [2], "revision": 1}}
+{"id": "ops-03", "category": "ops", "split": "dev", "user": "sg-ops", "question": "E17-42 复位后仍然报警应该联系谁", "expect": {"title": "E17 系列设备故障手册", "pages": [2], "revision": 1}}
+{"id": "ops-04", "category": "ops", "split": "dev", "user": "sg-ops", "question": "E17-07 进料卡滞怎么办", "expect": {"title": "E17 系列设备故障手册", "pages": [2], "revision": 1}}
+{"id": "ops-05", "category": "ops", "split": "dev", "user": "sg-ops", "question": "E17 手册适用于哪些设备", "expect": {"title": "E17 系列设备故障手册", "pages": [1], "revision": 1}}
+{"id": "ops-06", "category": "ops", "split": "dev", "user": "sg-ops", "question": "P03-11 泵组压力不足怎么处理", "expect": {"title": "泵组维护手册", "pages": [2], "revision": 1}}
+{"id": "ops-07", "category": "ops", "split": "dev", "user": "sg-ops", "question": "泵组日常检查多久做一次", "expect": {"title": "泵组维护手册", "pages": [1], "revision": 1}}
+{"id": "ops-08", "category": "ops", "split": "holdout", "user": "sg-ops", "question": "SEAL-9X 是什么型号的备件", "expect": {"title": "泵组维护手册", "pages": [2], "revision": 1}}
+{"id": "ops-09", "category": "ops", "split": "holdout", "user": "sg-ops", "question": "压力不足时先检查哪个阀门", "expect": {"title": "泵组维护手册", "pages": [2], "revision": 1}}
+{"id": "ops-10", "category": "ops", "split": "holdout", "user": "tw-ops", "question": "S5-19 感測器訊號漂移怎麼排查", "expect": {"title": "感測器故障手冊", "pages": [2], "revision": 1}}
+{"id": "ops-11", "category": "ops", "split": "holdout", "user": "tw-ops", "question": "K08-03 冷卻液溫度過高怎麼辦", "expect": {"title": "冷卻系統維護手冊", "pages": [1], "revision": 1}}
+{"id": "ops-12", "category": "ops", "split": "holdout", "user": "tw-ops", "question": "冷卻液多久更換一次", "expect": {"title": "冷卻系統維護手冊", "pages": [1], "revision": 1}}
+{"id": "ops-13", "category": "ops", "split": "holdout", "user": "tw-ops", "question": "W12-30 電源模組過載怎麼處理", "expect": {"title": "電源模組排障手冊", "pages": [1], "revision": 1}}
+{"id": "ops-14", "category": "ops", "split": "holdout", "user": "tw-ops", "question": "更換保險絲要用什麼規格", "expect": {"title": "電源模組排障手冊", "pages": [1], "revision": 1}}
+{"id": "ops-15", "category": "ops", "split": "holdout", "user": "cn-ops", "question": "C21-05 校准过期怎么清除", "expect": {"title": "校准流程（仅限中国区）", "pages": [1], "revision": 1}}
+{"id": "ops-16", "category": "ops", "split": "holdout", "user": "cn-ops", "question": "中国区设备多久校准一次", "expect": {"title": "校准流程（仅限中国区）", "pages": [1], "revision": 1}}
+{"id": "ops-17", "category": "ops", "split": "holdout", "user": "sg-ops", "question": "E17 设备环境温度超过多少算异常", "expect": {"title": "E17 系列设备故障手册", "pages": [2], "revision": 1}}
+{"id": "ops-18", "category": "ops", "split": "holdout", "user": "sg-ops", "question": "泵组压力不足时是否要更换密封圈", "expect": {"title": "泵组维护手册", "pages": [2], "revision": 1}}
+{"id": "ops-19", "category": "ops", "split": "holdout", "user": "sg-ops", "question": "VPN 客户端在哪里下载", "expect": {"title": "VPN 使用说明", "pages": [1], "revision": 1}}
+{"id": "ops-20", "category": "ops", "split": "holdout", "user": "hr", "question": "新员工入职当天 IT 会开通什么", "expect": {"title": "IT 入职指南", "pages": [1], "revision": 1}}
+{"id": "cross-01", "category": "cross", "split": "dev", "user": "tw-ops", "question": "泵組壓力不足 P03-11 怎麼處理", "expect": {"title": "泵组维护手册", "pages": [2], "revision": 1}}
+{"id": "cross-02", "category": "cross", "split": "dev", "user": "tw-ops", "question": "泵組日常檢查要做什麼", "expect": {"title": "泵组维护手册", "pages": [1], "revision": 1}}
+{"id": "cross-03", "category": "cross", "split": "dev", "user": "tw-ops", "question": "E17-42 主軸溫度異常怎麼排查", "expect": {"title": "E17 系列设备故障手册", "pages": [2], "revision": 1}}
+{"id": "cross-04", "category": "cross", "split": "holdout", "user": "tw-ops", "question": "E17 設備代碼 42 先檢查什麼", "expect": {"title": "E17 系列设备故障手册", "pages": [2], "revision": 1}}
+{"id": "cross-05", "category": "cross", "split": "holdout", "user": "tw-ops", "question": "進料卡滯 E17-07 怎麼處理", "expect": {"title": "E17 系列设备故障手册", "pages": [2], "revision": 1}}
+{"id": "cross-06", "category": "cross", "split": "holdout", "user": "sg-ops", "question": "感测器信号漂移 S5-19 怎么排查", "expect": {"title": "感測器故障手冊", "pages": [2], "revision": 1}}
+{"id": "cross-07", "category": "cross", "split": "holdout", "user": "sg-ops", "question": "冷却液多久更换一次", "expect": {"title": "冷卻系統維護手冊", "pages": [1], "revision": 1}}
+{"id": "cross-08", "category": "cross", "split": "holdout", "user": "sg-ops", "question": "电源模块过载 W12-30 怎么办", "expect": {"title": "電源模組排障手冊", "pages": [1], "revision": 1}}
+{"id": "cross-09", "category": "cross", "split": "holdout", "user": "sg-ops", "question": "保险丝要用什么规格", "expect": {"title": "電源模組排障手冊", "pages": [1], "revision": 1}}
+{"id": "cross-10", "category": "cross", "split": "holdout", "user": "tw-ops", "question": "VPN 遠端連線怎麼使用", "expect": {"title": "VPN 使用说明", "pages": [1], "revision": 1}}
+{"id": "access-01", "category": "access", "split": "dev", "user": "hr", "question": "E17-42 报警怎么处理", "expect": {"forbidden_titles": ["E17 系列设备故障手册"]}}
+{"id": "access-02", "category": "access", "split": "dev", "user": "hr", "question": "P03-11 泵组压力不足", "expect": {"forbidden_titles": ["泵组维护手册"]}}
+{"id": "access-03", "category": "access", "split": "dev", "user": "hr", "question": "C21-05 校准过期", "expect": {"forbidden_titles": ["校准流程（仅限中国区）"]}}
+{"id": "access-04", "category": "access", "split": "dev", "user": "fin", "question": "E17-07 进料卡滞怎么办", "expect": {"forbidden_titles": ["E17 系列设备故障手册"]}}
+{"id": "access-05", "category": "access", "split": "dev", "user": "fin", "question": "S5-19 感測器訊號漂移", "expect": {"forbidden_titles": ["感測器故障手冊"]}}
+{"id": "access-06", "category": "access", "split": "holdout", "user": "fin", "question": "年假怎么申请", "expect": {"forbidden_titles": ["休假制度"]}}
+{"id": "access-07", "category": "access", "split": "holdout", "user": "sg-ops", "question": "Ops 部门预算上限是多少", "expect": {"forbidden_titles": ["年度预算说明"]}}
+{"id": "access-08", "category": "access", "split": "holdout", "user": "sg-ops", "question": "差旅报销时限是多久", "expect": {"forbidden_titles": ["费用报销办法"]}}
+{"id": "access-09", "category": "access", "split": "holdout", "user": "sg-ops", "question": "每年什么时候调薪", "expect": {"forbidden_titles": ["薪酬调整办法"]}}
+{"id": "access-10", "category": "access", "split": "holdout", "user": "sg-ops", "question": "入职满一年有几天年假", "expect": {"forbidden_titles": ["休假制度"]}}
+{"id": "access-11", "category": "access", "split": "holdout", "user": "sg-ops", "question": "C21-05 校准证书过期怎么办", "expect": {"forbidden_titles": ["校准流程（仅限中国区）"]}}
+{"id": "access-12", "category": "access", "split": "holdout", "user": "tw-ops", "question": "中国区设备校准证书放在哪里", "expect": {"forbidden_titles": ["校准流程（仅限中国区）"]}}
+{"id": "access-13", "category": "access", "split": "holdout", "user": "hr", "question": "单笔超过 5000 元的报销要谁审批", "expect": {"forbidden_titles": ["费用报销办法"]}}
+{"id": "access-14", "category": "access", "split": "holdout", "user": "fin", "question": "调薪评审结果谁能看到", "expect": {"forbidden_titles": ["薪酬调整办法"]}}
+{"id": "access-15", "category": "access", "split": "holdout", "user": "admin", "question": "E17-42 排查步骤", "expect": {"forbidden_titles": ["E17 系列设备故障手册"]}}
+{"id": "no_basis-01", "category": "no_basis", "split": "dev", "user": "sg-ops", "question": "Z99-01 故障码怎么处理", "expect": {"refuse": true}}
+{"id": "no_basis-02", "category": "no_basis", "split": "dev", "user": "sg-ops", "question": "E17 设备的保修期是多长", "expect": {"refuse": true}}
+{"id": "no_basis-03", "category": "no_basis", "split": "dev", "user": "sg-ops", "question": "公司食堂几点开饭", "expect": {"refuse": true}}
+{"id": "no_basis-04", "category": "no_basis", "split": "holdout", "user": "sg-ops", "question": "怎么给 E18 设备更换主轴", "expect": {"refuse": true}}
+{"id": "no_basis-05", "category": "no_basis", "split": "holdout", "user": "sg-ops", "question": "P03-99 泵组报警是什么意思", "expect": {"refuse": true}}
+{"id": "no_basis-06", "category": "no_basis", "split": "holdout", "user": "sg-ops", "question": "新加坡下周天气怎么样", "expect": {"refuse": true}}
+{"id": "no_basis-07", "category": "no_basis", "split": "holdout", "user": "sg-ops", "question": "S5 感测器的出厂价格是多少", "expect": {"refuse": true}}
+{"id": "no_basis-08", "category": "no_basis", "split": "holdout", "user": "sg-ops", "question": "怎么重置 K08 系列的固件", "expect": {"refuse": true}}
+{"id": "no_basis-09", "category": "no_basis", "split": "holdout", "user": "sg-ops", "question": "公司现任 CEO 是谁", "expect": {"refuse": true}}
+{"id": "no_basis-10", "category": "no_basis", "split": "holdout", "user": "sg-ops", "question": "W12-31 代码怎么处理", "expect": {"refuse": true}}
+{"id": "escalation-01", "category": "escalation", "split": "dev", "user": "sg-ops", "question": "E17-42 复位后仍报警，帮我转人工专家", "expect": {"decisions": [true], "records": 1}}
+{"id": "escalation-02", "category": "escalation", "split": "dev", "user": "sg-ops", "question": "这个问题我想转人工", "expect": {"decisions": [true, true, false], "records": 1}}
+{"id": "escalation-03", "category": "escalation", "split": "holdout", "user": "sg-ops", "question": "帮我转交专家处理 E17-42", "expect": {"decisions": [false], "records": 0}}
+{"id": "escalation-04", "category": "escalation", "split": "holdout", "user": "tw-ops", "question": "我要轉人工專家", "expect": {"decisions": [true], "records": 1}}
+{"id": "escalation-05", "category": "escalation", "split": "holdout", "user": "hr", "question": "我想转人工咨询休假问题", "expect": {"decisions": [false], "records": 0}}

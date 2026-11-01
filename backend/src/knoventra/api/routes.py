@@ -10,7 +10,7 @@ from knoventra.access.scope import NoAccess, compute_scope
 from knoventra.api.deps import current_user, get_db, require_admin
 from knoventra.auth.security import issue_token, verify_password
 from knoventra.config import settings
-from knoventra.db.models import KnowledgeBase, Revision, User
+from knoventra.db.models import Document, KnowledgeBase, Revision, User
 from knoventra.ingestion.encoder import get_encoder
 from knoventra.ingestion.service import add_revision, publish
 from knoventra.retrieval.search import search
@@ -79,3 +79,16 @@ def publish_revision(revision_id: str, _: User = Depends(require_admin), db: Ses
         raise HTTPException(409, str(e)) from None
     rev = db.get(Revision, revision_id)
     return {"revision_id": rev.id, "status": rev.status}
+
+
+@router.get("/admin/documents")
+def list_documents(_: User = Depends(require_admin), db: Session = Depends(get_db)):
+    kbs = [k.name for k in db.scalars(select(KnowledgeBase).order_by(KnowledgeBase.name))]
+    docs = []
+    for d, kb in db.execute(select(Document, KnowledgeBase).join(KnowledgeBase, KnowledgeBase.id == Document.kb_id)
+                            .order_by(KnowledgeBase.name, Document.title)):
+        revs = db.scalars(select(Revision).where(Revision.document_id == d.id).order_by(Revision.version)).all()
+        docs.append({"kb": kb.name, "title": d.title, "lang": d.source_lang,
+                     "revisions": [{"id": r.id, "version": r.version, "status": r.status,
+                                    "published_at": r.published_at} for r in revs]})
+    return {"kbs": kbs, "documents": docs}

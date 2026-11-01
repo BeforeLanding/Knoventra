@@ -1,0 +1,49 @@
+* { box-sizing: border-box }
+body { margin: 0; font: 14px/1.6 system-ui, "Microsoft YaHei", sans-serif; color: #1f2933; background: #f5f6f8 }
+button { cursor: pointer; border: 1px solid #c4ccd6; background: #fff; border-radius: 6px; padding: 4px 12px }
+button:disabled { opacity: .5; cursor: default }
+.app { display: flex; flex-direction: column; height: 100vh }
+header { display: flex; gap: 24px; align-items: center; padding: 8px 16px; background: #fff; border-bottom: 1px solid #e1e5ea }
+header nav { flex: 1; display: flex; gap: 16px }
+header a { text-decoration: none; color: #52606d }
+header a.on { color: #1d4ed8; font-weight: 600 }
+.who { background: #eef2ff; padding: 2px 10px; border-radius: 12px }
+.who button { margin-left: 8px }
+.center { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px }
+.login button { width: 320px; display: flex; justify-content: space-between; padding: 10px 14px }
+.login small { color: #7b8794 }
+.err { color: #b91c1c }
+.chat { flex: 1; display: flex; min-height: 0 }
+.chat aside { width: 220px; background: #fff; border-right: 1px solid #e1e5ea; padding: 8px; overflow: auto }
+.conv { padding: 6px 8px; border-radius: 6px; cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
+.conv.on, .conv:hover { background: #eef2ff }
+.chat main { flex: 1; display: flex; flex-direction: column; min-width: 0 }
+.msgs { flex: 1; overflow: auto; padding: 16px 24px }
+.hint { color: #7b8794 }
+.msg { max-width: 780px; margin: 0 0 16px; padding: 10px 14px; border-radius: 10px; background: #fff; white-space: pre-wrap }
+.msg.user { margin-left: auto; background: #dbeafe }
+.msg.refusal { background: #fff7ed; border: 1px solid #fdba74 }
+.tag { font-weight: 600; margin-bottom: 4px }
+.tag.err { color: #b91c1c }
+.status { color: #7b8794 }
+.sources { display: grid; gap: 8px; margin-top: 8px }
+.card { border: 1px solid #e1e5ea; border-radius: 8px; padding: 6px 10px; cursor: pointer; background: #fafbfc }
+.card:hover { border-color: #1d4ed8 }
+.card small { display: block; color: #7b8794 }
+.card p { margin: 4px 0 0; color: #3e4c59 }
+.confirm { margin-top: 8px; padding: 8px 12px; border: 1px dashed #1d4ed8; border-radius: 8px }
+.confirm button { margin-right: 8px }
+.chat form { display: flex; gap: 8px; padding: 12px 24px; background: #fff; border-top: 1px solid #e1e5ea }
+.chat form input { flex: 1; padding: 6px 10px; border: 1px solid #c4ccd6; border-radius: 6px }
+.modal { position: fixed; inset: 0; background: #0006; display: flex; align-items: center; justify-content: center }
+.panel { background: #fff; padding: 16px 20px; border-radius: 10px; width: min(640px, 90vw); max-height: 80vh; overflow: auto }
+.panel pre { white-space: pre-wrap }
+.admin { padding: 16px 24px; overflow: auto }
+.admin form { display: flex; gap: 8px; flex-wrap: wrap }
+table { border-collapse: collapse; background: #fff }
+td, th { border: 1px solid #e1e5ea; padding: 4px 10px; text-align: left }
+.rev { margin-right: 12px }
+.rev.PUBLISHED { color: #15803d }
+.rev.RETIRED { color: #9aa5b1 }
+.rev.DRAFT { color: #b45309 }
+.rev button { margin-left: 4px; padding: 0 6px }

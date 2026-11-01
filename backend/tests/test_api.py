@@ -48,3 +48,10 @@ def test_admin_upload_then_publish(client):
     ev = client.get("/api/v1/debug/search", params={"q": "VPN SSO"}, headers=tok(client, "hr")).json()["evidence"]
     vpn = [e for e in ev if e["document_title"] == "VPN 使用说明"]
     assert vpn and {e["revision"] for e in vpn} == {2}
+
+
+def test_admin_list_documents(client):
+    assert client.get("/api/v1/admin/documents", headers=tok(client, "hr")).status_code == 403
+    d = client.get("/api/v1/admin/documents", headers=tok(client, "admin")).json()
+    e17 = next(x for x in d["documents"] if x["title"].startswith("E17"))
+    assert [r["status"] for r in e17["revisions"]] == ["PUBLISHED", "DRAFT"] and "hr" in d["kbs"]
