@@ -4,6 +4,15 @@ export type Source = {
   page: number | null; section_path: string; lang: string; snippet: string
 }
 export type SseEvent = { event: string; data: any }
+export type Confirmation = {
+  confirmation_id: string; summary: string; status: string; expires_at: string; expired: boolean
+}
+export type ConversationState = {
+  conversation_id: string
+  messages: { role: 'user' | 'assistant'; content: string; sources: Source[]; error_code: string | null }[]
+  blocked: boolean
+  pending_confirmation: Confirmation | null
+}
 
 const TOKEN_KEY = 'knv_token'
 export const getToken = () => localStorage.getItem(TOKEN_KEY)
@@ -35,6 +44,8 @@ export const api = {
   conversations: async (): Promise<{ id: string; title: string }[]> => (await req('/conversations')).json(),
   messages: async (id: string): Promise<{ role: string; content: string; sources: Source[] }[]> =>
     (await req(`/conversations/${id}/messages`)).json(),
+  conversationState: async (id: string, signal?: AbortSignal): Promise<ConversationState> =>
+    (await req(`/conversations/${id}/state`, { signal })).json(),
   evidence: async (chunkId: string) => (await req(`/evidence/${chunkId}`)).json(),
   adminDocs: async () => (await req('/admin/documents')).json(),
   upload: async (form: FormData) => (await req('/admin/documents', { method: 'POST', body: form })).json(),
@@ -42,22 +53,27 @@ export const api = {
 }
 
 /** POST + SSE (EventSource cannot POST). Yields parsed events as they arrive. */
-export async function* stream(path: string, body: unknown): AsyncGenerator<SseEvent> {
-  const r = await req(path, { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(body) })
+export async function* stream(path: string, body: unknown, signal?: AbortSignal): AsyncGenerator<SseEvent> {
+  const r = await req(path, { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(body), signal })
   const reader = r.body!.getReader()
   const dec = new TextDecoder()
   let buf = ''
-  for (;;) {
-    const { value, done } = await reader.read()
-    if (done) break
-    buf += dec.decode(value, { stream: true })
-    let i: number
-    while ((i = buf.indexOf('\n\n')) >= 0) {
-      const raw = buf.slice(0, i)
-      buf = buf.slice(i + 2)
-      const ev = /^event: (.*)$/m.exec(raw)?.[1]
-      const data = /^data: (.*)$/m.exec(raw)?.[1]
-      if (ev && data) yield { event: ev, data: JSON.parse(data) }
+  try {
+    for (;;) {
+      const { value, done } = await reader.read()
+      if (done) break
+      buf += dec.decode(value, { stream: true })
+      let i: number
+      while ((i = buf.indexOf('\n\n')) >= 0) {
+        const raw = buf.slice(0, i)
+        buf = buf.slice(i + 2)
+        const ev = /^event: (.*)$/m.exec(raw)?.[1]
+        const data = /^data: (.*)$/m.exec(raw)?.[1]
+        if (ev && data) yield { event: ev, data: JSON.parse(data) }
+      }
     }
+  } finally {
+    await reader.cancel().catch(() => {})
+    reader.releaseLock()
   }
 }

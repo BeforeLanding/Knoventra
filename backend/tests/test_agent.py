@@ -50,6 +50,9 @@ def test_answer_has_registered_sources_and_forged_marker_dropped(db, enc, saver,
     assert [s["alias"] for s in out["sources"]] == ["S1"]
     assert out["sources"][0]["document_title"].startswith("E17") and out["sources"][0]["page"] == 2
     assert out["error_code"] is None
+    assert out["model_declared_refusal"] is False
+    assert out["retrieval_trace"][0]["status"] == "OK"
+    assert out["sources"][0]["chunk_id"] in out["retrieval_trace"][0]["returned_chunk_ids"]
 
 
 def test_unauthorized_user_gets_refusal_and_no_restricted_text(db, enc, saver, users):
@@ -94,6 +97,8 @@ def test_escalation_interrupt_approve_is_idempotent_across_restart(db, enc, save
     g2 = make_graph(db, enc, saver, esc_script)
     assert g2.get_state(cfg).next
     out2 = g2.invoke(Command(resume={"approve": True}), cfg)
+    assert out2["retrieval_trace"] == out["retrieval_trace"] == []
+    assert out2["model_declared_refusal"] is False
     assert esc_count(db, user) == 1 and "已创建转交记录" in out2["messages"][-1].content
     assert not g2.get_state(cfg).next
     # the node itself is idempotent even if resumed again with the same operation id
@@ -112,13 +117,49 @@ def test_escalation_rejected_creates_nothing(db, enc, saver, users):
     assert esc_count(db, user) == 0 and "已取消" in out["messages"][-2].content
 
 
-def test_model_declared_refusal_hides_sources(db, enc, saver, users):
+@pytest.mark.parametrize("marker", ["【无依据】", "【無依據】"])
+def test_model_declared_refusal_hides_sources(db, enc, saver, users, marker):
     def script(msgs):
         if isinstance(msgs[-1], ToolMessage):
-            return AIMessage("【无依据】资料里没有保修期信息 [S1]，请联系 Ops 团队。")
+            return AIMessage(f"  {marker}资料里没有保修期信息 [S1]，请联系 Ops 团队。")
         return call("search_knowledge", {"query": "E17-42 排查"})
 
     out, _ = run(make_graph(db, enc, saver, script), users["sg-ops"], "E17 保修期多长")
     assert out["sources"] == [] and out["error_code"] == "INSUFFICIENT_EVIDENCE"
+    assert out["model_declared_refusal"] is True
+    assert out["retrieval_trace"][0]["status"] == "OK"
     final = out["messages"][-1].content
-    assert "【无依据】" not in final and "[S1]" not in final and "保修期" in final
+    assert marker not in final and "[S1]" not in final and "保修期" in final
+
+
+@pytest.mark.parametrize("query", ["E17-42 排查", "主轴温度异常", "E17-44"])
+def test_query_rewriting_cannot_replace_or_drop_original_code(db, enc, saver, users, query):
+    def script(msgs):
+        if isinstance(msgs[-1], ToolMessage):
+            return AIMessage("【无依据】没有该编码的可靠依据 [S1]，请联系 Ops。")
+        return call("search_knowledge", {"query": query})
+
+    out, _ = run(make_graph(db, enc, saver, script), users["sg-ops"], "E17-44 怎么恢复")
+    tool = next(m for m in out["messages"] if isinstance(m, ToolMessage))
+    assert "INSUFFICIENT_EVIDENCE" in tool.content and "冷却液" not in tool.content
+    assert out["evidence"] == {} and out["sources"] == []
+
+
+def test_retry_cannot_bypass_original_code_and_next_turn_can_ask_a_real_code(db, enc, saver, users):
+    def script(msgs):
+        human = next(m for m in reversed(msgs) if isinstance(m, HumanMessage))
+        if isinstance(msgs[-1], ToolMessage):
+            if "E17-44" in human.content and msgs[-1].tool_call_id == "first":
+                return call("search_knowledge", {"query": "主轴温度异常"}, cid="retry")
+            return AIMessage("按手册处理 [S1]" if "[S1]" in msgs[-1].content else "【无依据】请联系 Ops。")
+        return call("search_knowledge", {"query": "E17-42 排查"}, cid="first")
+
+    g = make_graph(db, enc, saver, script)
+    first, cfg = run(g, users["sg-ops"], "E17-44 如何排查")
+    assert len([m for m in first["messages"] if isinstance(m, ToolMessage)]) == 2
+    assert first["evidence"] == {} and first["error_code"] == "INSUFFICIENT_EVIDENCE"
+    assert len(first["retrieval_trace"]) == 2
+    assert all(t["reason"] == "IDENTIFIER_MISMATCH" and not t["returned_chunk_ids"] for t in first["retrieval_trace"])
+    second, _ = run(g, users["sg-ops"], "那 E17-42 呢", thread=cfg["configurable"]["thread_id"])
+    assert second["sources"] and second["error_code"] is None
+    assert len(second["retrieval_trace"]) == 1 and second["model_declared_refusal"] is False

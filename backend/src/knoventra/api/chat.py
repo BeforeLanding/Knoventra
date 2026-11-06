@@ -8,7 +8,6 @@ from contextlib import contextmanager
 from functools import lru_cache
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
 from langgraph.types import Command
 from pydantic import BaseModel
@@ -19,6 +18,7 @@ from knoventra.access.scope import NoAccess, compute_scope
 from knoventra.agent.checkpoint import make_checkpointer
 from knoventra.agent.graph import AgentDeps, build_graph
 from knoventra.api.deps import current_user, get_db
+from knoventra.api.run_lock import ConversationLease, ConversationStreamingResponse
 from knoventra.config import settings
 from knoventra.db.models import Chunk, Confirmation, Conversation, Document, Escalation, Message, Revision, User
 from knoventra.db.session import SessionLocal
@@ -56,6 +56,17 @@ def _public(card: dict) -> dict:
             "snippet": card["text"][:240]}
 
 
+def _confirmation_card(conf: Confirmation) -> dict:
+    return {"confirmation_id": conf.id, "summary": conf.summary, "status": conf.status,
+            "expires_at": conf.expires_at.isoformat(),
+            "expired": conf.status == "PENDING" and conf.expires_at <= dt.datetime.now(dt.UTC)}
+
+
+def _history(db: Session, conv: Conversation) -> list[dict]:
+    rows = db.scalars(select(Message).where(Message.conversation_id == conv.id).order_by(Message.created_at, Message.id)).all()
+    return [{"role": m.role, "content": m.content, "sources": m.evidence_json or [], "error_code": m.error_code} for m in rows]
+
+
 def _stream_run(graph, db: Session, conv: Conversation, user_id: str, inp, *, user_text: str | None) -> Iterator[str]:
     cfg = {"configurable": {"thread_id": conv.thread_id, "user_id": user_id}}
     yield sse("meta", {"conversation_id": conv.id, "run_id": uuid.uuid4().hex})
@@ -79,11 +90,17 @@ def _stream_run(graph, db: Session, conv: Conversation, user_id: str, inp, *, us
                             yield sse("status", {"tool": tc["name"]})
         state = graph.get_state(cfg).values
         if interrupted is not None:
-            yield sse("confirm", {"confirmation_id": interrupted["confirmation_id"], "summary": interrupted["summary"]})
+            conf = db.scalar(select(Confirmation).where(Confirmation.id == interrupted["confirmation_id"],
+                                                        Confirmation.user_id == user_id,
+                                                        Confirmation.thread_id == conv.thread_id))
+            if conf is None:
+                raise ValueError("confirmation does not belong to this conversation")
+            yield sse("confirm", _confirmation_card(conf))
             return
         sources = [_public(c) for c in state.get("sources", [])]
         answer = next((m.content for m in reversed(state["messages"]) if isinstance(m, AIMessage) and not m.tool_calls), "")
-        db.add(Message(conversation_id=conv.id, role="assistant", content=answer, evidence_json=sources))
+        db.add(Message(conversation_id=conv.id, role="assistant", content=answer, evidence_json=sources,
+                       error_code=state.get("error_code")))
         db.commit()
         yield sse("sources", sources)
         if state.get("error_code"):
@@ -91,6 +108,9 @@ def _stream_run(graph, db: Session, conv: Conversation, user_id: str, inp, *, us
         yield sse("done", {"answer": answer})
     except Exception as e:  # surface as a typed SSE error rather than a broken stream
         db.rollback()
+        db.add(Message(conversation_id=conv.id, role="assistant", content="", evidence_json=[],
+                       error_code="RETRIEVAL_UNAVAILABLE"))
+        db.commit()
         yield sse("error", {"code": "RETRIEVAL_UNAVAILABLE", "detail": type(e).__name__})
         yield sse("done", {"answer": ""})
 
@@ -112,15 +132,19 @@ def chat(body: ChatIn, user: User = Depends(current_user), db: Session = Depends
          graph=Depends(get_graph)):
     if body.conversation_id:
         conv = _own_conversation(db, user, body.conversation_id)
-        if graph.get_state({"configurable": {"thread_id": conv.thread_id}}).next:
-            raise HTTPException(409, "pending confirmation must be resolved first")
     else:
         conv = Conversation(user_id=user.id, thread_id=uuid.uuid4().hex, title=body.message[:30])
         db.add(conv)
         db.commit()
-    inp = {"messages": [HumanMessage(body.message)], "evidence": {}, "sources": [], "error_code": None}
-    return StreamingResponse(_stream_run(graph, db, conv, user.id, inp, user_text=body.message),
-                             media_type="text/event-stream")
+    lease = ConversationLease.acquire(db.get_bind().engine, conv.id)
+    try:
+        if graph.get_state({"configurable": {"thread_id": conv.thread_id}}).next:
+            raise HTTPException(409, "pending confirmation must be resolved first")
+        inp = {"messages": [HumanMessage(body.message)], "evidence": {}, "sources": [], "error_code": None}
+        return ConversationStreamingResponse(_stream_run(graph, db, conv, user.id, inp, user_text=body.message), lease)
+    except BaseException:
+        lease.close()
+        raise
 
 
 class ConfirmIn(BaseModel):
@@ -139,17 +163,23 @@ def confirm(body: ConfirmIn, user: User = Depends(current_user), db: Session = D
                                                 Conversation.user_id == user.id))
     if conv is None:
         raise HTTPException(404)
-    now = dt.datetime.now(dt.UTC)
-    expired = conf.status == "PENDING" and conf.expires_at <= now
-    approve = body.approve and not expired
-    # Claim the decision atomically; only the first caller changes the status.
-    target = "EXPIRED" if expired else ("APPROVED" if approve else "REJECTED")
-    db.execute(update(Confirmation).where(Confirmation.id == conf.id, Confirmation.status == "PENDING")
-               .values(status=target))
-    db.commit()
-    db.refresh(conf)
-    cfg = {"configurable": {"thread_id": conf.thread_id}}
-    still_waiting = bool(graph.get_state(cfg).next)
+    lease = ConversationLease.acquire(db.get_bind().engine, conv.id)
+    try:
+        db.refresh(conf)
+        now = dt.datetime.now(dt.UTC)
+        expired = conf.status == "PENDING" and conf.expires_at <= now
+        approve = body.approve and not expired
+        # Claim the decision only after excluding concurrent chat/resume runs.
+        target = "EXPIRED" if expired else ("APPROVED" if approve else "REJECTED")
+        db.execute(update(Confirmation).where(Confirmation.id == conf.id, Confirmation.status == "PENDING")
+                   .values(status=target))
+        db.commit()
+        db.refresh(conf)
+        cfg = {"configurable": {"thread_id": conf.thread_id}}
+        still_waiting = bool(graph.get_state(cfg).next)
+    except BaseException:
+        lease.close()
+        raise
 
     def gen() -> Iterator[str]:
         if expired:
@@ -162,7 +192,7 @@ def confirm(body: ConfirmIn, user: User = Depends(current_user), db: Session = D
         stored = {"approve": conf.status == "APPROVED"}
         yield from _stream_run(graph, db, conv, user.id, Command(resume=stored), user_text=None)
 
-    return StreamingResponse(gen(), media_type="text/event-stream")
+    return ConversationStreamingResponse(gen(), lease)
 
 
 @router.get("/conversations")
@@ -175,8 +205,29 @@ def conversations(user: User = Depends(current_user), db: Session = Depends(get_
 @router.get("/conversations/{cid}/messages")
 def messages(cid: str, user: User = Depends(current_user), db: Session = Depends(get_db)):
     conv = _own_conversation(db, user, cid)
-    rows = db.scalars(select(Message).where(Message.conversation_id == conv.id).order_by(Message.created_at, Message.id)).all()
-    return [{"role": m.role, "content": m.content, "sources": m.evidence_json or []} for m in rows]
+    return _history(db, conv)
+
+
+@router.get("/conversations/{cid}/state")
+def conversation_state(cid: str, user: User = Depends(current_user), db: Session = Depends(get_db),
+                       graph=Depends(get_graph)):
+    """Read the owned checkpoint's actual interrupt; never create/resume a run."""
+    conv = _own_conversation(db, user, cid)
+    snapshot = graph.get_state({"configurable": {"thread_id": conv.thread_id, "user_id": user.id}})
+    pending = None
+    for task in snapshot.tasks:
+        for interruption in task.interrupts:
+            value = interruption.value
+            if not isinstance(value, dict) or not value.get("confirmation_id"):
+                continue
+            conf = db.scalar(select(Confirmation).where(Confirmation.id == value["confirmation_id"],
+                                                        Confirmation.user_id == user.id,
+                                                        Confirmation.thread_id == conv.thread_id))
+            if conf is not None:
+                pending = _confirmation_card(conf)
+                break
+    return {"conversation_id": conv.id, "messages": _history(db, conv),
+            "blocked": bool(snapshot.next), "pending_confirmation": pending}
 
 
 @router.get("/evidence/{chunk_id}")

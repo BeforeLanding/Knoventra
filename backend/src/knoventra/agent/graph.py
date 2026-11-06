@@ -68,6 +68,8 @@ class State(TypedDict, total=False):
     sources: list[dict]
     error_code: str | None
     pending: dict | None
+    retrieval_trace: list[dict]  # per-turn diagnostics; never added to model messages
+    model_declared_refusal: bool
 
 
 @dataclass
@@ -81,6 +83,7 @@ class AgentDeps:
 
 _MARK = re.compile(r"\[S(\d+)\]")
 REFUSAL_MARK = "【无依据】"
+REFUSAL_MARKS = (REFUSAL_MARK, "【無依據】")
 
 
 def _card(e, alias: str) -> dict:
@@ -100,6 +103,11 @@ def _turn_tool_count(messages) -> int:
 
 
 def build_graph(deps: AgentDeps):
+    def start_turn(state: State):
+        # Command(resume=...) resumes at the interrupt and preserves this trace.
+        # A new user turn always starts fresh, even for callers reusing a thread.
+        return {"retrieval_trace": [], "model_declared_refusal": False}
+
     def agent(state: State):
         msgs = [SystemMessage(SYSTEM_PROMPT), *state["messages"]]
         return {"messages": [deps.llm.bind_tools(TOOLS).invoke(msgs)]}
@@ -117,13 +125,21 @@ def build_graph(deps: AgentDeps):
                 "error_code": "RUN_LIMIT",
             }
         evidence = dict(state.get("evidence") or {})
+        trace = list(state.get("retrieval_trace") or [])
         out: list[ToolMessage] = []
         pending = None
         error = state.get("error_code")
+        original_query = next((m.content for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), "")
         for c in calls:
             if c["name"] == "search_knowledge":
                 with deps.session_factory() as db:
-                    res = retrieve(db, deps.encoder, deps.reranker, db.get(User, uid), c["args"].get("query", ""))
+                    res = retrieve(db, deps.encoder, deps.reranker, db.get(User, uid), c["args"].get("query", ""),
+                                   original_query=original_query)
+                trace.append({"tool_call_id": c["id"], "query": c["args"].get("query", ""),
+                              "status": res.status, "reason": res.reason,
+                              "required_identifiers": res.required_identifiers,
+                              "missing_identifiers": res.missing_identifiers,
+                              "returned_chunk_ids": [e.chunk_id for e in res.evidence]})
                 if res.status != OK:
                     if not evidence:
                         error = res.status
@@ -149,7 +165,8 @@ def build_graph(deps: AgentDeps):
                 pending = {"tool_call_id": c["id"], "args": c["args"]}
             else:
                 out.append(ToolMessage("未知或重复的工具调用，已忽略", tool_call_id=c["id"]))
-        return {"messages": out, "evidence": evidence, "pending": pending, "error_code": error}
+        return {"messages": out, "evidence": evidence, "pending": pending, "error_code": error,
+                "retrieval_trace": trace}
 
     def after_tools(state: State):
         if state.get("error_code") == "RUN_LIMIT":
@@ -209,10 +226,13 @@ def build_graph(deps: AgentDeps):
             return ""  # forged / unknown marker is never rendered as a source
 
         content = last.content if isinstance(last.content, str) else str(last.content)
-        if content.lstrip().startswith(REFUSAL_MARK):
+        stripped = content.lstrip()
+        refusal_mark = next((mark for mark in REFUSAL_MARKS if stripped.startswith(mark)), None)
+        if refusal_mark:
             # Model-declared refusal: show no source cards (they would "prove" an absence) and flag the turn.
-            text = _MARK.sub("", content.lstrip()[len(REFUSAL_MARK):]).strip()
+            text = _MARK.sub("", stripped[len(refusal_mark):]).strip()
             return {"sources": [], "error_code": state.get("error_code") or "INSUFFICIENT_EVIDENCE",
+                    "model_declared_refusal": True,
                     "messages": [AIMessage(text, id=last.id)]}
         text = _MARK.sub(sub, content)
         upd: dict[str, Any] = {"sources": [reg[a] for a in cited]}
@@ -221,10 +241,11 @@ def build_graph(deps: AgentDeps):
         return upd
 
     g = StateGraph(State)
-    for name, fn in [("agent", agent), ("tools", tools), ("prepare_escalation", prepare_escalation),
+    for name, fn in [("start_turn", start_turn), ("agent", agent), ("tools", tools), ("prepare_escalation", prepare_escalation),
                      ("execute_escalation", execute_escalation), ("cite_check", cite_check)]:
         g.add_node(name, fn)
-    g.add_edge(START, "agent")
+    g.add_edge(START, "start_turn")
+    g.add_edge("start_turn", "agent")
     g.add_conditional_edges("agent", after_agent, ["tools", "cite_check"])
     g.add_conditional_edges("tools", after_tools, ["agent", "prepare_escalation", END])
     g.add_edge("prepare_escalation", "execute_escalation")

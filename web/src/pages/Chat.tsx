@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { api, stream, type Source } from '../api'
+import { api, stream, type Source, type Confirmation, type ConversationState } from '../api'
 
 type Msg = {
   role: 'user' | 'assistant'; content: string; sources?: Source[]
-  refusal?: string; status?: string; confirm?: { id: string; summary: string; done?: string }
+  refusal?: string; status?: string; confirm?: Confirmation
   error?: string
 }
 
@@ -22,56 +22,107 @@ export default function Chat() {
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
+  const [blocked, setBlocked] = useState(false)
+  const [notice, setNotice] = useState('')
   const [preview, setPreview] = useState<any>(null)
   const bottom = useRef<HTMLDivElement>(null)
+  const active = useRef<AbortController | null>(null)
 
-  const refresh = () => api.conversations().then(setConvs)
-  useEffect(() => { refresh() }, [])
+  const refresh = () => api.conversations().then(setConvs).catch(() => setNotice('会话列表加载失败，请重试。'))
+  useEffect(() => {
+    refresh()
+    return () => { active.current?.abort() }
+  }, [])
   useEffect(() => { bottom.current?.scrollIntoView({ block: 'end' }) }, [msgs])
 
+  const restore = (state: ConversationState) => {
+    const history: Msg[] = state.messages.map(m => ({
+      role: m.role, content: m.content, sources: m.sources,
+      refusal: m.error_code && REFUSAL_TEXT[m.error_code] ? m.error_code : undefined,
+      error: m.error_code && !REFUSAL_TEXT[m.error_code] ? ERROR_TEXT[m.error_code] ?? m.error_code : undefined,
+    }))
+    if (state.pending_confirmation) history.push({ role: 'assistant', content: '', confirm: state.pending_confirmation })
+    setMsgs(history)
+    setBlocked(state.blocked)
+  }
+
   const open = async (id: string | null) => {
-    setCid(id)
-    if (!id) return setMsgs([])
-    setMsgs((await api.messages(id)).map(m => ({ role: m.role as Msg['role'], content: m.content, sources: m.sources })))
+    if (active.current) return
+    setPreview(null)
+    setNotice('')
+    if (!id) { setCid(null); setMsgs([]); setBlocked(false); return }
+    const controller = new AbortController()
+    active.current = controller
+    setBusy(true)
+    try {
+      const state = await api.conversationState(id, controller.signal)
+      if (controller.signal.aborted) return
+      setCid(id)
+      restore(state)
+    } catch {
+      if (!controller.signal.aborted) setNotice('会话加载失败，请重新选择会话。')
+    } finally {
+      if (!controller.signal.aborted) setBusy(false)
+      active.current = null
+    }
   }
 
   const patchLast = (f: (m: Msg) => Msg) => setMsgs(ms => ms.map((m, i) => (i === ms.length - 1 ? f(m) : m)))
 
-  const consume = async (it: AsyncGenerator<{ event: string; data: any }>) => {
+  const consume = async (path: string, body: unknown) => {
+    if (active.current) return
+    const controller = new AbortController()
+    active.current = controller
+    setBusy(true)
+    setNotice('')
+    let conversationId = cid
     try {
-      for await (const { event, data } of it) {
-        if (event === 'meta' && data.conversation_id) setCid(data.conversation_id)
+      for await (const { event, data } of stream(path, body, controller.signal)) {
+        if (controller.signal.aborted) return
+        if (event === 'meta' && data.conversation_id) { conversationId = data.conversation_id; setCid(conversationId) }
         else if (event === 'status') patchLast(m => ({ ...m, status: data.tool === 'search_knowledge' ? '检索中…' : '调用工具：' + data.tool }))
         else if (event === 'token') patchLast(m => ({ ...m, content: m.content + data.text, status: undefined }))
         else if (event === 'sources') patchLast(m => ({ ...m, sources: data }))
-        else if (event === 'confirm') patchLast(m => ({ ...m, status: undefined, confirm: { id: data.confirmation_id, summary: data.summary } }))
+        else if (event === 'confirm') { setBlocked(true); patchLast(m => ({ ...m, status: undefined, confirm: data })) }
         else if (event === 'error') {
           const c = data.code as string
           patchLast(m => (REFUSAL_TEXT[c] ? { ...m, refusal: c } : { ...m, error: ERROR_TEXT[c] ?? c }))
-        } else if (event === 'done') patchLast(m => ({ ...m, status: undefined, content: data.answer || m.content }))
+        } else if (event === 'done') patchLast(m => ({ ...m, status: undefined, content: data.answer }))
       }
     } catch (e: any) {
-      patchLast(m => ({ ...m, status: undefined, error: e.status === 409 ? '请先处理待确认的转交。' : '请求失败' }))
+      if (controller.signal.aborted) return
+      const error = e.status === 409
+        ? (e.message?.includes('CONVERSATION_BUSY') ? '此会话正在处理其他请求，请稍后重新打开。' : '请先处理待确认的转交。')
+        : '请求失败'
+      setNotice(error)
+      patchLast(m => ({ ...m, status: undefined, error }))
+    } finally {
+      if (!controller.signal.aborted) {
+        // The stored decision wins, including after a lost confirmation response.
+        // Lock the composer until the server's checkpoint has been read successfully.
+        if (conversationId) {
+          setBlocked(true)
+          try { restore(await api.conversationState(conversationId, controller.signal)) }
+          catch { if (!controller.signal.aborted) setNotice('会话状态同步失败，请重新打开会话后继续。') }
+        }
+        if (!controller.signal.aborted) { setBusy(false); refresh() }
+      }
+      active.current = null
     }
-    refresh()
   }
 
   const send = async () => {
     const text = input.trim()
-    if (!text || busy) return
+    if (!text || busy || blocked || active.current) return
     setInput('')
-    setBusy(true)
     setMsgs(ms => [...ms, { role: 'user', content: text }, { role: 'assistant', content: '', status: '思考中…' }])
-    await consume(stream('/chat', { conversation_id: cid, message: text }))
-    setBusy(false)
+    await consume('/chat', { conversation_id: cid, message: text })
   }
 
-  const decide = async (i: number, id: string, approve: boolean) => {
-    setBusy(true)
-    setMsgs(ms => ms.map((m, j) => (j === i ? { ...m, confirm: { ...m.confirm!, done: approve ? '已确认' : '已取消' } } : m)))
+  const decide = async (id: string, approve: boolean) => {
+    if (active.current) return
     setMsgs(ms => [...ms, { role: 'assistant', content: '', status: '处理中…' }])
-    await consume(stream('/chat/confirm', { confirmation_id: id, approve }))
-    setBusy(false)
+    await consume('/chat/confirm', { confirmation_id: id, approve })
   }
 
   const show = async (s: Source) => {
@@ -81,11 +132,13 @@ export default function Chat() {
   return (
     <div className="chat">
       <aside>
-        <button onClick={() => open(null)}>＋ 新会话</button>
-        {convs.map(c => <div key={c.id} className={c.id === cid ? 'conv on' : 'conv'} onClick={() => open(c.id)}>{c.title || '(无标题)'}</div>)}
+        <button disabled={busy} onClick={() => open(null)}>＋ 新会话</button>
+        {convs.map(c => <button disabled={busy} key={c.id} className={c.id === cid ? 'conv on' : 'conv'} onClick={() => open(c.id)}>{c.title || '(无标题)'}</button>)}
       </aside>
       <main>
         <div className="msgs">
+          {notice && <p role="alert" className="err">{notice}</p>}
+          {blocked && <p className="hint">请先处理待确认的转交；若状态未同步，请重新打开会话。</p>}
           {msgs.length === 0 && <p className="hint">试试：「E17 设备报代码 42 先查什么」</p>}
           {msgs.map((m, i) => (
             <div key={i} className={`msg ${m.role}${m.refusal ? ' refusal' : ''}`}>
@@ -96,12 +149,13 @@ export default function Chat() {
                 <div className="confirm">
                   <b>转交专家确认</b>
                   <p>{m.confirm.summary}</p>
-                  {m.confirm.done ? <span>{m.confirm.done}</span> : (
-                    <>
-                      <button disabled={busy} onClick={() => decide(i, m.confirm!.id, true)}>确认转交</button>
-                      <button disabled={busy} onClick={() => decide(i, m.confirm!.id, false)}>取消</button>
-                    </>
-                  )}
+                  <small>有效期至 {new Date(m.confirm.expires_at).toLocaleString()}</small>
+                  {m.confirm.expired && <p className="err">确认已过期，请关闭此确认后继续。</p>}
+                  {m.confirm.status !== 'PENDING' ? <span>已保存决定，点击恢复处理。</span> : null}
+                  <div>
+                    <button disabled={busy || m.confirm.expired || m.confirm.status !== 'PENDING'} onClick={() => decide(m.confirm!.confirmation_id, true)}>确认转交</button>
+                    <button disabled={busy} onClick={() => decide(m.confirm!.confirmation_id, false)}>{m.confirm.expired ? '关闭过期确认' : m.confirm.status !== 'PENDING' ? '恢复处理' : '取消'}</button>
+                  </div>
                 </div>
               )}
               {!!m.sources?.length && (
@@ -121,7 +175,7 @@ export default function Chat() {
         </div>
         <form onSubmit={e => { e.preventDefault(); send() }}>
           <input value={input} onChange={e => setInput(e.target.value)} placeholder="向你有权限的资料提问…" />
-          <button disabled={busy || !input.trim()}>发送</button>
+          <button disabled={busy || blocked || !input.trim()}>发送</button>
         </form>
       </main>
       {preview && (

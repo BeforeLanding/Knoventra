@@ -11,7 +11,9 @@ The database must already be seeded with `python -m knoventra.db.seed` using the
 from __future__ import annotations
 
 import argparse
+import copy
 import datetime as dt
+import hashlib
 import json
 import platform
 import sys
@@ -19,20 +21,25 @@ import time
 import uuid
 from pathlib import Path
 
+from answer_review import make_snapshot
+
 HERE = Path(__file__).resolve().parent
 CASES = HERE / "cases.jsonl"
 CASES_V2 = HERE / "cases_v2.jsonl"
 CASES_V3 = HERE / "cases_v3.jsonl"
+CASES_V4 = HERE / "cases_v4.jsonl"
+CASES_V5 = HERE / "cases_v5.jsonl"
 
 
 def load_cases(split: str) -> list[dict]:
-    src = {"val2": CASES_V2, "val3": CASES_V3}.get(split, CASES)
+    src = {"val2": CASES_V2, "val3": CASES_V3, "val4": CASES_V4, "val5": CASES_V5}.get(split, CASES)
     rows = [json.loads(line) for line in src.read_text(encoding="utf-8").splitlines() if line.strip()]
-    return rows if split in ("all", "val2", "val3") else [c for c in rows if c["split"] == split]
+    return rows if split in ("all", "val2", "val3", "val4", "val5") else [c for c in rows if c["split"] == split]
 
 
 def matches(e, exp: dict) -> bool:
-    return e.document_title == exp["title"] and e.page in exp["pages"] and e.revision == exp["revision"]
+    return (e.document_title == exp["title"] and e.page in exp["pages"] and e.revision == exp["revision"]
+            and exp.get("support_text", "") in e.text)
 
 
 def eval_retrieval(db, enc, rr, users, cases, *, use_sparse, use_opencc, threshold) -> list[dict]:
@@ -50,12 +57,13 @@ def eval_retrieval(db, enc, rr, users, cases, *, use_sparse, use_opencc, thresho
         out = retrieve(db, enc, rr, user, c["question"], threshold=threshold,
                        use_sparse=use_sparse, use_opencc=use_opencc)
         r["latency_ms"] = round((time.perf_counter() - t0) * 1000, 1)
-        r["status"] = out.status
+        r.update(status=out.status, reason=out.reason, required_identifiers=out.required_identifiers,
+                 missing_identifiers=out.missing_identifiers)
         exp = c["expect"]
         if c["category"] in ("ops", "cross"):
-            # recall is measured on the retrieval top-5 before the gate, so gate tuning does not hide misses
-            scope = compute_scope(db, user)
-            ev = search(db, enc, scope, c["question"], use_sparse=use_sparse, use_opencc=use_opencc).evidence
+            # Use the very candidates scored by the pipeline, including reranking.
+            # A second plain search would silently measure RRF instead of Rerank.
+            ev = out.ranked_evidence
             rank = next((i for i, e in enumerate(ev, 1) if matches(e, exp)), None)
             r.update(hit=rank is not None, rank=rank, gated_out=out.status == INSUFFICIENT)
         elif c["category"] == "access":
@@ -67,6 +75,11 @@ def eval_retrieval(db, enc, rr, users, cases, *, use_sparse, use_opencc, thresho
             r["leaked"] = [e.document_title for e in ev if e.document_title in exp["forbidden_titles"]]
         elif c["category"] == "no_basis":
             r["refused"] = out.status == INSUFFICIENT
+        r["ranked_evidence"] = [
+            {"chunk_id": e.chunk_id, "document_title": e.document_title, "revision": e.revision, "page": e.page,
+             "dense_sim": e.dense_sim, "sparse_ip": e.sparse_ip, "rerank_score": e.rerank_score}
+            for e in out.ranked_evidence
+        ]
         results.append(r)
     return results
 
@@ -124,7 +137,8 @@ def eval_agent(graph, db, users, cases) -> list[dict]:
             answer = next((m.content for m in reversed(st["messages"]) if isinstance(m, AIMessage) and not m.tool_calls), "")
             if c["category"] in ("ops", "cross"):
                 r["cited_ok"] = any(s["document_title"] == exp["title"] and s["page"] in exp["pages"]
-                                    and s["revision"] == exp["revision"] for s in srcs)
+                                    and s["revision"] == exp["revision"]
+                                    and exp.get("support_text", "") in s.get("text", "") for s in srcs)
             elif c["category"] == "access":
                 # v2 rule: a title counts only if it was RETURNED (tool output lists "《title》") or shown as a
                 # source. v1 also matched the title as a substring of the model's prose, which gave a false
@@ -137,6 +151,13 @@ def eval_agent(graph, db, users, cases) -> list[dict]:
                         for tc in m.tool_calls if tc["name"] == "search_knowledge"]
         r["answer"] = next((m.content for m in reversed(st["messages"]) if isinstance(m, AIMessage) and not m.tool_calls), "")
         r["error_code"] = st.get("error_code")
+        r["review_snapshot"] = make_snapshot(c["question"], r["answer"], st.get("evidence") or {},
+                                              st.get("sources") or [], st.get("error_code"))
+        r["thread_id"] = cfg["configurable"]["thread_id"]
+        r["expect"] = copy.deepcopy(exp)
+        r["diagnostics"] = {"schema_version": 1,
+                            "retrieval_trace": copy.deepcopy(st.get("retrieval_trace") or []),
+                            "model_declared_refusal": bool(st.get("model_declared_refusal"))}
         r["latency_ms"] = round((time.perf_counter() - t0) * 1000, 1)
         out.append(r)
     return out
@@ -161,34 +182,46 @@ def summarize_agent(rs: list[dict]) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--split", choices=["dev", "holdout", "all", "val2", "val3"], default="dev")
+    ap.add_argument("--split", choices=["dev", "holdout", "all", "val2", "val3", "val4", "val5"], default="dev")
     ap.add_argument("--mode", choices=["retrieval", "agent"], default="retrieval")
     ap.add_argument("--no-sparse", action="store_true")
     ap.add_argument("--no-opencc", action="store_true")
     ap.add_argument("--rerank", action="store_true")
+    ap.add_argument("--rerank-model", help="model name/path; requires --rerank")
     ap.add_argument("--threshold", type=float, default=None)
-    ap.add_argument("--confirm-final", action="store_true", help="required for holdout/all")
+    ap.add_argument("--confirm-final", action="store_true", help="required for holdout/all/val3/val4/val5")
     ap.add_argument("--out", type=Path)
     a = ap.parse_args()
-    if a.split in ("holdout", "all", "val3") and not a.confirm_final:
-        sys.exit("holdout/all are for final reporting only; pass --confirm-final to proceed")
+    if a.rerank_model and not a.rerank:
+        ap.error("--rerank-model requires --rerank")
+    if a.mode == "agent" and (a.no_sparse or a.no_opencc or a.threshold is not None):
+        ap.error("--no-sparse, --no-opencc and --threshold are retrieval-only options")
+    if a.split in ("holdout", "all", "val3", "val4", "val5") and not a.confirm_final:
+        sys.exit(f"{a.split} is for final reporting only; pass --confirm-final to proceed")
 
-    import os
-    if a.rerank:
-        os.environ["KNV_RERANK"] = "bge"
-    from sqlalchemy import select
+    from sqlalchemy import func, select
 
     from knoventra.config import settings
-    from knoventra.db.models import User
+    from knoventra.db.models import Chunk, Document, Revision, User
     from knoventra.db.session import SessionLocal
     from knoventra.ingestion.encoder import get_encoder
     from knoventra.retrieval.rerank import get_reranker
 
+    if a.rerank:
+        settings.rerank = "bge"
+    if a.rerank_model:
+        settings.rerank_model = a.rerank_model
     cases = load_cases(a.split)
     enc, rr = get_encoder(), get_reranker()
-    th = settings.gate_threshold if a.threshold is None else a.threshold
+    th = (settings.rerank_threshold if rr else settings.gate_threshold) if a.threshold is None else a.threshold
     with SessionLocal() as db:
         users = {u.email.split("@")[0]: u for u in db.scalars(select(User))}
+        corpus = {
+            "documents": db.scalar(select(func.count()).select_from(Document)),
+            "published_revisions": db.scalar(select(func.count()).select_from(Revision).where(Revision.status == "PUBLISHED")),
+            "published_chunks": db.scalar(select(func.count()).select_from(Chunk).join(Revision)
+                                           .where(Revision.status == "PUBLISHED")),
+        }
         if a.mode == "retrieval":
             res = eval_retrieval(db, enc, rr, users, cases, use_sparse=not a.no_sparse,
                                  use_opencc=not a.no_opencc, threshold=th)
@@ -198,10 +231,24 @@ def main() -> None:
             res = eval_agent(get_graph(), db, users, cases)
             metrics = summarize_agent(res)
             db.rollback()
+    prompt_sha256 = None
+    if a.mode == "agent":
+        from knoventra.agent.graph import SYSTEM_PROMPT
+        prompt_sha256 = hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()
     report = {
         "date": dt.date.today().isoformat(), "split": a.split, "mode": a.mode, "n_cases": len(cases),
         "config": {"encoder": settings.encoder, "rerank": "bge" if rr else "off", "sparse": not a.no_sparse,
-                   "opencc": not a.no_opencc, "gate_threshold": th, "llm_model": settings.llm_model or None},
+                   "opencc": not a.no_opencc, "gate_threshold": th,
+                   "gate_sparse_threshold": settings.gate_sparse_threshold, "identifier_policy": "exact-v1",
+                   "rerank_model": settings.rerank_model if rr else None,
+                   "rerank_candidates": settings.rerank_candidates if rr else None,
+                   "rerank_input": "section_path+text-v1" if rr else None,
+                   "rank_metric_stage": "post_rerank_pre_gate" if rr else "post_rrf_pre_gate",
+                   "llm_model": settings.llm_model or None,
+                   "review_snapshot_schema": 1 if a.mode == "agent" else None,
+                   "prompt_sha256": prompt_sha256},
+        "corpus": corpus,
+        "cases_sha256": hashlib.sha256(json.dumps(cases, sort_keys=True, ensure_ascii=False).encode()).hexdigest(),
         "env": {"python": platform.python_version(), "platform": platform.platform()},
         "metrics": metrics, "cases": res,
     }

@@ -9,6 +9,7 @@ from knoventra.access.scope import AccessScope, NoAccess
 from knoventra.config import settings
 from knoventra.ingestion.encoder import Encoder
 from knoventra.ingestion.normalize import to_simplified
+from knoventra.retrieval.identifiers import evidence_identifiers, extract_identifiers, normalize_identifiers
 
 
 @dataclass
@@ -32,6 +33,8 @@ class Evidence:
 class SearchResult:
     evidence: list[Evidence]
     stages: dict[str, list[str]]  # for /debug/search: chunk ids per stage
+    required_identifiers: list[str] = field(default_factory=list)
+    missing_identifiers: list[str] = field(default_factory=list)
 
 
 _BASE = """
@@ -57,15 +60,17 @@ def rrf(rankings: dict[str, list[str]], k: int) -> dict[str, float]:
 
 
 def search(db: Session, enc: Encoder, scope: AccessScope, query: str, *,
-           use_sparse: bool = True, use_opencc: bool = True, top_k: int | None = None) -> SearchResult:
+           use_sparse: bool = True, use_opencc: bool = True, top_k: int | None = None,
+           original_query: str = "") -> SearchResult:
     """Permission-aware hybrid retrieval. The readable-KB filter is applied inside both
     recall SQLs, so unauthorised chunks never reach fusion, rerank or the model."""
     if not scope.readable_kb_ids:
         raise NoAccess("empty scope")
     readable = sorted(scope.readable_kb_ids)
     k = settings.recall_top_k
-    dense_q = enc.encode([query])[0][0]
-    sparse_q = enc.encode([to_simplified(query) if use_opencc else query])[0][1]
+    recall_query = normalize_identifiers(query) if extract_identifiers(query) else query
+    dense_q = enc.encode([recall_query])[0][0]
+    sparse_q = enc.encode([to_simplified(recall_query) if use_opencc else recall_query])[0][1]
 
     from pgvector import SparseVector
 
@@ -90,7 +95,7 @@ def search(db: Session, enc: Encoder, scope: AccessScope, query: str, *,
         run("sparse", _SPARSE, SparseVector(sparse_q, settings.sparse_dim).to_text())
 
     fused = rrf(rankings, settings.rrf_k)
-    order = sorted(fused, key=fused.get, reverse=True)[: top_k or settings.final_top_k]
+    order = sorted(fused, key=fused.get, reverse=True)
     evidence = []
     for cid in order:
         r = rows[cid]
@@ -100,4 +105,14 @@ def search(db: Session, enc: Encoder, scope: AccessScope, query: str, *,
             score=fused[cid], dense_sim=dense_sims.get(cid), sparse_ip=sparse_ips.get(cid),
             channels={n: ids.index(cid) + 1 for n, ids in rankings.items() if cid in ids},
         ))
-    return SearchResult(evidence, {**rankings, "fused": order})
+    required = extract_identifiers(query) | extract_identifiers(original_query)
+    stages = {**rankings, "fused": order}
+    if required:
+        # Filter before Top-K / rerank, so near-misses cannot crowd out an exact
+        # match already present in the permission-filtered recall candidates.
+        evidence = [e for e in evidence if required & evidence_identifiers(e.section_path, e.text)]
+        stages["identifier_match"] = [e.chunk_id for e in evidence]
+    evidence = evidence[: top_k or settings.final_top_k]
+    stages["selected"] = [e.chunk_id for e in evidence]
+    covered = frozenset().union(*(evidence_identifiers(e.section_path, e.text) for e in evidence))
+    return SearchResult(evidence, stages, sorted(required), sorted(required - covered))

@@ -1,0 +1,28 @@
+{"id": "v5-ops-01", "split": "val5", "category": "ops", "user": "sg-ops", "question": "E17-07 进料卡住后，清理前要做什么", "expect": {"title": "E17 系列设备故障手册", "pages": [2], "revision": 1, "support_text": "断电后手动清理进料口"}}
+{"id": "v5-ops-02", "split": "val5", "category": "ops", "user": "sg-ops", "question": "E17-42 复位之后需观察多少分钟", "expect": {"title": "E17 系列设备故障手册", "pages": [2], "revision": 1, "support_text": "复位设备并观察 10 分钟"}}
+{"id": "v5-ops-03", "split": "val5", "category": "ops", "user": "sg-ops", "question": "P03-11 进水阀应处于什么状态", "expect": {"title": "泵组维护手册", "pages": [2], "revision": 1, "support_text": "检查进水阀是否全开"}}
+{"id": "v5-ops-04", "split": "val5", "category": "ops", "user": "sg-ops", "question": "压力仍不足时，SEAL-9X 用于更换哪个部件", "expect": {"title": "泵组维护手册", "pages": [2], "revision": 1, "support_text": "更换密封圈"}}
+{"id": "v5-ops-05", "split": "val5", "category": "ops", "user": "tw-ops", "question": "SNS-5B 是在感測器持續異常時更換嗎", "expect": {"title": "感測器故障手冊", "pages": [2], "revision": 1, "support_text": "仍異常則更換感測器"}}
+{"id": "v5-ops-06", "split": "val5", "category": "ops", "user": "tw-ops", "question": "K08-03 排查時需要清潔什麼", "expect": {"title": "冷卻系統維護手冊", "pages": [1], "revision": 1, "support_text": "清潔散熱片"}}
+{"id": "v5-ops-07", "split": "val5", "category": "ops", "user": "tw-ops", "question": "W12-30 拔除多餘負載後等待多久才能啟動", "expect": {"title": "電源模組排障手冊", "pages": [1], "revision": 1, "support_text": "十分鐘後重新啟動"}}
+{"id": "v5-ops-08", "split": "val5", "category": "ops", "user": "cn-ops", "question": "C21-05 更新證書以後控制台應輸入什麼", "expect": {"title": "校准流程（仅限中国区）", "pages": [1], "revision": 1, "support_text": "在控制台输入证书编号"}}
+{"id": "v5-ops-09", "split": "val5", "category": "ops", "user": "hr", "question": "带薪年假的天数和入职年限要求是什么", "expect": {"title": "休假制度", "pages": [1], "revision": 1, "support_text": "入职满一年享有 15 天带薪年假"}}
+{"id": "v5-ops-10", "split": "val5", "category": "ops", "user": "hr", "question": "调薪评审结果能被哪些人员看到", "expect": {"title": "薪酬调整办法", "pages": [1], "revision": 1, "support_text": "评审结果仅 HR 与直属主管可见"}}
+{"id": "v5-ops-11", "split": "val5", "category": "ops", "user": "fin", "question": "差旅行程结束后，多少天内必须提交报销", "expect": {"title": "费用报销办法", "pages": [1], "revision": 1, "support_text": "行程结束后 30 日内提交报销"}}
+{"id": "v5-ops-12", "split": "val5", "category": "ops", "user": "fin", "question": "哪个月份需要提交下一年度预算", "expect": {"title": "年度预算说明", "pages": [1], "revision": 1, "support_text": "每年 11 月提交下一年度预算"}}
+{"id": "v5-ops-13", "split": "val5", "category": "ops", "user": "sg-ops", "question": "首次登录公司账号时必须修改什么", "expect": {"title": "IT 入职指南", "pages": [1], "revision": 1, "support_text": "首次登录须修改初始密码"}}
+{"id": "v5-ops-14", "split": "val5", "category": "ops", "user": "hr", "question": "VPN 客户端的下载位置是哪里", "expect": {"title": "VPN 使用说明", "pages": [1], "revision": 1, "support_text": "VPN 客户端可在 IT 门户下载"}}
+{"id": "v5-cross-15", "split": "val5", "category": "cross", "user": "tw-ops", "question": "冷卻液更換之前管路要怎麼處理", "expect": {"title": "冷卻系統維護手冊", "pages": [1], "revision": 1, "support_text": "更換時須排空管路"}}
+{"id": "v5-cross-16", "split": "val5", "category": "cross", "user": "tw-ops", "question": "s5–19 校正零點之前應檢查哪個接頭", "expect": {"title": "感測器故障手冊", "pages": [2], "revision": 1, "support_text": "檢查感測器接頭是否鬆動"}}
+{"id": "v5-cross-17", "split": "val5", "category": "cross", "user": "sg-ops", "question": "电源保险丝更换时允许使用什么规格", "expect": {"title": "電源模組排障手冊", "pages": [1], "revision": 1, "support_text": "15A 慢熔型"}}
+{"id": "v5-cross-18", "split": "val5", "category": "cross", "user": "cn-ops", "question": "中國區年度校準的證書應存檔在哪裡", "expect": {"title": "校准流程（仅限中国区）", "pages": [1], "revision": 1, "support_text": "CN 区 Ops 共享目录"}}
+{"id": "v5-no_basis-19", "split": "val5", "category": "no_basis", "user": "sg-ops", "question": "E17-48 复位后应该观察多长时间", "expect": {"refuse": true}}
+{"id": "v5-no_basis-20", "split": "val5", "category": "no_basis", "user": "sg-ops", "question": "P03-16 需要打开进水阀吗", "expect": {"refuse": true}}
+{"id": "v5-no_basis-21", "split": "val5", "category": "no_basis", "user": "tw-ops", "question": "SNS-5F 異常要更換感測器嗎", "expect": {"refuse": true}}
+{"id": "v5-no_basis-22", "split": "val5", "category": "no_basis", "user": "tw-ops", "question": "K08-09 的散熱片應如何清潔", "expect": {"refuse": true}}
+{"id": "v5-no_basis-23", "split": "val5", "category": "no_basis", "user": "tw-ops", "question": "W12-36 等待十分鐘後可以啟動嗎", "expect": {"refuse": true}}
+{"id": "v5-no_basis-24", "split": "val5", "category": "no_basis", "user": "cn-ops", "question": "C21-09 的证书编号怎么输入", "expect": {"refuse": true}}
+{"id": "v5-access-25", "split": "val5", "category": "access", "user": "hr", "question": "E17-07 进料卡滞清理流程", "expect": {"forbidden_titles": ["E17 系列设备故障手册"]}}
+{"id": "v5-access-26", "split": "val5", "category": "access", "user": "fin", "question": "SEAL-9X 密封圈更换步骤", "expect": {"forbidden_titles": ["泵组维护手册"]}}
+{"id": "v5-access-27", "split": "val5", "category": "access", "user": "sg-ops", "question": "C21-05 清除错误的证书登记", "expect": {"forbidden_titles": ["校准流程（仅限中国区）"]}}
+{"id": "v5-access-28", "split": "val5", "category": "access", "user": "tw-ops", "question": "C21-05 證書編號登記方式", "expect": {"forbidden_titles": ["校准流程（仅限中国区）"]}}

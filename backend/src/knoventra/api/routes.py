@@ -48,7 +48,8 @@ def debug_search(q: str, sparse: bool = True, opencc: bool = True,
     except NoAccess:
         return {"error": "NO_ACCESS", "evidence": [], "stages": {}}
     res = search(db, get_encoder(), scope, q, use_sparse=sparse, use_opencc=opencc)
-    return {"evidence": [e.__dict__ for e in res.evidence], "stages": res.stages}
+    return {"evidence": [e.__dict__ for e in res.evidence], "stages": res.stages,
+            "identifiers": {"required": res.required_identifiers, "missing": res.missing_identifiers}}
 
 
 @router.post("/admin/documents")
@@ -61,11 +62,15 @@ def upload_document(kb: str = Form(...), title: str = Form(...), lang: str = For
     suffix = Path(file.filename or "").suffix.lower()
     if suffix not in {".md", ".pdf"}:
         raise HTTPException(400, "only .md and .pdf")
-    with tempfile.TemporaryDirectory() as td:
-        p = Path(td) / f"upload{suffix}"
-        p.write_bytes(file.file.read())
-        rev = add_revision(db, get_encoder(), kb_id=kb_row.id, title=title, lang=lang, path=p)
-    db.commit()
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / f"upload{suffix}"
+            p.write_bytes(file.file.read())
+            rev = add_revision(db, get_encoder(), kb_id=kb_row.id, title=title, lang=lang, path=p)
+        db.commit()
+    except ValueError as e:
+        db.rollback()
+        raise HTTPException(422, str(e)) from None
     return {"revision_id": rev.id, "version": rev.version, "status": rev.status}
 
 

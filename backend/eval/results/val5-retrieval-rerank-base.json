@@ -1,0 +1,974 @@
+{
+ "date": "2026-11-01",
+ "split": "val5",
+ "mode": "retrieval",
+ "n_cases": 28,
+ "config": {
+  "encoder": "bge-m3",
+  "rerank": "bge",
+  "sparse": true,
+  "opencc": true,
+  "gate_threshold": 0.6,
+  "gate_sparse_threshold": 0.03,
+  "identifier_policy": "exact-v1",
+  "rerank_model": "BAAI/bge-reranker-base",
+  "rerank_candidates": 10,
+  "rerank_input": "section_path+text-v1",
+  "rank_metric_stage": "post_rerank_pre_gate",
+  "llm_model": "deepseek-flash"
+ },
+ "corpus": {
+  "documents": 12,
+  "published_revisions": 12,
+  "published_chunks": 21
+ },
+ "cases_sha256": "60ab87221c2e3b016e501122cc33561045b0f7fc01abb42a98d949b90fe32596",
+ "env": {
+  "python": "3.12.10",
+  "platform": "Windows-11-10.0.26200-SP0"
+ },
+ "metrics": {
+  "ops": {
+   "n": 14,
+   "recall@5": 1.0,
+   "mrr": 1.0,
+   "gated_out_of_hits": 0
+  },
+  "cross": {
+   "n": 4,
+   "recall@5": 1.0,
+   "mrr": 1.0,
+   "gated_out_of_hits": 0
+  },
+  "access": {
+   "n": 4,
+   "leaks": 0
+  },
+  "no_basis": {
+   "n": 6,
+   "refusal_rate": 1.0
+  },
+  "latency_ms": {
+   "p50": 117.6,
+   "max": 1661.7
+  }
+ },
+ "cases": [
+  {
+   "id": "v5-ops-01",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 1661.7,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [
+    "E17-07"
+   ],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "7bf637785c7b4ebfa7d90f16dbef62c0",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.6711133729651382,
+     "sparse_ip": 0.18327108025550842,
+     "rerank_score": 0.9845754479181588
+    }
+   ]
+  },
+  {
+   "id": "v5-ops-02",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 221.4,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [
+    "E17-42"
+   ],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "9c0f762dc1e84fbdb5aab12fef2fb59d",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.6573057362820783,
+     "sparse_ip": 0.29230445623397827,
+     "rerank_score": 0.9981251382797387
+    },
+    {
+     "chunk_id": "4e152da9c5e94f2caf99dafc230cec9d",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.5549013642223283,
+     "sparse_ip": 0.16169768571853638,
+     "rerank_score": 0.005980329969128225
+    }
+   ]
+  },
+  {
+   "id": "v5-ops-03",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 119.0,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [
+    "P03-11"
+   ],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "eee70432aba640d790dda57f5ccbdfe2",
+     "document_title": "泵组维护手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.5431401927279919,
+     "sparse_ip": 0.10440117120742798,
+     "rerank_score": 0.8500956645233594
+    },
+    {
+     "chunk_id": "bdf5e003d44441b7aebcbfd5ffd161f7",
+     "document_title": "泵组维护手册",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.5820115081848736,
+     "sparse_ip": 0.10416534543037415,
+     "rerank_score": 0.6289773258919396
+    }
+   ]
+  },
+  {
+   "id": "v5-ops-04",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 118.5,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [
+    "SEAL-9X"
+   ],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "eee70432aba640d790dda57f5ccbdfe2",
+     "document_title": "泵组维护手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.7015814681479181,
+     "sparse_ip": 0.30370083451271057,
+     "rerank_score": 0.9952448000901669
+    }
+   ]
+  },
+  {
+   "id": "v5-ops-05",
+   "category": "ops",
+   "user": "tw-ops",
+   "latency_ms": 117.6,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [
+    "SNS-5B"
+   ],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "50b5ca6ef5b44618b131e3139602fcdf",
+     "document_title": "感測器故障手冊",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.7223704046720129,
+     "sparse_ip": 0.28642576932907104,
+     "rerank_score": 0.9988883318306349
+    }
+   ]
+  },
+  {
+   "id": "v5-ops-06",
+   "category": "ops",
+   "user": "tw-ops",
+   "latency_ms": 121.0,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [
+    "K08-03"
+   ],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "ec52b48296754441bb016909c246ba15",
+     "document_title": "冷卻系統維護手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.5568155588566003,
+     "sparse_ip": 0.07238733023405075,
+     "rerank_score": 0.9543930566810523
+    }
+   ]
+  },
+  {
+   "id": "v5-ops-07",
+   "category": "ops",
+   "user": "tw-ops",
+   "latency_ms": 123.0,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [
+    "W12-30"
+   ],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "2cc291b1244f42fb8e95f8513469f866",
+     "document_title": "電源模組排障手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.6207676258472808,
+     "sparse_ip": 0.16368632018566132,
+     "rerank_score": 0.9980956697286526
+    }
+   ]
+  },
+  {
+   "id": "v5-ops-08",
+   "category": "ops",
+   "user": "cn-ops",
+   "latency_ms": 110.8,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [
+    "C21-05"
+   ],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "57ed93d4c452415b90343b3e28ad7ee2",
+     "document_title": "校准流程（仅限中国区）",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.7019948252913798,
+     "sparse_ip": 0.21764907240867615,
+     "rerank_score": 0.9947186660939477
+    }
+   ]
+  },
+  {
+   "id": "v5-ops-09",
+   "category": "ops",
+   "user": "hr",
+   "latency_ms": 122.6,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "851323f453a54bff95064bdd78dbd1bd",
+     "document_title": "休假制度",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.7961955259621376,
+     "sparse_ip": 0.2806289792060852,
+     "rerank_score": 0.9794722117598561
+    },
+    {
+     "chunk_id": "f1949bfcb55a4bcc88c5d81535b26fcf",
+     "document_title": "薪酬调整办法",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.5268275119048441,
+     "sparse_ip": 0.05978870391845703,
+     "rerank_score": 0.016721143705442146
+    },
+    {
+     "chunk_id": "d7b282c115c94a2c83be9ce3c157d6c0",
+     "document_title": "IT 入职指南",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.5047851091530479,
+     "sparse_ip": 0.06696928292512894,
+     "rerank_score": 0.003363492495187692
+    },
+    {
+     "chunk_id": "d81700a4273b4ead9138892ac6acd7f2",
+     "document_title": "VPN 使用说明",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.37433824867697607,
+     "sparse_ip": 0.015322163701057434,
+     "rerank_score": 3.734356896287336e-05
+    }
+   ]
+  },
+  {
+   "id": "v5-ops-10",
+   "category": "ops",
+   "user": "hr",
+   "latency_ms": 112.7,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "f1949bfcb55a4bcc88c5d81535b26fcf",
+     "document_title": "薪酬调整办法",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.7831790414664962,
+     "sparse_ip": 0.21054032444953918,
+     "rerank_score": 0.9956853120436374
+    },
+    {
+     "chunk_id": "851323f453a54bff95064bdd78dbd1bd",
+     "document_title": "休假制度",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.44882593602539544,
+     "sparse_ip": 0.06447203457355499,
+     "rerank_score": 3.822911232549001e-05
+    },
+    {
+     "chunk_id": "d7b282c115c94a2c83be9ce3c157d6c0",
+     "document_title": "IT 入职指南",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.44550749040362425,
+     "sparse_ip": 0.00303548201918602,
+     "rerank_score": 3.734356896287336e-05
+    },
+    {
+     "chunk_id": "d81700a4273b4ead9138892ac6acd7f2",
+     "document_title": "VPN 使用说明",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.39472252730871915,
+     "sparse_ip": 0.002674560993909836,
+     "rerank_score": 3.734356896287336e-05
+    }
+   ]
+  },
+  {
+   "id": "v5-ops-11",
+   "category": "ops",
+   "user": "fin",
+   "latency_ms": 122.4,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "7ca3f9ae2ace43019382471119797bae",
+     "document_title": "费用报销办法",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.8169275674719364,
+     "sparse_ip": 0.21439719200134277,
+     "rerank_score": 0.997748152720497
+    },
+    {
+     "chunk_id": "7280f2a2383e4a7ca65a0f5ac8da0e5f",
+     "document_title": "年度预算说明",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.462383498607847,
+     "sparse_ip": 0.03751567751169205,
+     "rerank_score": 3.734356896287336e-05
+    },
+    {
+     "chunk_id": "d7b282c115c94a2c83be9ce3c157d6c0",
+     "document_title": "IT 入职指南",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.41717324515575527,
+     "sparse_ip": 0.01548677682876587,
+     "rerank_score": 3.734356896287336e-05
+    },
+    {
+     "chunk_id": "d81700a4273b4ead9138892ac6acd7f2",
+     "document_title": "VPN 使用说明",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.3627732818721816,
+     "sparse_ip": 0.016056427732110023,
+     "rerank_score": 3.734356896287336e-05
+    }
+   ]
+  },
+  {
+   "id": "v5-ops-12",
+   "category": "ops",
+   "user": "fin",
+   "latency_ms": 151.0,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "7280f2a2383e4a7ca65a0f5ac8da0e5f",
+     "document_title": "年度预算说明",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.6808534990057694,
+     "sparse_ip": 0.1976523995399475,
+     "rerank_score": 0.9995044640524365
+    },
+    {
+     "chunk_id": "7ca3f9ae2ace43019382471119797bae",
+     "document_title": "费用报销办法",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.4935685891386077,
+     "sparse_ip": 0.04241747409105301,
+     "rerank_score": 0.003298651257832941
+    },
+    {
+     "chunk_id": "d7b282c115c94a2c83be9ce3c157d6c0",
+     "document_title": "IT 入职指南",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.40976609688585497,
+     "sparse_ip": 0.0023712627589702606,
+     "rerank_score": 3.734356896287336e-05
+    },
+    {
+     "chunk_id": "d81700a4273b4ead9138892ac6acd7f2",
+     "document_title": "VPN 使用说明",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.36195543148097875,
+     "sparse_ip": 0.002089317888021469,
+     "rerank_score": 3.734356896287336e-05
+    }
+   ]
+  },
+  {
+   "id": "v5-ops-13",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 123.2,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "d7b282c115c94a2c83be9ce3c157d6c0",
+     "document_title": "IT 入职指南",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.7713364195298978,
+     "sparse_ip": 0.231760635972023,
+     "rerank_score": 0.982151261550011
+    },
+    {
+     "chunk_id": "2cc291b1244f42fb8e95f8513469f866",
+     "document_title": "電源模組排障手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.4836106463186849,
+     "sparse_ip": 0.01447565108537674,
+     "rerank_score": 0.008577485413711984
+    },
+    {
+     "chunk_id": "d81700a4273b4ead9138892ac6acd7f2",
+     "document_title": "VPN 使用说明",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.5066398969109523,
+     "sparse_ip": 0.05245739594101906,
+     "rerank_score": 0.0017546144100994867
+    },
+    {
+     "chunk_id": "be0f0c80c8204dcba0d3abaa681cee44",
+     "document_title": "冷卻系統維護手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.41517923007910673,
+     "sparse_ip": 0.017184073105454445,
+     "rerank_score": 0.0007014082876992124
+    },
+    {
+     "chunk_id": "7bf637785c7b4ebfa7d90f16dbef62c0",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.45465747355996766,
+     "sparse_ip": 0.00912833958864212,
+     "rerank_score": 0.0003053489321118595
+    }
+   ]
+  },
+  {
+   "id": "v5-ops-14",
+   "category": "ops",
+   "user": "hr",
+   "latency_ms": 112.0,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "d81700a4273b4ead9138892ac6acd7f2",
+     "document_title": "VPN 使用说明",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.6637133911262292,
+     "sparse_ip": 0.22752176225185394,
+     "rerank_score": 0.9913222832950107
+    },
+    {
+     "chunk_id": "d7b282c115c94a2c83be9ce3c157d6c0",
+     "document_title": "IT 入职指南",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.4290666590367771,
+     "sparse_ip": 0.0055694784969091415,
+     "rerank_score": 0.00023597174148291185
+    },
+    {
+     "chunk_id": "851323f453a54bff95064bdd78dbd1bd",
+     "document_title": "休假制度",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.3256314921928597,
+     "sparse_ip": 0.008258946239948273,
+     "rerank_score": 3.734356896287336e-05
+    },
+    {
+     "chunk_id": "f1949bfcb55a4bcc88c5d81535b26fcf",
+     "document_title": "薪酬调整办法",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.3709976523993974,
+     "sparse_ip": 0.006772086024284363,
+     "rerank_score": 3.734356896287336e-05
+    }
+   ]
+  },
+  {
+   "id": "v5-cross-15",
+   "category": "cross",
+   "user": "tw-ops",
+   "latency_ms": 115.7,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "be0f0c80c8204dcba0d3abaa681cee44",
+     "document_title": "冷卻系統維護手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.7320036959534881,
+     "sparse_ip": 0.2890111804008484,
+     "rerank_score": 0.8507168330025411
+    },
+    {
+     "chunk_id": "ec52b48296754441bb016909c246ba15",
+     "document_title": "冷卻系統維護手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.5478994870444386,
+     "sparse_ip": 0.004730112850666046,
+     "rerank_score": 0.1939094650191358
+    },
+    {
+     "chunk_id": "eee70432aba640d790dda57f5ccbdfe2",
+     "document_title": "泵组维护手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.5333309428486711,
+     "sparse_ip": 0.03420544043183327,
+     "rerank_score": 0.09268777863937604
+    },
+    {
+     "chunk_id": "2cc291b1244f42fb8e95f8513469f866",
+     "document_title": "電源模組排障手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.4286273460935084,
+     "sparse_ip": 0.005767557770013809,
+     "rerank_score": 0.054198729823185576
+    },
+    {
+     "chunk_id": "9c0f762dc1e84fbdb5aab12fef2fb59d",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.5243711411926738,
+     "sparse_ip": 0.10208950191736221,
+     "rerank_score": 0.012241275291807161
+    }
+   ]
+  },
+  {
+   "id": "v5-cross-16",
+   "category": "cross",
+   "user": "tw-ops",
+   "latency_ms": 119.8,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [
+    "S5-19"
+   ],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "50b5ca6ef5b44618b131e3139602fcdf",
+     "document_title": "感測器故障手冊",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.6030107260834563,
+     "sparse_ip": 0.16578729450702667,
+     "rerank_score": 0.9978426581115474
+    },
+    {
+     "chunk_id": "fd186febc0024c749f65b96d3c20c64c",
+     "document_title": "感測器故障手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.48017173469114227,
+     "sparse_ip": 0.016649959608912468,
+     "rerank_score": 0.3967691551154115
+    }
+   ]
+  },
+  {
+   "id": "v5-cross-17",
+   "category": "cross",
+   "user": "sg-ops",
+   "latency_ms": 123.4,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "c865d50e2d2445078497454082205fe5",
+     "document_title": "電源模組排障手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.7054488557727497,
+     "sparse_ip": 0.27747783064842224,
+     "rerank_score": 0.9928508980334536
+    },
+    {
+     "chunk_id": "2cc291b1244f42fb8e95f8513469f866",
+     "document_title": "電源模組排障手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.42485059842046047,
+     "sparse_ip": 0.000966890249401331,
+     "rerank_score": 0.0030160662173845665
+    },
+    {
+     "chunk_id": "7bf637785c7b4ebfa7d90f16dbef62c0",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.5271332327833412,
+     "sparse_ip": 0.03254074975848198,
+     "rerank_score": 0.002768385516913781
+    },
+    {
+     "chunk_id": "eee70432aba640d790dda57f5ccbdfe2",
+     "document_title": "泵组维护手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.4440449976126868,
+     "sparse_ip": 0.03337060287594795,
+     "rerank_score": 0.0007350448316939618
+    },
+    {
+     "chunk_id": "9c0f762dc1e84fbdb5aab12fef2fb59d",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.437758635079579,
+     "sparse_ip": 0.0005674066487699747,
+     "rerank_score": 0.00023231418862275664
+    }
+   ]
+  },
+  {
+   "id": "v5-cross-18",
+   "category": "cross",
+   "user": "cn-ops",
+   "latency_ms": 126.2,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "b46ef2e984334d8ba9628921f9c77ddb",
+     "document_title": "校准流程（仅限中国区）",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.6928508497055308,
+     "sparse_ip": 0.2865294814109802,
+     "rerank_score": 0.9997131459176125
+    },
+    {
+     "chunk_id": "57ed93d4c452415b90343b3e28ad7ee2",
+     "document_title": "校准流程（仅限中国区）",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.5354342286878114,
+     "sparse_ip": 0.1315007209777832,
+     "rerank_score": 0.4830539782927799
+    },
+    {
+     "chunk_id": "50b5ca6ef5b44618b131e3139602fcdf",
+     "document_title": "感測器故障手冊",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.3497088634234513,
+     "sparse_ip": 0.020312964916229248,
+     "rerank_score": 3.734356896287336e-05
+    },
+    {
+     "chunk_id": "105e4293368c48df8097af9f787dd3d9",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.3890091364445316,
+     "sparse_ip": null,
+     "rerank_score": 3.734356896287336e-05
+    },
+    {
+     "chunk_id": "ecccb0f03417463ea6ea0c5e046ac8f9",
+     "document_title": "感測器故障手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.3798359667434479,
+     "sparse_ip": null,
+     "rerank_score": 3.734356896287336e-05
+    }
+   ]
+  },
+  {
+   "id": "v5-no_basis-19",
+   "category": "no_basis",
+   "user": "sg-ops",
+   "latency_ms": 95.5,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "IDENTIFIER_MISMATCH",
+   "required_identifiers": [
+    "E17-48"
+   ],
+   "missing_identifiers": [
+    "E17-48"
+   ],
+   "refused": true,
+   "ranked_evidence": []
+  },
+  {
+   "id": "v5-no_basis-20",
+   "category": "no_basis",
+   "user": "sg-ops",
+   "latency_ms": 100.4,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "IDENTIFIER_MISMATCH",
+   "required_identifiers": [
+    "P03-16"
+   ],
+   "missing_identifiers": [
+    "P03-16"
+   ],
+   "refused": true,
+   "ranked_evidence": []
+  },
+  {
+   "id": "v5-no_basis-21",
+   "category": "no_basis",
+   "user": "tw-ops",
+   "latency_ms": 99.9,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "IDENTIFIER_MISMATCH",
+   "required_identifiers": [
+    "SNS-5F"
+   ],
+   "missing_identifiers": [
+    "SNS-5F"
+   ],
+   "refused": true,
+   "ranked_evidence": []
+  },
+  {
+   "id": "v5-no_basis-22",
+   "category": "no_basis",
+   "user": "tw-ops",
+   "latency_ms": 95.6,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "IDENTIFIER_MISMATCH",
+   "required_identifiers": [
+    "K08-09"
+   ],
+   "missing_identifiers": [
+    "K08-09"
+   ],
+   "refused": true,
+   "ranked_evidence": []
+  },
+  {
+   "id": "v5-no_basis-23",
+   "category": "no_basis",
+   "user": "tw-ops",
+   "latency_ms": 95.7,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "IDENTIFIER_MISMATCH",
+   "required_identifiers": [
+    "W12-36"
+   ],
+   "missing_identifiers": [
+    "W12-36"
+   ],
+   "refused": true,
+   "ranked_evidence": []
+  },
+  {
+   "id": "v5-no_basis-24",
+   "category": "no_basis",
+   "user": "cn-ops",
+   "latency_ms": 96.3,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "IDENTIFIER_MISMATCH",
+   "required_identifiers": [
+    "C21-09"
+   ],
+   "missing_identifiers": [
+    "C21-09"
+   ],
+   "refused": true,
+   "ranked_evidence": []
+  },
+  {
+   "id": "v5-access-25",
+   "category": "access",
+   "user": "hr",
+   "latency_ms": 94.8,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "IDENTIFIER_MISMATCH",
+   "required_identifiers": [
+    "E17-07"
+   ],
+   "missing_identifiers": [
+    "E17-07"
+   ],
+   "leaked": [],
+   "ranked_evidence": []
+  },
+  {
+   "id": "v5-access-26",
+   "category": "access",
+   "user": "fin",
+   "latency_ms": 93.0,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "IDENTIFIER_MISMATCH",
+   "required_identifiers": [
+    "SEAL-9X"
+   ],
+   "missing_identifiers": [
+    "SEAL-9X"
+   ],
+   "leaked": [],
+   "ranked_evidence": []
+  },
+  {
+   "id": "v5-access-27",
+   "category": "access",
+   "user": "sg-ops",
+   "latency_ms": 93.4,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "IDENTIFIER_MISMATCH",
+   "required_identifiers": [
+    "C21-05"
+   ],
+   "missing_identifiers": [
+    "C21-05"
+   ],
+   "leaked": [],
+   "ranked_evidence": []
+  },
+  {
+   "id": "v5-access-28",
+   "category": "access",
+   "user": "tw-ops",
+   "latency_ms": 95.8,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "IDENTIFIER_MISMATCH",
+   "required_identifiers": [
+    "C21-05"
+   ],
+   "missing_identifiers": [
+    "C21-05"
+   ],
+   "leaked": [],
+   "ranked_evidence": []
+  }
+ ]
+}

@@ -15,7 +15,7 @@ header a.on { color: #1d4ed8; font-weight: 600 }
 .err { color: #b91c1c }
 .chat { flex: 1; display: flex; min-height: 0 }
 .chat aside { width: 220px; background: #fff; border-right: 1px solid #e1e5ea; padding: 8px; overflow: auto }
-.conv { padding: 6px 8px; border-radius: 6px; cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
+.conv { display: block; width: 100%; text-align: left; border: 0; padding: 6px 8px; border-radius: 6px; cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
 .conv.on, .conv:hover { background: #eef2ff }
 .chat main { flex: 1; display: flex; flex-direction: column; min-width: 0 }
 .msgs { flex: 1; overflow: auto; padding: 16px 24px }

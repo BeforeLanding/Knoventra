@@ -5,6 +5,7 @@ import hashlib
 from pathlib import Path
 
 from sqlalchemy import select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
 from knoventra.db.models import Chunk, Document, Revision
@@ -15,15 +16,25 @@ from knoventra.ingestion.normalize import to_simplified
 
 def add_revision(db: Session, enc: Encoder, *, kb_id: str, title: str, lang: str, path: Path) -> Revision:
     """Parse, encode and store a new DRAFT revision. Nothing is searchable until `publish`."""
-    doc = db.scalar(select(Document).where(Document.kb_id == kb_id, Document.title == title))
-    if doc is None:
-        doc = Document(kb_id=kb_id, title=title, source_lang=lang)
-        db.add(doc)
-        db.flush()
+    chunks = chunk_file(path)
+    if not chunks:
+        raise ValueError("document contains no extractable text")
+    norms = [to_simplified(c.text) for c in chunks]
+    # Dense encoding keeps original glyphs; sparse encoding shares a simplified vocabulary.
+    dense = enc.encode([c.text for c in chunks])
+    sparse = enc.encode(norms)
+    if len(dense) != len(chunks) or len(sparse) != len(chunks):
+        raise ValueError("encoder result count does not match document chunks")
+    # Encode before acquiring the lock; an expensive/failed encoder must not
+    # block other uploads or mutate a document. Unique identity handles first uploads.
+    db.execute(pg_insert(Document).values(kb_id=kb_id, title=title, source_lang=lang)
+               .on_conflict_do_nothing(index_elements=["kb_id", "title"]))
+    doc = db.scalar(select(Document).where(Document.kb_id == kb_id, Document.title == title).with_for_update())
+    if doc.source_lang != lang:
+        raise ValueError("revision language must match the existing document")
     last = db.scalar(
         select(Revision.version).where(Revision.document_id == doc.id).order_by(Revision.version.desc()).limit(1)
     )
-    chunks = chunk_file(path)
     rev = Revision(
         document_id=doc.id,
         version=(last or 0) + 1,
@@ -32,12 +43,7 @@ def add_revision(db: Session, enc: Encoder, *, kb_id: str, title: str, lang: str
     )
     db.add(rev)
     db.flush()
-    norms = [to_simplified(c.text) for c in chunks]
-    # encode the normalised text so Traditional/Simplified share one sparse vocabulary;
-    # the dense channel gets the original glyphs (BGE-M3 is cross-lingual).
-    dense = enc.encode([c.text for c in chunks])
-    sparse = enc.encode(norms)
-    for c, n, (d, _), (_, s) in zip(chunks, norms, dense, sparse):
+    for c, n, (d, _), (_, s) in zip(chunks, norms, dense, sparse, strict=True):
         db.add(Chunk(revision_id=rev.id, kb_id=kb_id, page=c.page, section_path=c.section_path,
                      text=c.text, text_norm=n, dense=d, sparse=_sparse(s)))
     db.flush()
@@ -58,9 +64,19 @@ def publish(db: Session, revision_id: str) -> None:
     Runs inside the caller's transaction; any failure rolls both changes back, so
     the previous version stays effective.
     """
-    rev = db.get(Revision, revision_id)
-    if rev is None or rev.status == "RETIRED":
+    doc_id = db.scalar(select(Revision.document_id).where(Revision.id == revision_id))
+    if doc_id is None:
         raise ValueError("revision not publishable")
+    # Every publisher of a document must wait on the same parent row, even
+    # when publishing different draft revisions. Re-read stale ORM state after waiting.
+    db.execute(select(Document.id).where(Document.id == doc_id).with_for_update())
+    rev = db.scalar(select(Revision).where(Revision.id == revision_id).execution_options(populate_existing=True))
+    if rev is None or rev.status not in {"DRAFT", "PUBLISHED"}:
+        raise ValueError("revision not publishable")
+    if rev.status == "PUBLISHED":
+        return  # Idempotent retry must not change the publication timestamp.
+    if db.scalar(select(Chunk.id).where(Chunk.revision_id == rev.id).limit(1)) is None:
+        raise ValueError("revision contains no chunks")
     db.execute(
         update(Revision)
         .where(Revision.document_id == rev.document_id, Revision.status == "PUBLISHED")

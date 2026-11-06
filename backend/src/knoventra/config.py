@@ -17,7 +17,11 @@ class Settings(BaseSettings):
     final_top_k: int = 5
     rrf_k: int = 60
     rerank: str = "off"  # off | bge
+    rerank_model: str = "BAAI/bge-reranker-v2-m3"
     rerank_candidates: int = 10
+    # A separate sigmoid-score scale; 0.60 preserves the previous rerank default,
+    # not a calibrated probability of answerability. Rerank remains opt-in.
+    rerank_threshold: float = 0.60
     # Evidence gate on dense cosine (or rerank score). 0.60 is tuned on the BGE-M3 dev split only (see eval report).
     gate_threshold: float = 0.60
     gate_sparse_threshold: float = 0.03  # sparse inner-product arm; calibrated on dev + val2 (in-sample)

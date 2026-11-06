@@ -55,3 +55,22 @@ def test_admin_list_documents(client):
     d = client.get("/api/v1/admin/documents", headers=tok(client, "admin")).json()
     e17 = next(x for x in d["documents"] if x["title"].startswith("E17"))
     assert [r["status"] for r in e17["revisions"]] == ["PUBLISHED", "DRAFT"] and "hr" in d["kbs"]
+
+
+@pytest.mark.parametrize("body,lang", [("# 仅标题", "zh-Hans"), ("# VPN\n正文。", "zh-Hant")])
+def test_invalid_upload_returns_validation_error_without_new_revision(client, body, lang):
+    h = tok(client, "admin")
+    before = client.get("/api/v1/admin/documents", headers=h).json()
+    response = client.post("/api/v1/admin/documents", headers=h,
+                           data={"kb": "it-public", "title": "VPN 使用说明", "lang": lang},
+                           files={"file": ("invalid.md", body.encode(), "text/markdown")})
+    assert response.status_code == 422
+    assert client.get("/api/v1/admin/documents", headers=h).json() == before
+
+
+def test_debug_search_explains_exact_identifier_rejection(client):
+    r = client.get("/api/v1/debug/search", params={"q": "E17-44 排查"}, headers=tok(client, "sg-ops"))
+    body = r.json()
+    assert r.status_code == 200 and body["evidence"] == []
+    assert body["identifiers"] == {"required": ["E17-44"], "missing": ["E17-44"]}
+    assert body["stages"]["fused"] and body["stages"]["identifier_match"] == []

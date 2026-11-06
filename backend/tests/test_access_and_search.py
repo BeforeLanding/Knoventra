@@ -125,3 +125,31 @@ def test_draft_chunks_exist_but_not_searchable(db):
     revs = _e17(db)
     n = db.scalar(select(Chunk.id).where(Chunk.revision_id == revs[2].id).limit(1))
     assert n is not None
+
+
+@pytest.mark.parametrize("code", ["E17-44", "P03-12", "SEAL-9W", "SNS-5C", "E17-420", "XE17-42"])
+def test_near_miss_never_returns_similar_code_as_evidence(db, enc, users, code):
+    from knoventra.retrieval.pipeline import INSUFFICIENT, retrieve
+
+    out = retrieve(db, enc, None, users["sg-ops"], f"{code} 如何处理", threshold=0.0)
+    assert out.status == INSUFFICIENT and out.evidence == []
+    assert out.reason == "IDENTIFIER_MISMATCH" and out.missing_identifiers == [code]
+
+
+@pytest.mark.parametrize("code", ["E17-07", "ｅ１７－０７", "e17‑07", "S5–19", "SEAL−9X"])
+def test_exact_identifier_in_text_or_heading_survives_normalization(db, enc, users, code):
+    from knoventra.retrieval.identifiers import evidence_identifiers, extract_identifiers
+    from knoventra.retrieval.pipeline import OK, retrieve
+
+    out = retrieve(db, enc, None, users["sg-ops"], code, threshold=0.0)
+    assert out.status == OK and out.evidence
+    assert all(extract_identifiers(code) & evidence_identifiers(e.section_path, e.text) for e in out.evidence)
+
+
+def test_exact_code_in_unreadable_kb_is_not_considered_present(db, enc, users):
+    from knoventra.retrieval.pipeline import INSUFFICIENT, OK, retrieve
+
+    denied = retrieve(db, enc, None, users["sg-ops"], "C21-05", threshold=0.0)
+    allowed = retrieve(db, enc, None, users["cn-ops"], "C21-05", threshold=0.0)
+    assert denied.status == INSUFFICIENT and denied.missing_identifiers == ["C21-05"]
+    assert allowed.status == OK and allowed.evidence
