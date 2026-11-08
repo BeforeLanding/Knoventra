@@ -74,6 +74,7 @@ uv run python eval/run_eval.py --split dev --mode agent --case-id ops-01 --dry-r
 - [评测报告](docs/evaluation-report.md)
 - [回答支持度审核流程](backend/eval/REVIEW.md)
 - [演示与会话恢复验证](docs/demo-guide.md)
+- [本地浏览器流程录像（脚本模型）](docs/demo/README.md)
 - [自动化验收与 CI](docs/ci.md)
 - [后端说明](backend/README.md) · [前端说明](web/README.md)
 
