@@ -309,7 +309,7 @@ Text fingerprints exclude random IDs and vectors; grants have a separate digest.
 
 Configure `KNV_RERANK=bge`, `KNV_RERANK_MODEL` (default `BAAI/bge-reranker-v2-m3`), and
 `KNV_RERANK_THRESHOLD` (default `0.60`). The latter is independent of `KNV_GATE_THRESHOLD` and is not
-calibrated on the corpus. Restart the API after changing model configuration. The `ml` extra and locally
+established as a production threshold. Restart the API after changing model configuration. The `ml` extra and locally
 available model weights are required for offline execution; keep `KNV_RERANK=off` for the normal default.
 
 The reranker scores `section_path + text`, so a fault code inherited from a heading remains available.
@@ -330,6 +330,19 @@ per-case diagnostics preserve that ordering and scores even on refusal, while th
 refused evidence. Val5's positive examples also require a literal `expect.support_text` in the target chunk,
 so another section on the same document/page is not counted as a hit. This checks retrieval relevance,
 not whether an LLM answer is supported. Old case files remain unchanged.
+
+For a separate, score-only threshold check, `eval/cases_threshold_v1.jsonl` freezes 12 calibration and
+12 validation cases. On an isolated seeded database with cached local models, run:
+
+```bash
+KNV_ENCODER=bge-m3 KNV_RERANK=bge HF_HUB_OFFLINE=1 uv run python eval/calibrate_rerank.py --out eval/results/new-threshold-check.json
+```
+
+The script measures Top-5 target presence and normalized reranker scores, selects a threshold using only
+the calibration half, and reports validation errors without changing server settings or calling an LLM.
+The stored result and its small-sample limits are in [the evaluation report](../docs/evaluation-report.md)
+section 18. Score alone did not separate every answerable detail from unsupported specifics; Rerank stays
+off by default.
 
 `--rerank-model` requires `--rerank`. `--threshold` overrides the active score gate in retrieval mode.
 The runner rejects `--no-sparse`, `--no-opencc` and `--threshold` in agent mode because those per-run

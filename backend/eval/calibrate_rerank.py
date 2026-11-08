@@ -11,10 +11,10 @@ import hashlib
 import json
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from knoventra.config import settings
-from knoventra.db.models import User
+from knoventra.db.models import Chunk, Document, Revision, User
 from knoventra.db.session import SessionLocal
 from knoventra.ingestion.encoder import get_encoder
 from knoventra.retrieval.pipeline import retrieve
@@ -61,7 +61,8 @@ def measure(db, enc, rr, users: dict[str, User], cases: list[dict]) -> list[dict
                      "question": case["question"], "user": case["user"], "top_score": score,
                      "target_found_at_5": target_found, "pre_gate_reason": outcome.reason,
                      "top_title": ranked[0].document_title if ranked else None,
-                     "top_page": ranked[0].page if ranked else None})
+                     "top_page": ranked[0].page if ranked else None,
+                     "top_text": ranked[0].text if ranked else None})
     return rows
 
 
@@ -107,7 +108,12 @@ def main() -> None:
         raise RuntimeError("reranker did not load")
     with SessionLocal() as db:
         users = {u.email.split("@")[0]: u for u in db.scalars(select(User))}
-        corpus = corpus_fingerprints(db)
+        corpus = {"documents": db.scalar(select(func.count()).select_from(Document)),
+                  "published_revisions": db.scalar(select(func.count()).select_from(Revision)
+                                                   .where(Revision.status == "PUBLISHED")),
+                  "published_chunks": db.scalar(select(func.count()).select_from(Chunk).join(Revision)
+                                                .where(Revision.status == "PUBLISHED"))}
+        corpus.update(corpus_fingerprints(db))
         rows = measure(db, enc, rr, users, cases)
     calibration = [row for row in rows if row["split"] == "calibration"]
     validation = [row for row in rows if row["split"] == "validation"]
