@@ -368,7 +368,8 @@ def evidence(chunk_id: str, user: User = Depends(current_user), db: Session = De
     row = db.execute(
         select(Chunk, Revision, Document).join(Revision, Revision.id == Chunk.revision_id)
         .join(Document, Document.id == Revision.document_id)
-        .where(Chunk.id == chunk_id, Chunk.kb_id.in_(scope.readable_kb_ids))).first()
+        .where(Chunk.id == chunk_id, Chunk.kb_id.in_(scope.readable_kb_ids),
+               Revision.status.in_(("PUBLISHED", "RETIRED")))).first()
     if row is None:
         raise HTTPException(404)
     c, r, d = row

@@ -1,7 +1,9 @@
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 from knoventra.api.deps import get_db
+from knoventra.db.models import Chunk, Document, Revision
 from knoventra.main import app
 
 
@@ -55,6 +57,22 @@ def test_admin_list_documents(client):
     d = client.get("/api/v1/admin/documents", headers=tok(client, "admin")).json()
     e17 = next(x for x in d["documents"] if x["title"].startswith("E17"))
     assert [r["status"] for r in e17["revisions"]] == ["PUBLISHED", "DRAFT"] and "hr" in d["kbs"]
+
+
+def test_preview_hides_draft_but_keeps_historical_published_source(client, db):
+    doc = db.scalar(select(Document).where(Document.title == "E17 系列设备故障手册"))
+    revisions = {r.status: r for r in db.scalars(select(Revision).where(Revision.document_id == doc.id))}
+    old_chunk = db.scalar(select(Chunk.id).where(Chunk.revision_id == revisions["PUBLISHED"].id).limit(1))
+    draft_chunk = db.scalar(select(Chunk.id).where(Chunk.revision_id == revisions["DRAFT"].id).limit(1))
+    ops = tok(client, "sg-ops")
+    assert client.get(f"/api/v1/evidence/{draft_chunk}", headers=ops).status_code == 404
+    assert client.get(f"/api/v1/evidence/{old_chunk}", headers=ops).json()["revision_status"] == "PUBLISHED"
+
+    result = client.post(f"/api/v1/admin/revisions/{revisions['DRAFT'].id}/publish",
+                         headers=tok(client, "admin"))
+    assert result.status_code == 200
+    assert client.get(f"/api/v1/evidence/{old_chunk}", headers=ops).json()["revision_status"] == "RETIRED"
+    assert client.get(f"/api/v1/evidence/{draft_chunk}", headers=ops).json()["revision_status"] == "PUBLISHED"
 
 
 def test_upload_accepts_the_exact_byte_limit_and_keeps_the_previous_revision_published(client, monkeypatch):
