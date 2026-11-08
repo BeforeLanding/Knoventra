@@ -29,7 +29,7 @@
   "documents": 13,
   "published_revisions": 13,
   "published_chunks": 23,
-  "published_text_sha256": "3425af0a7ed0741555f05a1cc5261bc8a1926d4e6edb67efae479ddb1bac8941",
+  "published_text_sha256": "c276aa551b877eb89ec71bee8cfb5b3a9aba5dba0e4384af90cc344c998c7111",
   "grants_sha256": "1f01e113180b25cbdce511459f9620e0876c3359fb20464d54e6db0d837c00d7"
  },
  "cases_sha256": "60ab87221c2e3b016e501122cc33561045b0f7fc01abb42a98d949b90fe32596",
@@ -66,8 +66,8 @@
    "refusal_rate": 1.0
   },
   "latency_ms": {
-   "p50": 76.4,
-   "max": 689.8
+   "p50": 75.6,
+   "max": 622.7
   }
  },
  "cases": [
@@ -75,7 +75,7 @@
    "id": "v5-ops-01",
    "category": "ops",
    "user": "sg-ops",
-   "latency_ms": 689.8,
+   "latency_ms": 622.7,
    "status": "OK",
    "reason": null,
    "required_identifiers": [
@@ -87,7 +87,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "05d1e4fd2189489db4bb44c22987d0dc",
+     "chunk_id": "97b0ec8d39ec42c891d31e68a355ba4e",
      "document_title": "E17 系列设备故障手册",
      "revision": 1,
      "page": 2,
@@ -101,7 +101,7 @@
    "id": "v5-ops-02",
    "category": "ops",
    "user": "sg-ops",
-   "latency_ms": 135.0,
+   "latency_ms": 102.9,
    "status": "OK",
    "reason": null,
    "required_identifiers": [
@@ -113,7 +113,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "5e31af72784d43e7ac2c963feba80f80",
+     "chunk_id": "292c9605d5764ce0854bdf6a0a04569d",
      "document_title": "E17 系列设备故障手册",
      "revision": 1,
      "page": 2,
@@ -122,7 +122,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "be77f9bc95b04fcda9245f7eefc4f3d8",
+     "chunk_id": "dbaecdee1cc4488d85fc530cb3d8906d",
      "document_title": "E17 系列设备故障手册",
      "revision": 1,
      "page": 1,
@@ -136,7 +136,7 @@
    "id": "v5-ops-03",
    "category": "ops",
    "user": "sg-ops",
-   "latency_ms": 76.0,
+   "latency_ms": 72.4,
    "status": "OK",
    "reason": null,
    "required_identifiers": [
@@ -148,7 +148,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "e68b0e32dbe64ba898cab6ad860db290",
+     "chunk_id": "ea73472f644541cfae7156de4b8c3181",
      "document_title": "泵组维护手册",
      "revision": 1,
      "page": 1,
@@ -157,7 +157,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "30a8300dee484af292784ddf2431d93c",
+     "chunk_id": "a49c68f70be943fb85293695e715dc39",
      "document_title": "泵组维护手册",
      "revision": 1,
      "page": 2,
@@ -171,7 +171,7 @@
    "id": "v5-ops-04",
    "category": "ops",
    "user": "sg-ops",
-   "latency_ms": 76.8,
+   "latency_ms": 75.4,
    "status": "OK",
    "reason": null,
    "required_identifiers": [
@@ -183,7 +183,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "30a8300dee484af292784ddf2431d93c",
+     "chunk_id": "a49c68f70be943fb85293695e715dc39",
      "document_title": "泵组维护手册",
      "revision": 1,
      "page": 2,
@@ -197,7 +197,7 @@
    "id": "v5-ops-05",
    "category": "ops",
    "user": "tw-ops",
-   "latency_ms": 75.3,
+   "latency_ms": 75.7,
    "status": "OK",
    "reason": null,
    "required_identifiers": [
@@ -209,7 +209,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "228f78ed45e449acb1a941f998b1ecd8",
+     "chunk_id": "c4b908354d254c2a8ecb0eb1fed8b6bb",
      "document_title": "感測器故障手冊",
      "revision": 1,
      "page": 2,
@@ -235,7 +235,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "de91ad742ceb41bea5e7dacf55ff9730",
+     "chunk_id": "464a4496e8054cb8b722dc0f6c87b664",
      "document_title": "冷卻系統維護手冊",
      "revision": 1,
      "page": 1,
@@ -249,7 +249,7 @@
    "id": "v5-ops-07",
    "category": "ops",
    "user": "tw-ops",
-   "latency_ms": 79.7,
+   "latency_ms": 78.9,
    "status": "OK",
    "reason": null,
    "required_identifiers": [
@@ -261,7 +261,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "7cfbb6d4c3f144a59325abef35393ff9",
+     "chunk_id": "a815afe060e241478b1df2300fb078d4",
      "document_title": "電源模組排障手冊",
      "revision": 1,
      "page": 1,
@@ -275,7 +275,7 @@
    "id": "v5-ops-08",
    "category": "ops",
    "user": "cn-ops",
-   "latency_ms": 87.4,
+   "latency_ms": 75.7,
    "status": "OK",
    "reason": null,
    "required_identifiers": [
@@ -287,7 +287,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "b5004ec920404d189654037f53568f2e",
+     "chunk_id": "eafac5f17767490bac0c37b5fb94cbb6",
      "document_title": "校准流程（仅限中国区）",
      "revision": 1,
      "page": 1,
@@ -301,7 +301,7 @@
    "id": "v5-ops-09",
    "category": "ops",
    "user": "hr",
-   "latency_ms": 76.0,
+   "latency_ms": 76.1,
    "status": "OK",
    "reason": null,
    "required_identifiers": [],
@@ -311,7 +311,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "529006c87cdc4f0eb7476cb980e1f863",
+     "chunk_id": "5fcca649b6d44e2ab991fc6039c030a1",
      "document_title": "休假制度",
      "revision": 1,
      "page": 1,
@@ -320,7 +320,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "f59076bffb274b8da01fea173901cf1c",
+     "chunk_id": "c7688bdffbbb47c7b4ac58ad28f2a58e",
      "document_title": "薪酬调整办法",
      "revision": 1,
      "page": 1,
@@ -329,7 +329,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "86fa5a1f3b8f4828ac91b8599ee4c856",
+     "chunk_id": "cf28ea8e3f6544fe9d75b8537ce30320",
      "document_title": "IT 入职指南",
      "revision": 1,
      "page": 1,
@@ -338,7 +338,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "216d1b585d89435cbab94c3e38d67e01",
+     "chunk_id": "c63667860eec4166a0265c85e0eb88f2",
      "document_title": "VPN 使用说明",
      "revision": 1,
      "page": 1,
@@ -347,7 +347,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "543cbb6d03c047e98c8809ac00dbc2e7",
+     "chunk_id": "379c3de5246a43e590d1244007d8be03",
      "document_title": "访客证件与门禁操作说明",
      "revision": 1,
      "page": 1,
@@ -361,7 +361,7 @@
    "id": "v5-ops-10",
    "category": "ops",
    "user": "hr",
-   "latency_ms": 71.7,
+   "latency_ms": 75.6,
    "status": "OK",
    "reason": null,
    "required_identifiers": [],
@@ -371,7 +371,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "f59076bffb274b8da01fea173901cf1c",
+     "chunk_id": "c7688bdffbbb47c7b4ac58ad28f2a58e",
      "document_title": "薪酬调整办法",
      "revision": 1,
      "page": 1,
@@ -380,7 +380,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "529006c87cdc4f0eb7476cb980e1f863",
+     "chunk_id": "5fcca649b6d44e2ab991fc6039c030a1",
      "document_title": "休假制度",
      "revision": 1,
      "page": 1,
@@ -389,7 +389,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "86fa5a1f3b8f4828ac91b8599ee4c856",
+     "chunk_id": "cf28ea8e3f6544fe9d75b8537ce30320",
      "document_title": "IT 入职指南",
      "revision": 1,
      "page": 1,
@@ -398,7 +398,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "216d1b585d89435cbab94c3e38d67e01",
+     "chunk_id": "c63667860eec4166a0265c85e0eb88f2",
      "document_title": "VPN 使用说明",
      "revision": 1,
      "page": 1,
@@ -407,7 +407,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "543cbb6d03c047e98c8809ac00dbc2e7",
+     "chunk_id": "379c3de5246a43e590d1244007d8be03",
      "document_title": "访客证件与门禁操作说明",
      "revision": 1,
      "page": 1,
@@ -421,7 +421,7 @@
    "id": "v5-ops-11",
    "category": "ops",
    "user": "fin",
-   "latency_ms": 71.9,
+   "latency_ms": 75.6,
    "status": "OK",
    "reason": null,
    "required_identifiers": [],
@@ -431,7 +431,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "2e8dce49503c4c5cbf62b2992b51a09b",
+     "chunk_id": "db449c7af97c4984b209220deba21b7d",
      "document_title": "费用报销办法",
      "revision": 1,
      "page": 1,
@@ -440,7 +440,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "28f15f3951674b8eace088c5704fce4f",
+     "chunk_id": "8e3314fba9b249e6a8621c021f0e2d32",
      "document_title": "年度预算说明",
      "revision": 1,
      "page": 1,
@@ -449,7 +449,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "4528120d1c95425ba258d56b91f5ee25",
+     "chunk_id": "d3c79352dd884ac49f5707760ca17b30",
      "document_title": "访客证件与门禁操作说明",
      "revision": 1,
      "page": 2,
@@ -458,7 +458,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "216d1b585d89435cbab94c3e38d67e01",
+     "chunk_id": "c63667860eec4166a0265c85e0eb88f2",
      "document_title": "VPN 使用说明",
      "revision": 1,
      "page": 1,
@@ -467,7 +467,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "86fa5a1f3b8f4828ac91b8599ee4c856",
+     "chunk_id": "cf28ea8e3f6544fe9d75b8537ce30320",
      "document_title": "IT 入职指南",
      "revision": 1,
      "page": 1,
@@ -481,7 +481,7 @@
    "id": "v5-ops-12",
    "category": "ops",
    "user": "fin",
-   "latency_ms": 75.8,
+   "latency_ms": 71.7,
    "status": "OK",
    "reason": null,
    "required_identifiers": [],
@@ -491,7 +491,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "28f15f3951674b8eace088c5704fce4f",
+     "chunk_id": "8e3314fba9b249e6a8621c021f0e2d32",
      "document_title": "年度预算说明",
      "revision": 1,
      "page": 1,
@@ -500,7 +500,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "2e8dce49503c4c5cbf62b2992b51a09b",
+     "chunk_id": "db449c7af97c4984b209220deba21b7d",
      "document_title": "费用报销办法",
      "revision": 1,
      "page": 1,
@@ -509,7 +509,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "86fa5a1f3b8f4828ac91b8599ee4c856",
+     "chunk_id": "cf28ea8e3f6544fe9d75b8537ce30320",
      "document_title": "IT 入职指南",
      "revision": 1,
      "page": 1,
@@ -518,7 +518,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "543cbb6d03c047e98c8809ac00dbc2e7",
+     "chunk_id": "379c3de5246a43e590d1244007d8be03",
      "document_title": "访客证件与门禁操作说明",
      "revision": 1,
      "page": 1,
@@ -527,7 +527,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "216d1b585d89435cbab94c3e38d67e01",
+     "chunk_id": "c63667860eec4166a0265c85e0eb88f2",
      "document_title": "VPN 使用说明",
      "revision": 1,
      "page": 1,
@@ -541,7 +541,7 @@
    "id": "v5-ops-13",
    "category": "ops",
    "user": "sg-ops",
-   "latency_ms": 75.8,
+   "latency_ms": 72.6,
    "status": "OK",
    "reason": null,
    "required_identifiers": [],
@@ -551,7 +551,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "86fa5a1f3b8f4828ac91b8599ee4c856",
+     "chunk_id": "cf28ea8e3f6544fe9d75b8537ce30320",
      "document_title": "IT 入职指南",
      "revision": 1,
      "page": 1,
@@ -560,7 +560,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "216d1b585d89435cbab94c3e38d67e01",
+     "chunk_id": "c63667860eec4166a0265c85e0eb88f2",
      "document_title": "VPN 使用说明",
      "revision": 1,
      "page": 1,
@@ -569,7 +569,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "7cfbb6d4c3f144a59325abef35393ff9",
+     "chunk_id": "a815afe060e241478b1df2300fb078d4",
      "document_title": "電源模組排障手冊",
      "revision": 1,
      "page": 1,
@@ -578,7 +578,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "30a8300dee484af292784ddf2431d93c",
+     "chunk_id": "a49c68f70be943fb85293695e715dc39",
      "document_title": "泵组维护手册",
      "revision": 1,
      "page": 2,
@@ -587,7 +587,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "543cbb6d03c047e98c8809ac00dbc2e7",
+     "chunk_id": "379c3de5246a43e590d1244007d8be03",
      "document_title": "访客证件与门禁操作说明",
      "revision": 1,
      "page": 1,
@@ -601,7 +601,7 @@
    "id": "v5-ops-14",
    "category": "ops",
    "user": "hr",
-   "latency_ms": 72.0,
+   "latency_ms": 71.7,
    "status": "OK",
    "reason": null,
    "required_identifiers": [],
@@ -611,7 +611,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "216d1b585d89435cbab94c3e38d67e01",
+     "chunk_id": "c63667860eec4166a0265c85e0eb88f2",
      "document_title": "VPN 使用说明",
      "revision": 1,
      "page": 1,
@@ -620,7 +620,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "86fa5a1f3b8f4828ac91b8599ee4c856",
+     "chunk_id": "cf28ea8e3f6544fe9d75b8537ce30320",
      "document_title": "IT 入职指南",
      "revision": 1,
      "page": 1,
@@ -629,7 +629,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "543cbb6d03c047e98c8809ac00dbc2e7",
+     "chunk_id": "379c3de5246a43e590d1244007d8be03",
      "document_title": "访客证件与门禁操作说明",
      "revision": 1,
      "page": 1,
@@ -638,7 +638,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "529006c87cdc4f0eb7476cb980e1f863",
+     "chunk_id": "5fcca649b6d44e2ab991fc6039c030a1",
      "document_title": "休假制度",
      "revision": 1,
      "page": 1,
@@ -647,7 +647,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "f59076bffb274b8da01fea173901cf1c",
+     "chunk_id": "c7688bdffbbb47c7b4ac58ad28f2a58e",
      "document_title": "薪酬调整办法",
      "revision": 1,
      "page": 1,
@@ -661,7 +661,7 @@
    "id": "v5-cross-15",
    "category": "cross",
    "user": "tw-ops",
-   "latency_ms": 76.4,
+   "latency_ms": 76.5,
    "status": "OK",
    "reason": null,
    "required_identifiers": [],
@@ -671,7 +671,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "6ed53d0fd8be465a91d5de9ce8ba7fad",
+     "chunk_id": "527ce798746d4da1a7639d7ccdd7b76e",
      "document_title": "冷卻系統維護手冊",
      "revision": 1,
      "page": 1,
@@ -680,7 +680,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "5e31af72784d43e7ac2c963feba80f80",
+     "chunk_id": "292c9605d5764ce0854bdf6a0a04569d",
      "document_title": "E17 系列设备故障手册",
      "revision": 1,
      "page": 2,
@@ -689,7 +689,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "de91ad742ceb41bea5e7dacf55ff9730",
+     "chunk_id": "464a4496e8054cb8b722dc0f6c87b664",
      "document_title": "冷卻系統維護手冊",
      "revision": 1,
      "page": 1,
@@ -698,7 +698,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "30a8300dee484af292784ddf2431d93c",
+     "chunk_id": "a49c68f70be943fb85293695e715dc39",
      "document_title": "泵组维护手册",
      "revision": 1,
      "page": 2,
@@ -707,7 +707,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "05d1e4fd2189489db4bb44c22987d0dc",
+     "chunk_id": "97b0ec8d39ec42c891d31e68a355ba4e",
      "document_title": "E17 系列设备故障手册",
      "revision": 1,
      "page": 2,
@@ -721,7 +721,7 @@
    "id": "v5-cross-16",
    "category": "cross",
    "user": "tw-ops",
-   "latency_ms": 76.1,
+   "latency_ms": 75.4,
    "status": "OK",
    "reason": null,
    "required_identifiers": [
@@ -733,7 +733,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "228f78ed45e449acb1a941f998b1ecd8",
+     "chunk_id": "c4b908354d254c2a8ecb0eb1fed8b6bb",
      "document_title": "感測器故障手冊",
      "revision": 1,
      "page": 2,
@@ -742,7 +742,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "edec80f8cbf0435192b17e0cbbcabeb4",
+     "chunk_id": "397c47e8e8da462ba60ebb7585217da3",
      "document_title": "感測器故障手冊",
      "revision": 1,
      "page": 1,
@@ -756,7 +756,7 @@
    "id": "v5-cross-17",
    "category": "cross",
    "user": "sg-ops",
-   "latency_ms": 71.6,
+   "latency_ms": 72.3,
    "status": "OK",
    "reason": null,
    "required_identifiers": [],
@@ -766,7 +766,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "eff5eafb6d404f1db509217202d5a143",
+     "chunk_id": "8a09fddd14e84a649eae57f2def62442",
      "document_title": "電源模組排障手冊",
      "revision": 1,
      "page": 1,
@@ -775,7 +775,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "6ed53d0fd8be465a91d5de9ce8ba7fad",
+     "chunk_id": "527ce798746d4da1a7639d7ccdd7b76e",
      "document_title": "冷卻系統維護手冊",
      "revision": 1,
      "page": 1,
@@ -784,7 +784,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "05d1e4fd2189489db4bb44c22987d0dc",
+     "chunk_id": "97b0ec8d39ec42c891d31e68a355ba4e",
      "document_title": "E17 系列设备故障手册",
      "revision": 1,
      "page": 2,
@@ -793,7 +793,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "30a8300dee484af292784ddf2431d93c",
+     "chunk_id": "a49c68f70be943fb85293695e715dc39",
      "document_title": "泵组维护手册",
      "revision": 1,
      "page": 2,
@@ -802,7 +802,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "228f78ed45e449acb1a941f998b1ecd8",
+     "chunk_id": "c4b908354d254c2a8ecb0eb1fed8b6bb",
      "document_title": "感測器故障手冊",
      "revision": 1,
      "page": 2,
@@ -816,7 +816,7 @@
    "id": "v5-cross-18",
    "category": "cross",
    "user": "cn-ops",
-   "latency_ms": 113.0,
+   "latency_ms": 123.8,
    "status": "OK",
    "reason": null,
    "required_identifiers": [],
@@ -826,7 +826,7 @@
    "gated_out": false,
    "ranked_evidence": [
     {
-     "chunk_id": "87574b3bc28441dab1389b8ccb342b9d",
+     "chunk_id": "5f94f2c736d440be9200c123abf7d801",
      "document_title": "校准流程（仅限中国区）",
      "revision": 1,
      "page": 1,
@@ -835,7 +835,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "b5004ec920404d189654037f53568f2e",
+     "chunk_id": "eafac5f17767490bac0c37b5fb94cbb6",
      "document_title": "校准流程（仅限中国区）",
      "revision": 1,
      "page": 1,
@@ -844,7 +844,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "4528120d1c95425ba258d56b91f5ee25",
+     "chunk_id": "d3c79352dd884ac49f5707760ca17b30",
      "document_title": "访客证件与门禁操作说明",
      "revision": 1,
      "page": 2,
@@ -853,7 +853,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "543cbb6d03c047e98c8809ac00dbc2e7",
+     "chunk_id": "379c3de5246a43e590d1244007d8be03",
      "document_title": "访客证件与门禁操作说明",
      "revision": 1,
      "page": 1,
@@ -862,7 +862,7 @@
      "rerank_score": null
     },
     {
-     "chunk_id": "228f78ed45e449acb1a941f998b1ecd8",
+     "chunk_id": "c4b908354d254c2a8ecb0eb1fed8b6bb",
      "document_title": "感測器故障手冊",
      "revision": 1,
      "page": 2,
@@ -876,7 +876,7 @@
    "id": "v5-no_basis-19",
    "category": "no_basis",
    "user": "sg-ops",
-   "latency_ms": 70.9,
+   "latency_ms": 71.3,
    "status": "INSUFFICIENT_EVIDENCE",
    "reason": "IDENTIFIER_MISMATCH",
    "required_identifiers": [
@@ -892,7 +892,7 @@
    "id": "v5-no_basis-20",
    "category": "no_basis",
    "user": "sg-ops",
-   "latency_ms": 72.1,
+   "latency_ms": 72.2,
    "status": "INSUFFICIENT_EVIDENCE",
    "reason": "IDENTIFIER_MISMATCH",
    "required_identifiers": [
@@ -908,7 +908,7 @@
    "id": "v5-no_basis-21",
    "category": "no_basis",
    "user": "tw-ops",
-   "latency_ms": 76.0,
+   "latency_ms": 76.3,
    "status": "INSUFFICIENT_EVIDENCE",
    "reason": "IDENTIFIER_MISMATCH",
    "required_identifiers": [
@@ -924,7 +924,7 @@
    "id": "v5-no_basis-22",
    "category": "no_basis",
    "user": "tw-ops",
-   "latency_ms": 76.4,
+   "latency_ms": 76.3,
    "status": "INSUFFICIENT_EVIDENCE",
    "reason": "IDENTIFIER_MISMATCH",
    "required_identifiers": [
@@ -940,7 +940,7 @@
    "id": "v5-no_basis-23",
    "category": "no_basis",
    "user": "tw-ops",
-   "latency_ms": 96.8,
+   "latency_ms": 71.4,
    "status": "INSUFFICIENT_EVIDENCE",
    "reason": "IDENTIFIER_MISMATCH",
    "required_identifiers": [
@@ -956,7 +956,7 @@
    "id": "v5-no_basis-24",
    "category": "no_basis",
    "user": "cn-ops",
-   "latency_ms": 98.6,
+   "latency_ms": 72.0,
    "status": "INSUFFICIENT_EVIDENCE",
    "reason": "IDENTIFIER_MISMATCH",
    "required_identifiers": [
@@ -972,7 +972,7 @@
    "id": "v5-access-25",
    "category": "access",
    "user": "hr",
-   "latency_ms": 83.7,
+   "latency_ms": 72.3,
    "status": "INSUFFICIENT_EVIDENCE",
    "reason": "IDENTIFIER_MISMATCH",
    "required_identifiers": [
@@ -988,7 +988,7 @@
    "id": "v5-access-26",
    "category": "access",
    "user": "fin",
-   "latency_ms": 76.5,
+   "latency_ms": 72.2,
    "status": "INSUFFICIENT_EVIDENCE",
    "reason": "IDENTIFIER_MISMATCH",
    "required_identifiers": [
@@ -1004,7 +1004,7 @@
    "id": "v5-access-27",
    "category": "access",
    "user": "sg-ops",
-   "latency_ms": 73.0,
+   "latency_ms": 72.3,
    "status": "INSUFFICIENT_EVIDENCE",
    "reason": "IDENTIFIER_MISMATCH",
    "required_identifiers": [
@@ -1020,7 +1020,7 @@
    "id": "v5-access-28",
    "category": "access",
    "user": "tw-ops",
-   "latency_ms": 80.5,
+   "latency_ms": 80.1,
    "status": "INSUFFICIENT_EVIDENCE",
    "reason": "IDENTIFIER_MISMATCH",
    "required_identifiers": [

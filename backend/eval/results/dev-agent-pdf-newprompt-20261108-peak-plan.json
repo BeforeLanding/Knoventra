@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "mode": "preflight",
+  "evaluation_mode": "agent",
+  "split": "dev",
+  "case_ids": [
+    "ops-01",
+    "ops-02",
+    "ops-03",
+    "ops-04",
+    "ops-05",
+    "ops-06",
+    "ops-07",
+    "cross-01",
+    "cross-02",
+    "cross-03",
+    "access-01",
+    "access-02",
+    "access-03",
+    "access-04",
+    "access-05",
+    "no_basis-01",
+    "no_basis-02",
+    "no_basis-03",
+    "escalation-01",
+    "escalation-02"
+  ],
+  "n_cases": 20,
+  "confirmation_decision_cases": [
+    "escalation-01",
+    "escalation-02"
+  ],
+  "categories": {
+    "access": 5,
+    "cross": 3,
+    "escalation": 2,
+    "no_basis": 3,
+    "ops": 7
+  },
+  "cases_sha256": "2640ed0341c9221799e9b827a6cb772f705f88d907b53e500e4c8aa8dd182d99",
+  "model": "deepseek-flash",
+  "max_tool_calls_per_turn": 4,
+  "graph_model_call_bound": 100,
+  "automatic_provider_retries": 0,
+  "max_output_tokens_per_call": 1024,
+  "requested_output_token_bound": 102400,
+  "assumed_input_tokens_per_call": 4000,
+  "input_price_per_million": 0.3,
+  "output_price_per_million": 1.2,
+  "currency": "USD",
+  "scenario_cost_estimate": 0.24288,
+  "limitation": "Scenario estimate, not a billing cap. Input length is assumed, not measured; provider token semantics, reasoning/cache charges and failed requests may differ. Output bound depends on provider honoring max_tokens. No calls made by preflight."
+}

@@ -1,0 +1,705 @@
+{
+ "date": "2026-11-08",
+ "split": "dev",
+ "mode": "retrieval",
+ "n_cases": 20,
+ "config": {
+  "encoder": "bge-m3",
+  "rerank": "off",
+  "sparse": true,
+  "encoder_model": "BAAI/bge-m3",
+  "encoder_model_revision": null,
+  "opencc": true,
+  "gate_threshold": 0.6,
+  "gate_sparse_threshold": 0.03,
+  "identifier_policy": "explicit-and-split-v2",
+  "rerank_model": null,
+  "rerank_model_revision": null,
+  "rerank_candidates": null,
+  "rerank_input": null,
+  "rank_metric_stage": "post_rrf_pre_gate",
+  "llm_model": "deepseek-flash",
+  "review_snapshot_schema": null,
+  "citation_policy": null,
+  "query_vector_policy": "float32-finite-v1",
+  "query_encoding_policy": "distinct-batch-v1",
+  "prompt_sha256": null
+ },
+ "corpus": {
+  "documents": 13,
+  "published_revisions": 13,
+  "published_chunks": 23,
+  "published_text_sha256": "c276aa551b877eb89ec71bee8cfb5b3a9aba5dba0e4384af90cc344c998c7111",
+  "grants_sha256": "1f01e113180b25cbdce511459f9620e0876c3359fb20464d54e6db0d837c00d7"
+ },
+ "cases_sha256": "2640ed0341c9221799e9b827a6cb772f705f88d907b53e500e4c8aa8dd182d99",
+ "env": {
+  "python": "3.12.10",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "packages": {
+   "FlagEmbedding": "1.4.2",
+   "torch": "2.11.0+cu128",
+   "transformers": "5.22.1",
+   "pgvector": "0.5.1",
+   "sqlalchemy": "2.1.6"
+  }
+ },
+ "metrics": {
+  "ops": {
+   "n": 7,
+   "recall@5": 1.0,
+   "mrr": 0.786,
+   "gated_out_of_hits": 0
+  },
+  "cross": {
+   "n": 3,
+   "recall@5": 1.0,
+   "mrr": 0.667,
+   "gated_out_of_hits": 0
+  },
+  "access": {
+   "n": 5,
+   "leaks": 0
+  },
+  "no_basis": {
+   "n": 3,
+   "refusal_rate": 0.667
+  },
+  "latency_ms": {
+   "p50": 75.6,
+   "max": 641.9
+  }
+ },
+ "cases": [
+  {
+   "id": "ops-01",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 641.9,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [
+    "E17-42"
+   ],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 2,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "67895c8bbab1485385f68c7bf84454a0",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.6172079142162487,
+     "sparse_ip": 0.16552546620368958,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "f2cf11d70b8543b5a05882522ef6d649",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.6033372290250896,
+     "sparse_ip": 0.14357052743434906,
+     "rerank_score": null
+    }
+   ]
+  },
+  {
+   "id": "ops-02",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 73.7,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [
+    "E17-42"
+   ],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 2,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "67895c8bbab1485385f68c7bf84454a0",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.7961542910079141,
+     "sparse_ip": 0.33423444628715515,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "f2cf11d70b8543b5a05882522ef6d649",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.7052468558814416,
+     "sparse_ip": 0.20285707712173462,
+     "rerank_score": null
+    }
+   ]
+  },
+  {
+   "id": "ops-03",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 76.2,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [
+    "E17-42"
+   ],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "f2cf11d70b8543b5a05882522ef6d649",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.6799915912449247,
+     "sparse_ip": 0.23729795217514038,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "67895c8bbab1485385f68c7bf84454a0",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.6096625047965082,
+     "sparse_ip": 0.16088372468948364,
+     "rerank_score": null
+    }
+   ]
+  },
+  {
+   "id": "ops-04",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 77.1,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [
+    "E17-07"
+   ],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "a9feaa68bfe44b15bbb99b3c63988076",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.6092604000030508,
+     "sparse_ip": 0.10439521074295044,
+     "rerank_score": null
+    }
+   ]
+  },
+  {
+   "id": "ops-05",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 75.6,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "5edb159192ba4aaab654d0db52493b5f",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.7654187409863125,
+     "sparse_ip": 0.28492259979248047,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "67895c8bbab1485385f68c7bf84454a0",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.5860434359267817,
+     "sparse_ip": 0.16282978653907776,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "f2cf11d70b8543b5a05882522ef6d649",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.564905291690639,
+     "sparse_ip": 0.147524893283844,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "cfe019647a904ea3bfba82f89dd63c2c",
+     "document_title": "感測器故障手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.5196167060709935,
+     "sparse_ip": 0.11225184798240662,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "a56bad301e8545c2a9cd31b102e7a914",
+     "document_title": "電源模組排障手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.4390112135477463,
+     "sparse_ip": 0.014616191387176514,
+     "rerank_score": null
+    }
+   ]
+  },
+  {
+   "id": "ops-06",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 75.7,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [
+    "P03-11"
+   ],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 2,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "71acb0998eab4a229daa63bfecc8bee9",
+     "document_title": "泵组维护手册",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.7846546583488203,
+     "sparse_ip": 0.3153448700904846,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "88e34b8cec5740b0b8065ab0ac7573e6",
+     "document_title": "泵组维护手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.6413301784900396,
+     "sparse_ip": 0.12289486825466156,
+     "rerank_score": null
+    }
+   ]
+  },
+  {
+   "id": "ops-07",
+   "category": "ops",
+   "user": "sg-ops",
+   "latency_ms": 71.9,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "71acb0998eab4a229daa63bfecc8bee9",
+     "document_title": "泵组维护手册",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.6833637708989891,
+     "sparse_ip": 0.1691620796918869,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "8d3149d0b1ed4a0d8ad10d3d753a614b",
+     "document_title": "冷卻系統維護手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.47976510956367835,
+     "sparse_ip": 0.05931265652179718,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "88e34b8cec5740b0b8065ab0ac7573e6",
+     "document_title": "泵组维护手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.5601653934345104,
+     "sparse_ip": 0.04612557962536812,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "8d99a8028f19452d912318a62d8732b2",
+     "document_title": "冷卻系統維護手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.5681837335704017,
+     "sparse_ip": 0.023479484021663666,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "94b560881d7e4f0ba6443316fa4558e8",
+     "document_title": "感測器故障手冊",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.45337990126434824,
+     "sparse_ip": 0.043859947472810745,
+     "rerank_score": null
+    }
+   ]
+  },
+  {
+   "id": "cross-01",
+   "category": "cross",
+   "user": "tw-ops",
+   "latency_ms": 79.7,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [
+    "P03-11"
+   ],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 2,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "71acb0998eab4a229daa63bfecc8bee9",
+     "document_title": "泵组维护手册",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.7764583661734851,
+     "sparse_ip": 0.3108215034008026,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "88e34b8cec5740b0b8065ab0ac7573e6",
+     "document_title": "泵组维护手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.6377121291221247,
+     "sparse_ip": 0.11398646235466003,
+     "rerank_score": null
+    }
+   ]
+  },
+  {
+   "id": "cross-02",
+   "category": "cross",
+   "user": "tw-ops",
+   "latency_ms": 75.9,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 1,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "71acb0998eab4a229daa63bfecc8bee9",
+     "document_title": "泵组维护手册",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.659846630456457,
+     "sparse_ip": 0.175233393907547,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "88e34b8cec5740b0b8065ab0ac7573e6",
+     "document_title": "泵组维护手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.5680390683594396,
+     "sparse_ip": 0.0489659458398819,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "8d3149d0b1ed4a0d8ad10d3d753a614b",
+     "document_title": "冷卻系統維護手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.5266382425581588,
+     "sparse_ip": 0.061713725328445435,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "94b560881d7e4f0ba6443316fa4558e8",
+     "document_title": "感測器故障手冊",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.48314665822728353,
+     "sparse_ip": 0.045797199010849,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "8d99a8028f19452d912318a62d8732b2",
+     "document_title": "冷卻系統維護手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.5303217803193828,
+     "sparse_ip": 0.0028990954160690308,
+     "rerank_score": null
+    }
+   ]
+  },
+  {
+   "id": "cross-03",
+   "category": "cross",
+   "user": "tw-ops",
+   "latency_ms": 75.6,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [
+    "E17-42"
+   ],
+   "missing_identifiers": [],
+   "hit": true,
+   "rank": 2,
+   "gated_out": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "67895c8bbab1485385f68c7bf84454a0",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.757104915088207,
+     "sparse_ip": 0.3328520655632019,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "f2cf11d70b8543b5a05882522ef6d649",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.6642238743401419,
+     "sparse_ip": 0.20091372728347778,
+     "rerank_score": null
+    }
+   ]
+  },
+  {
+   "id": "access-01",
+   "category": "access",
+   "user": "hr",
+   "latency_ms": 71.4,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "IDENTIFIER_MISMATCH",
+   "required_identifiers": [
+    "E17-42"
+   ],
+   "missing_identifiers": [
+    "E17-42"
+   ],
+   "leaked": [],
+   "ranked_evidence": []
+  },
+  {
+   "id": "access-02",
+   "category": "access",
+   "user": "hr",
+   "latency_ms": 72.2,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "IDENTIFIER_MISMATCH",
+   "required_identifiers": [
+    "P03-11"
+   ],
+   "missing_identifiers": [
+    "P03-11"
+   ],
+   "leaked": [],
+   "ranked_evidence": []
+  },
+  {
+   "id": "access-03",
+   "category": "access",
+   "user": "hr",
+   "latency_ms": 72.4,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "IDENTIFIER_MISMATCH",
+   "required_identifiers": [
+    "C21-05"
+   ],
+   "missing_identifiers": [
+    "C21-05"
+   ],
+   "leaked": [],
+   "ranked_evidence": []
+  },
+  {
+   "id": "access-04",
+   "category": "access",
+   "user": "fin",
+   "latency_ms": 71.1,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "IDENTIFIER_MISMATCH",
+   "required_identifiers": [
+    "E17-07"
+   ],
+   "missing_identifiers": [
+    "E17-07"
+   ],
+   "leaked": [],
+   "ranked_evidence": []
+  },
+  {
+   "id": "access-05",
+   "category": "access",
+   "user": "fin",
+   "latency_ms": 83.8,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "IDENTIFIER_MISMATCH",
+   "required_identifiers": [
+    "S5-19"
+   ],
+   "missing_identifiers": [
+    "S5-19"
+   ],
+   "leaked": [],
+   "ranked_evidence": []
+  },
+  {
+   "id": "no_basis-01",
+   "category": "no_basis",
+   "user": "sg-ops",
+   "latency_ms": 71.9,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "IDENTIFIER_MISMATCH",
+   "required_identifiers": [
+    "Z99-01"
+   ],
+   "missing_identifiers": [
+    "Z99-01"
+   ],
+   "refused": true,
+   "ranked_evidence": []
+  },
+  {
+   "id": "no_basis-02",
+   "category": "no_basis",
+   "user": "sg-ops",
+   "latency_ms": 72.1,
+   "status": "OK",
+   "reason": null,
+   "required_identifiers": [],
+   "missing_identifiers": [],
+   "refused": false,
+   "ranked_evidence": [
+    {
+     "chunk_id": "5edb159192ba4aaab654d0db52493b5f",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.5940844732986443,
+     "sparse_ip": 0.16817888617515564,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "67895c8bbab1485385f68c7bf84454a0",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.579572819717547,
+     "sparse_ip": 0.16558998823165894,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "f2cf11d70b8543b5a05882522ef6d649",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.5433303741008904,
+     "sparse_ip": 0.14785809814929962,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "8d99a8028f19452d912318a62d8732b2",
+     "document_title": "冷卻系統維護手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.46298487291499546,
+     "sparse_ip": 0.008571427315473557,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "a56bad301e8545c2a9cd31b102e7a914",
+     "document_title": "電源模組排障手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.4218690877908722,
+     "sparse_ip": 0.010675657540559769,
+     "rerank_score": null
+    }
+   ]
+  },
+  {
+   "id": "no_basis-03",
+   "category": "no_basis",
+   "user": "sg-ops",
+   "latency_ms": 71.8,
+   "status": "INSUFFICIENT_EVIDENCE",
+   "reason": "LOW_SCORE",
+   "required_identifiers": [],
+   "missing_identifiers": [],
+   "refused": true,
+   "ranked_evidence": [
+    {
+     "chunk_id": "88e34b8cec5740b0b8065ab0ac7573e6",
+     "document_title": "泵组维护手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.42581795459474026,
+     "sparse_ip": 0.020626291632652283,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "94b560881d7e4f0ba6443316fa4558e8",
+     "document_title": "感測器故障手冊",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.3543368792917453,
+     "sparse_ip": 0.010904461145401001,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "97e5377aeb5745c9878cf71e8a5cfafe",
+     "document_title": "IT 入职指南",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.5321503760331483,
+     "sparse_ip": null,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "a56bad301e8545c2a9cd31b102e7a914",
+     "document_title": "電源模組排障手冊",
+     "revision": 1,
+     "page": 1,
+     "dense_sim": 0.4891438590905861,
+     "sparse_ip": null,
+     "rerank_score": null
+    },
+    {
+     "chunk_id": "a9feaa68bfe44b15bbb99b3c63988076",
+     "document_title": "E17 系列设备故障手册",
+     "revision": 1,
+     "page": 2,
+     "dense_sim": 0.4811635473363324,
+     "sparse_ip": null,
+     "rerank_score": null
+    }
+   ]
+  }
+ ],
+ "preflight": null,
+ "progress_path": null
+}

@@ -340,3 +340,11 @@ FlagEmbedding 包装对象未暴露 Transformers commit 字段，报告中的模
 - 开启精排：上述命中、MRR、越权和拒答数字相同，但 `v5-ops-03` 与 `v5-cross-15` 仍因原有 0.60 精排闸门被拒绝，合计 2/18 个可答例误拒。精排继续默认关闭。
 
 这与第 13 节的主要结论一致，但只是同一小语料回归集的单次复跑。没有独立阈值校准、真实 LLM 端到端净效果或人工支持度结论；历史 12 份语料的报告仍按原指纹保留。
+
+PDF 最终改用内嵌 Noto 字体后，重新生成的文件内容哈希改变；本节成对报告已使用最终 PDF 重新运行，语料指纹 `c276aa551b877eb89ec71bee8cfb5b3a9aba5dba0e4384af90cc344c998c7111` 与第 17 节的 dev 检索报告一致。
+
+## 17. 新提示词 / 最终 PDF 语料的 dev 复测预检（2026-11-08）
+
+在独立的 `knoventra_eval_pdf_newprompt_20261108` PostgreSQL 库完成迁移并用本地 BGE-M3 导入最终 13 份资料（23 个生效块）。[离线 dev 检索报告](../backend/eval/results/dev-retrieval-pdf-20261108.json)的语料指纹与第 16 节一致；20 例中 Ops 7/7、简繁 3/3 Recall@5 命中，越权 5 例泄露 0，无依据检索层拒答 2/3。它没有调用 LLM，不能说明更新后提示词的回答效果。
+
+[谷时段费用预检](../backend/eval/results/dev-agent-pdf-newprompt-20261108-plan.json)与[峰时段费用预检](../backend/eval/results/dev-agent-pdf-newprompt-20261108-peak-plan.json)使用冻结的同一 dev 20 例（用例哈希 `2640ed0341c9221799e9b827a6cb772f705f88d907b53e500e4c8aa8dd182d99`），包含 2 例会在专用评测库写入转交记录。按每次调用假设 4,000 输入 / 最多请求 1,024 输出 token、最多 100 次图模型调用及 DeepSeek Flash 当前[峰谷单价](https://api-docs.deepseek.com/quick_start/pricing/)估算，费用场景为谷时段 US$0.12144、峰时段 US$0.24288。这不是账单上限，实际输入长度、缓存、失败请求和供应商计费均可能不同。当前提示词 SHA-256 为 `7bc8cb46439c42eeb58725d92a9276d776acfe72f8556c757a899dc309a2b40a`；尚未调用模型运行本次复测。
