@@ -3,13 +3,17 @@ from unittest.mock import MagicMock, Mock
 import pymupdf
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 from knoventra.api import routes
 from knoventra.api.deps import get_db
+from knoventra.access.scope import compute_scope
 from knoventra.auth.security import issue_token
 from knoventra.ingestion.chunking import DocumentParseError, chunk_file
 from knoventra.ingestion.service import add_revision
+from knoventra.db.models import Chunk, Document, Revision
 from knoventra.main import app
+from knoventra.retrieval.search import search
 
 
 def source(tmp_path, kind):
@@ -77,6 +81,18 @@ def test_valid_uppercase_markdown_and_pdf_still_preserve_body_and_page(tmp_path)
         doc.new_page().insert_text((20, 30), 'Valid manual')
         doc.save(pdf)
     assert [(c.page, c.text) for c in chunk_file(pdf)] == [(1, 'Valid manual')]
+
+
+def test_seeded_pdf_has_searchable_text_and_real_page_numbers(db, enc, users):
+    doc = db.scalar(select(Document).where(Document.title == '访客证件与门禁操作说明'))
+    assert doc is not None
+    rows = db.execute(select(Chunk.page, Chunk.text).join(Revision, Revision.id == Chunk.revision_id)
+                      .where(Revision.document_id == doc.id, Revision.status == 'PUBLISHED')
+                      .order_by(Chunk.page)).all()
+    assert [page for page, _ in rows] == [1, 2]
+    assert '前台' in rows[0].text and '冻结该证权限' in rows[1].text
+    hits = search(db, enc, compute_scope(db, users['hr']), '访客证遗失 冻结权限', top_k=20).evidence
+    assert any(hit.document_title == doc.title and hit.page == 2 for hit in hits)
 
 
 @pytest.mark.parametrize('error', [PermissionError('disk unavailable'), RuntimeError('unexpected parser failure')])

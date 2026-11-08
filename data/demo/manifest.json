@@ -27,6 +27,7 @@
     {"kb": "fin", "title": "费用报销办法", "lang": "zh-Hans", "files": ["fin-expense.md"], "publish": 1},
     {"kb": "fin", "title": "年度预算说明", "lang": "zh-Hans", "files": ["fin-budget.md"], "publish": 1},
     {"kb": "it-public", "title": "IT 入职指南", "lang": "zh-Hans", "files": ["it-onboarding.md"], "publish": 1},
-    {"kb": "it-public", "title": "VPN 使用说明", "lang": "zh-Hans", "files": ["it-vpn.md"], "publish": 1}
+    {"kb": "it-public", "title": "VPN 使用说明", "lang": "zh-Hans", "files": ["it-vpn.md"], "publish": 1},
+    {"kb": "it-public", "title": "访客证件与门禁操作说明", "lang": "zh-Hans", "files": ["it-badge.pdf"], "publish": 1}
   ]
 }

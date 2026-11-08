@@ -25,7 +25,7 @@
 
 ## 未完成与已知问题
 
-- 评测规模很小（12 份虚构资料，最新运行有 21 个生效块；评测集 60 + 112 例），结果只说明这些用例，不代表通用效果；Recall@5 在此规模下饱和，不能区分配置。
+- 评测规模很小：已保存的真实检索 / LLM 报告使用 12 份虚构资料、21 个生效块；当前种子另增一份两页 PDF，共 13 份资料，旧报告尚未在新语料上复跑。评测集为 60 + 112 例，结果只说明对应语料与用例，不代表通用效果；Recall@5 在小语料下饱和，不能区分配置。
 - 新的真实 LLM dev 20 例已保存当轮来源快照，并完成 10 个可答例的 Codex 逐句审核；**真人审核数仍为 0，不能把 agent 审核率当成人工支持率**。旧报告缺少快照时不能补造历史依据。审核流程见[说明](backend/eval/REVIEW.md)，单次结果见[评测报告](docs/evaluation-report.md)第 15 节。
 - 编码校验覆盖显式 ASCII 编码和有限的带标签两位分写语法；无标签数字、跨句关联、省略型号、范围 / 多选表达不自动推断，编码存在也不证明资料支持所问内容。新 dev 运行发现模型把“日常”误解为“每日”而拒答；运行后已补充提示词约束，尚无新提示词的真实效果测量。
 - Rerank 各配置只做单次小语料对照，独立阈值校准尚未做；`base` 与 `v2-m3` 属于不同日期 / 策略的测量，不能直接比较其净效果。OCR、数据驻留、长期记忆、异步入库、MCP 服务化的原因与扩展方向见[开发方案](docs/knoventra-development-plan.md)第 12 节。
@@ -49,7 +49,7 @@ uv run uvicorn knoventra.main:app
 cd web && npm install && npm run dev
 ```
 
-演示账号与资料见 `data/demo/manifest.json`（密码为虚构的演示值）。不想配置 LLM 时，可用 `backend/dev/mock_server.py` 做界面检查，其回答是固定的，只用于演示流程。
+演示账号与资料见 `data/demo/manifest.json`（密码为虚构的演示值）。资料含 12 份 Markdown 和一份两页 PDF；PDF 的生成脚本为 `data/demo/generate_it_badge_pdf.py`，需要 ReportLab 和中文 TrueType 字体。已入库的旧演示库可再次执行种子命令加入新资料。不想配置 LLM 时，可用 `backend/dev/mock_server.py` 做界面检查，其回答是固定的，只用于演示流程。
 
 测试（使用独立的 `knoventra_test` 库和离线哈希编码器，不需要模型和 LLM）：
 
