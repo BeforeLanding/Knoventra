@@ -1,0 +1,24 @@
+{"id":"th-cal-pos-01","split":"calibration","answerable":true,"user":"hr","question":"访客到访前，接待员工要在 IT 门户登记哪些信息？","expect":{"title":"访客证件与门禁操作说明","page":1,"support_text":"登记姓名、到访日期和接待部门"}}
+{"id":"th-cal-pos-02","split":"calibration","answerable":true,"user":"sg-ops","question":"临时访客证丢失后，接待员工应联系谁处理权限？","expect":{"title":"访客证件与门禁操作说明","page":2,"support_text":"联系 IT 服务台冻结该证权限"}}
+{"id":"th-cal-pos-03","split":"calibration","answerable":true,"user":"sg-ops","question":"E17 主轴温度异常时，手册先要求确认哪项环境条件？","expect":{"title":"E17 系列设备故障手册","page":2,"support_text":"确认环境温度是否超过 35 摄氏度"}}
+{"id":"th-cal-pos-04","split":"calibration","answerable":true,"user":"tw-ops","question":"泵組平時要每週檢查哪兩種異常？","expect":{"title":"泵组维护手册","page":1,"support_text":"每周检查泵组振动与异响"}}
+{"id":"th-cal-pos-05","split":"calibration","answerable":true,"user":"tw-ops","question":"感測器接頭檢查後，接下來要執行哪一項校正？","expect":{"title":"感測器故障手冊","page":2,"support_text":"執行零點校正"}}
+{"id":"th-cal-pos-06","split":"calibration","answerable":true,"user":"hr","question":"年假申请最晚应提前几个工作日？","expect":{"title":"休假制度","page":1,"support_text":"须提前 5 个工作日在 HR 系统申请"}}
+{"id":"th-cal-neg-01","split":"calibration","answerable":false,"user":"hr","question":"领取临时访客证需要交多少押金？"}
+{"id":"th-cal-neg-02","split":"calibration","answerable":false,"user":"sg-ops","question":"访客证遗失后 IT 服务台必须在多少分钟内冻结权限？"}
+{"id":"th-cal-neg-03","split":"calibration","answerable":false,"user":"sg-ops","question":"E17 设备的保修期是几年？"}
+{"id":"th-cal-neg-04","split":"calibration","answerable":false,"user":"tw-ops","question":"泵組濾網需要每隔幾天更換一次？"}
+{"id":"th-cal-neg-05","split":"calibration","answerable":false,"user":"tw-ops","question":"感測器零點校正必須使用哪個品牌的儀器？"}
+{"id":"th-cal-neg-06","split":"calibration","answerable":false,"user":"hr","question":"病假一年最多可以請幾天？"}
+{"id":"th-val-pos-01","split":"validation","answerable":true,"user":"fin","question":"访客进入办公区时需要谁陪同？","expect":{"title":"访客证件与门禁操作说明","page":1,"support_text":"进入办公区时须由接待员工陪同"}}
+{"id":"th-val-pos-02","split":"validation","answerable":true,"user":"hr","question":"临时访客证离开时交还到哪里？","expect":{"title":"访客证件与门禁操作说明","page":2,"support_text":"交还一层前台"}}
+{"id":"th-val-pos-03","split":"validation","answerable":true,"user":"sg-ops","question":"E17 冷却液低于刻度线时该怎么处理？","expect":{"title":"E17 系列设备故障手册","page":2,"support_text":"低于刻度线需补充"}}
+{"id":"th-val-pos-04","split":"validation","answerable":true,"user":"tw-ops","question":"冷卻液的更換週期是多久？","expect":{"title":"冷卻系統維護手冊","page":1,"support_text":"冷卻液每六個月更換一次"}}
+{"id":"th-val-pos-05","split":"validation","answerable":true,"user":"fin","question":"一笔报销超过多少元需要部门负责人审批？","expect":{"title":"费用报销办法","page":1,"support_text":"单笔超过 5000 元需部门负责人审批"}}
+{"id":"th-val-pos-06","split":"validation","answerable":true,"user":"sg-ops","question":"远程接入用的 VPN 客户端在哪里下载？","expect":{"title":"VPN 使用说明","page":1,"support_text":"VPN 客户端可在 IT 门户下载"}}
+{"id":"th-val-neg-01","split":"validation","answerable":false,"user":"fin","question":"周末一层前台领取临时访客证的营业时间是几点？"}
+{"id":"th-val-neg-02","split":"validation","answerable":false,"user":"hr","question":"访客证到期后如何在线续期？"}
+{"id":"th-val-neg-03","split":"validation","answerable":false,"user":"sg-ops","question":"E17 主轴的温度报警阈值具体是多少摄氏度？"}
+{"id":"th-val-neg-04","split":"validation","answerable":false,"user":"tw-ops","question":"冷卻液必須使用哪個品牌？"}
+{"id":"th-val-neg-05","split":"validation","answerable":false,"user":"fin","question":"出租车费用每次最多能报销多少元？"}
+{"id":"th-val-neg-06","split":"validation","answerable":false,"user":"sg-ops","question":"公司 VPN 客户端支持哪些操作系统版本？"}
