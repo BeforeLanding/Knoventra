@@ -1,6 +1,6 @@
 """Rebuild the fictional two-page PDF used by the demo seed.
 
-Requires reportlab. Run from the repository root:
+Requires reportlab and fonttools. Run from the repository root:
     python data/demo/generate_it_badge_pdf.py
 """
 from pathlib import Path
@@ -17,13 +17,30 @@ OUTPUT = Path(__file__).resolve().parent / "docs" / "it-badge.pdf"
 
 def main() -> None:
     candidates = [Path(os.environ["KNV_DEMO_FONT"])] if os.environ.get("KNV_DEMO_FONT") else [
-        Path("C:/Windows/Fonts/simhei.ttf"),
+        Path("C:/Windows/Fonts/NotoSansSC-VF.ttf"),
         Path("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc"),
     ]
     font_path = next((path for path in candidates if path.is_file()), None)
     if font_path is None:
         raise SystemExit("Set KNV_DEMO_FONT to a Chinese TrueType font file")
-    pdfmetrics.registerFont(TTFont("DemoCJK", str(font_path)))
+    # The installed Noto variable font defaults to weight 100. Freeze a readable
+    # medium weight before embedding; keep the generated static font out of git.
+    if font_path.name == "NotoSansSC-VF.ttf":
+        from fontTools.ttLib import TTFont as VariableFont
+        from fontTools.varLib.instancer import instantiateVariableFont
+
+        temp_font = OUTPUT.with_suffix(".font.tmp.ttf")
+        variable = VariableFont(str(font_path))
+        try:
+            instantiateVariableFont(variable, {"wght": 500}, inplace=True).save(str(temp_font))
+        finally:
+            variable.close()
+        try:
+            pdfmetrics.registerFont(TTFont("DemoCJK", str(temp_font)))
+        finally:
+            temp_font.unlink(missing_ok=True)
+    else:
+        pdfmetrics.registerFont(TTFont("DemoCJK", str(font_path)))
     pdf = canvas.Canvas(str(OUTPUT), pagesize=A4, invariant=1)
     pdf.setTitle("访客证件与门禁操作说明（虚构演示）")
     pdf.setAuthor("示例精密设备公司 · IT")

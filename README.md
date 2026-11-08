@@ -49,7 +49,7 @@ uv run uvicorn knoventra.main:app
 cd web && npm install && npm run dev
 ```
 
-演示账号与资料见 `data/demo/manifest.json`（密码为虚构的演示值）。资料含 12 份 Markdown 和一份两页 PDF；PDF 的生成脚本为 `data/demo/generate_it_badge_pdf.py`，需要 ReportLab 和中文 TrueType 字体。已入库的旧演示库可再次执行种子命令加入新资料。不想配置 LLM 时，可用 `backend/dev/mock_server.py` 做界面检查，其回答是固定的，只用于演示流程。
+演示账号与资料见 `data/demo/manifest.json`（密码为虚构的演示值）。资料含 12 份 Markdown 和一份两页 PDF；PDF 的生成脚本为 `data/demo/generate_it_badge_pdf.py`，需要 ReportLab、FontTools 和中文 TrueType 字体。已入库的旧演示库可再次执行种子命令加入新资料。不想配置 LLM 时，可用 `backend/dev/mock_server.py` 做界面检查，其回答是固定的，只用于演示流程。
 
 测试（使用独立的 `knoventra_test` 库和离线哈希编码器，不需要模型和 LLM）：
 
