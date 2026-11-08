@@ -11,8 +11,17 @@ from knoventra.api.deps import current_user, get_db, require_admin
 from knoventra.auth.security import issue_token, verify_password
 from knoventra.config import settings
 from knoventra.db.models import Document, KnowledgeBase, Revision, User
-from knoventra.ingestion.encoder import get_encoder
-from knoventra.ingestion.service import add_revision, publish
+from knoventra.ingestion.chunking import DocumentParseError
+from knoventra.ingestion.encoder import EncoderOutputError, get_encoder
+from knoventra.ingestion.service import (
+    SUPPORTED_LANGUAGES,
+    TITLE_MAX_CHARS,
+    DocumentMetadataError,
+    add_revision,
+    publish,
+    validate_revision_metadata,
+)
+from knoventra.ingestion.uploads import UploadTooLarge, copy_upload
 from knoventra.retrieval.search import search
 
 router = APIRouter(prefix="/api/v1")
@@ -34,7 +43,7 @@ def login(body: LoginIn, db: Session = Depends(get_db)):
 @router.get("/me")
 def me(user: User = Depends(current_user)):
     return {"id": user.id, "email": user.email, "region": user.region,
-            "department": user.department, "role": user.role}
+            "department": user.department, "role": user.role, "chat_max_chars": settings.chat_max_chars}
 
 
 @router.get("/debug/search")
@@ -63,11 +72,24 @@ def upload_document(kb: str = Form(...), title: str = Form(...), lang: str = For
     if suffix not in {".md", ".pdf"}:
         raise HTTPException(400, "only .md and .pdf")
     try:
+        validate_revision_metadata(db, kb_id=kb_row.id, title=title, lang=lang)
         with tempfile.TemporaryDirectory() as td:
             p = Path(td) / f"upload{suffix}"
-            p.write_bytes(file.file.read())
+            copy_upload(file.file, p, settings.upload_max_bytes)
             rev = add_revision(db, get_encoder(), kb_id=kb_row.id, title=title, lang=lang, path=p)
         db.commit()
+    except EncoderOutputError:
+        db.rollback()
+        raise HTTPException(503, "ENCODER_OUTPUT_INVALID") from None
+    except DocumentParseError as error:
+        db.rollback()
+        raise HTTPException(422, {"code": "DOCUMENT_PARSE_INVALID", "message": str(error)}) from None
+    except DocumentMetadataError as error:
+        db.rollback()
+        raise HTTPException(422, {"code": "INVALID_DOCUMENT_METADATA", "message": str(error)}) from None
+    except UploadTooLarge:
+        db.rollback()
+        raise HTTPException(413, {"code": "UPLOAD_TOO_LARGE", "max_bytes": settings.upload_max_bytes}) from None
     except ValueError as e:
         db.rollback()
         raise HTTPException(422, str(e)) from None
@@ -88,12 +110,21 @@ def publish_revision(revision_id: str, _: User = Depends(require_admin), db: Ses
 
 @router.get("/admin/documents")
 def list_documents(_: User = Depends(require_admin), db: Session = Depends(get_db)):
-    kbs = [k.name for k in db.scalars(select(KnowledgeBase).order_by(KnowledgeBase.name))]
-    docs = []
-    for d, kb in db.execute(select(Document, KnowledgeBase).join(KnowledgeBase, KnowledgeBase.id == Document.kb_id)
-                            .order_by(KnowledgeBase.name, Document.title)):
-        revs = db.scalars(select(Revision).where(Revision.document_id == d.id).order_by(Revision.version)).all()
-        docs.append({"kb": kb.name, "title": d.title, "lang": d.source_lang,
-                     "revisions": [{"id": r.id, "version": r.version, "status": r.status,
-                                    "published_at": r.published_at} for r in revs]})
-    return {"kbs": kbs, "documents": docs}
+    kbs = list(db.scalars(select(KnowledgeBase.name).order_by(KnowledgeBase.name)))
+    # Read only catalog fields, with a left join so revisionless documents stay
+    # visible. The number of reads does not grow with the number of documents.
+    rows = db.execute(select(
+        Document.id, KnowledgeBase.name.label("kb"), Document.title, Document.source_lang,
+        Revision.id.label("revision_id"), Revision.version, Revision.status, Revision.published_at,
+    ).join(KnowledgeBase, KnowledgeBase.id == Document.kb_id)
+     .outerjoin(Revision, Revision.document_id == Document.id)
+     .order_by(KnowledgeBase.name, Document.title, Document.id, Revision.version, Revision.id))
+    docs = {}
+    for row in rows:
+        doc = docs.setdefault(row.id, {"kb": row.kb, "title": row.title, "lang": row.source_lang,
+                                      "revisions": []})
+        if row.revision_id is not None:
+            doc["revisions"].append({"id": row.revision_id, "version": row.version, "status": row.status,
+                                     "published_at": row.published_at})
+    return {"kbs": kbs, "documents": list(docs.values()), "upload_max_bytes": settings.upload_max_bytes,
+            "upload_rules": {"title_max_chars": TITLE_MAX_CHARS, "languages": list(SUPPORTED_LANGUAGES)}}

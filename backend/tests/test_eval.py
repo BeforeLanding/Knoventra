@@ -72,6 +72,54 @@ def test_unsupported_flags_fail_before_loading_models(monkeypatch, args):
     assert error.value.code == 2
 
 
+def test_corpus_fingerprints_track_published_text_and_grants_independently(db):
+    from knoventra.db.models import Chunk, KbGrant, Revision
+    from sqlalchemy import select
+
+    initial = run_eval.corpus_fingerprints(db)
+    assert initial == run_eval.corpus_fingerprints(db)
+    with db.begin_nested() as savepoint:
+        chunk = db.scalar(select(Chunk).join(Revision).where(Revision.status == "PUBLISHED").limit(1))
+        chunk.text += " 新增片段。"
+        db.flush()
+        changed = run_eval.corpus_fingerprints(db)
+        assert changed["published_text_sha256"] != initial["published_text_sha256"]
+        assert changed["grants_sha256"] == initial["grants_sha256"]
+        savepoint.rollback()
+    assert run_eval.corpus_fingerprints(db) == initial
+    grant = db.scalar(select(KbGrant).limit(1))
+    grant.region = "ZZ"
+    db.flush()
+    changed = run_eval.corpus_fingerprints(db)
+    assert changed["published_text_sha256"] == initial["published_text_sha256"]
+    assert changed["grants_sha256"] != initial["grants_sha256"]
+
+
+def test_existing_eval_output_is_rejected_before_models_load(tmp_path, monkeypatch):
+    path = tmp_path / "existing.json"
+    path.write_text("original", encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["run_eval", "--out", str(path)])
+    with pytest.raises(SystemExit) as error:
+        run_eval.main()
+    assert error.value.code == 2 and path.read_text(encoding="utf-8") == "original"
+
+
+def test_dependency_metadata_records_missing_optional_packages_without_imports(monkeypatch):
+    def absent(package):
+        raise run_eval.PackageNotFoundError(package)
+    monkeypatch.setattr(run_eval, "version", absent)
+    assert all(value is None for value in run_eval.dependency_versions().values())
+
+
+def test_paired_runner_requires_confirmation_and_a_new_directory(tmp_path, monkeypatch):
+    import run_rerank_pair
+    for flags in ([], ["--confirm-final"]):
+        monkeypatch.setattr(sys, "argv", ["pair", "--out-dir", str(tmp_path), *flags])
+        with pytest.raises(SystemExit) as error:
+            run_rerank_pair.main()
+        assert error.value.code == 2
+
+
 def test_retrieval_eval_runs_and_has_zero_leaks(db, enc, users):
     cases = run_eval.load_cases("all")
     res = run_eval.eval_retrieval(db, enc, None, users, cases, use_sparse=True, use_opencc=True, threshold=0.6)
@@ -100,6 +148,34 @@ def test_agent_eval_escalation_counts(db, enc, users):
         assert all(r["ok"] for r in rs), rs
     finally:
         pool.close()
+
+
+@pytest.mark.parametrize("reason,answer,error", [
+    ("length", "请检查循环泵 [S1] 然后", "MODEL_OUTPUT_TRUNCATED"),
+    ("stop", "无引用的回答", "MODEL_CITATION_MISSING"),
+])
+def test_incomplete_eval_answer_is_an_operational_failure_not_a_refusal(db, enc, users, monkeypatch, reason, answer, error):
+    from analyze_refusals import analyze
+    from fakes import ScriptedModel, call, session_factory_for
+    from langchain_core.messages import AIMessage, ToolMessage
+    from langgraph.checkpoint.memory import InMemorySaver
+    from knoventra.agent.graph import AgentDeps, build_graph
+    from knoventra.config import settings
+    monkeypatch.setattr(settings, "gate_threshold", 0.1)
+    monkeypatch.setattr(settings, "gate_sparse_threshold", 1e9)
+    def script(msgs):
+        if isinstance(msgs[-1], ToolMessage):
+            return AIMessage(answer, response_metadata={"finish_reason": reason})
+        return call("search_knowledge", {"query": "E17-42 排查"})
+    graph = build_graph(AgentDeps(session_factory_for(db), enc, None, ScriptedModel(script=script), InMemorySaver()))
+    case = run_eval.load_cases("dev")[0]
+    result = run_eval.eval_agent(graph, db, users, [case])
+    assert result[0]["diagnostics"]["model_finish_reason"] == reason
+    assert result[0]["error_code"] == error
+    assert result[0]["cited_ok"] is False and result[0]["review_snapshot"]["sources"] == []
+    triage = analyze({"mode": "agent", "cases": result})
+    assert triage["operational_failures"] == 1 and triage["refused_cases"] == 0
+    assert triage["cases"][0]["bucket"] == "operational_failure"
 
 
 @pytest.mark.parametrize("question,bucket,reason", [

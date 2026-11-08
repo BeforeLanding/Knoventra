@@ -27,6 +27,15 @@ def test_rerank_preserves_heading_context_and_original_source():
     assert ev[0].text == "執行零點校正。"
 
 
+def test_rerank_uses_same_split_code_normalization_as_recall():
+    rr = Mock()
+    rr.score.return_value = [0.9]
+    original = evidence("a", "故障碼 S5-19", "執行零點校正。")
+    module.rerank(rr, "s5設備報錯誤碼19 如何處理", [original], top_k=1)
+    rr.score.assert_called_once_with("S5-19 如何處理", ["故障碼 S5-19\n執行零點校正。"])
+    assert original.text == "執行零點校正。"
+
+
 @pytest.mark.parametrize("scores", [[], [0.9], [0.1, 0.2, 0.3], [float("nan"), 0.8],
                                     [float("inf"), 0.8], [-0.1, 0.8], [1.1, 0.8], [True, 0.8],
                                     [None, 0.8], ["0.8", 0.8]])

@@ -8,9 +8,41 @@
 
 这些是评测文件中的离线副本，不是新建的对外查询接口，也不替代在线预览的重新鉴权。审核不连接数据库、不重新检索、不调用 LLM。校验值用于检测意外修改；它不是签名，也不能证明审核意见正确。
 
-旧报告若没有 `review_snapshot`，会报 `no captured source snapshot`，不能用当前库重建旧来源。历史报告保持原样。新的真实 LLM 评测仍按开发方案先估算费用、确认后运行；本轮测试使用离线编码器与脚本模型，没有产生在线评测费用。
+旧报告若没有 `review_snapshot`，会报 `no captured source snapshot`，不能用当前库重建旧来源。历史报告保持原样。新的真实 LLM 评测仍按开发方案先估算费用、确认后运行。2026-11-08 已在确认后完成一次 dev 20 例真实运行，并保留[原始报告](results/dev-agent-20261108.json)和[未标注审核包](results/dev-agent-20261108-review.json)。另有 10 个可答例的 Codex 审核，`reviewer_kind` 为 `agent`；真人审核尚未完成，详见[评测报告](../../docs/evaluation-report.md)第 15 节。
 
 ## 2. 生成审核包
+
+先用 `run_eval.py --mode agent --split dev --case-id ops-01 --dry-run` 检查用例与调用估计。
+填入实际输入 / 输出单价后可预览费用场景；真实运行还需显式 `--allow-llm`。
+命令、token 限制和估算边界见[后端说明](../README.md)。预检 JSON 不是 Agent 报告，不能生成回答审核包。
+真实评测使用专用种子库；转交用例会按预设决定恢复确认，可能提交转交记录，预检字段
+`confirmation_decision_cases` 列出这类用例。调用模型前仍须按方案确认费用。
+
+真实运行逐例写入 `<报告路径>.progress.jsonl`（可用 `--progress-out` 指定），保存开始时的线程 ID
+以及完成后的原始回答 / 快照 / 诊断。中途失败保留已完成记录，成功写出正式报告后才记
+`run_completed`。日志不自动恢复执行，也不能直接作为审核包输入；失败运行不发布汇总指标。
+进程被强制终止可能没有结尾事件，最后一行也可能不完整。日志含完整资料正文，按报告同等保护。
+
+### 离线检查运行日志
+
+```bash
+uv run python eval/inspect_progress.py eval/results/new-agent-run.json.progress.jsonl --out eval/results/new-agent-inspection.json
+# 已有正式报告时，显式指定要核对的文件；工具不自动打开日志中的路径
+uv run python eval/inspect_progress.py eval/results/new-agent-run.json.progress.jsonl --report eval/results/new-agent-run.json --out eval/results/new-agent-verified.json
+```
+
+输出列出已完成 ID、当前未完成用例及线程 ID、尚未开始 ID，以及 `completed` / `failed` /
+`unclosed` 状态。`unclosed` 只说明没有完整终态，不证明进程仍在运行；报告已保存后再发生
+输出错误时为 `completed_with_error`。未完成用例仍可能已计费或提交转交记录。
+
+默认拒绝未以换行结束的末行。确认日志来自已停止的进程后，可加 `--allow-truncated-tail`
+忽略该末行（包括截断的 UTF-8 字符），输出会明确标记；中间坏行不会跳过，终态后的截断也
+不会默默接受。读取正在写入的文件只能得到某一时刻的前缀，不应用来判断运行是否已经结束。
+
+检查会验证事件顺序、所选用例顺序、唯一线程、完成结果与证据快照；显式核对报告时还比较
+预检、用例摘要、split、语料、逐例结果及重算指标。尚未记录到日志的配置字段无法由日志核实，
+摘要也不是防篡改签名。检查结果不含回答质量指标，不是 Agent 报告或回答审核输入；不自动
+恢复、重试或调用模型，也不连接数据库。输出独占创建，不覆盖原日志、报告或已有检查结果。
 
 从 `backend/` 运行，输入应为新产生的 Agent 报告：
 
@@ -66,7 +98,31 @@ uv run python eval/review_answers.py summarize eval/results/new-agent-review.jso
 
 ## 5. 先定位拒答发生在哪一层
 
+查询数值策略在新报告中记为 `config.query_vector_policy: float32-finite-v1`：查询按 float32
+回环精度序列化，归零的稠密通道跳过；无有效通道返回空召回。候选的非有限距离不进入融合，
+检索报告阶段字段可记录 `dense_unscorable` / `sparse_unscorable` 中的本人有权 chunk ID。
+这些数值诊断不作为模型证据，不证明语义支持关系；其他有限通道仍可贡献同一块。历史报告
+未标记时保持原样，不能据当前代码重建旧查询排序，也不能将旧效果数字直接当作新策略实测。
+
 新 Agent 评测还保存每例 `expect` 和 `diagnostics`。诊断包含按调用顺序排列的检索查询、工具调用 ID、返回状态、闸门拒绝原因、所需与缺失编码、实际返回的 chunk ID，以及最终回答是否使用了简体 / 繁体拒答控制标记。这些字段只用于检查运行状态，不加入模型消息，不新增公开诊断接口。新用户轮次清空追踪；同一轮重试累积追踪，interrupt 恢复保留已有追踪。
+
+新报告还保存可选的 `diagnostics.model_finish_reason`（最后一次模型响应的完成原因）。
+`length` 对应 `MODEL_OUTPUT_TRUNCATED`，模型响应含无法解析的工具调用时对应
+`MODEL_TOOL_CALL_INVALID`；二者终止本轮并清空展示引用，保留已有检索证据与诊断，不执行
+该响应中的工具调用、不自动重试。在预期可答用例中它们归为 `operational_failure`，不算
+“无依据拒答”或过度拒答。历史报告没有完成原因时不回填；供应商未提供标记的截断无法自动识别。
+
+`MODEL_TOOL_CALL_INVALID` 也包括 JSON 已解析但参数不符合工具契约的响应：缺字段、错误类型、
+空白 / 超长文本、额外字段、未知工具、空或重复调用 ID、单响应多次转交。整批执行前校验，
+不发生“先执行合法调用、再发现另一个不合法”的部分执行；它仍归为运行故障，不算无依据拒答。
+
+纯检索批次之后的正常回答若没有任何当轮有效引用，会以 `MODEL_CITATION_MISSING` 结束，
+最终答案替换为固定错误文本、展示引用为空，原检索证据仍保存在快照中。可答例的该错误归为
+`operational_failure`，不计无依据拒答。纯检索无证据且带拒答错误码时，最终输出固定拒答文本，
+避免保存模型忽略闸门后生成的操作建议；明确拒答控制标记仍记录在诊断中。
+转交 / 状态查询等工作流批次（含与检索混合的批次）及未检索对话不受这个引用要求约束。
+一条有效引用不证明整段答案或每个论断均被支持，人工支持度复核仍须进行。旧报告不重写。
+新 Agent 报告用 `config.citation_policy: retrieval-batch-v1` 标明该行为，便于区分历史结果口径。
 
 在 `backend/` 执行：
 

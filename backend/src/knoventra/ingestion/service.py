@@ -10,28 +10,46 @@ from sqlalchemy.orm import Session
 
 from knoventra.db.models import Chunk, Document, Revision
 from knoventra.ingestion.chunking import chunk_file
-from knoventra.ingestion.encoder import Encoder
+from knoventra.ingestion.encoder import Encoder, encode_checked
 from knoventra.ingestion.normalize import to_simplified
+
+TITLE_MAX_CHARS = 255
+SUPPORTED_LANGUAGES = ("zh-Hans", "zh-Hant", "en")
+
+
+class DocumentMetadataError(ValueError):
+    pass
+
+
+def validate_revision_metadata(db: Session, *, kb_id: str, title: str, lang: str) -> None:
+    if not isinstance(title, str) or not title.strip() or len(title) > TITLE_MAX_CHARS or "\x00" in title:
+        raise DocumentMetadataError("title must be nonblank, at most 255 characters and contain no NUL")
+    if lang not in SUPPORTED_LANGUAGES:
+        raise DocumentMetadataError("language must be zh-Hans, zh-Hant or en")
+    # This preflight must not flush unrelated pending writes or acquire document locks.
+    with db.no_autoflush:
+        existing_lang = db.scalar(select(Document.source_lang).where(Document.kb_id == kb_id, Document.title == title))
+    if existing_lang is not None and existing_lang != lang:
+        raise DocumentMetadataError("revision language must match the existing document")
 
 
 def add_revision(db: Session, enc: Encoder, *, kb_id: str, title: str, lang: str, path: Path) -> Revision:
     """Parse, encode and store a new DRAFT revision. Nothing is searchable until `publish`."""
+    validate_revision_metadata(db, kb_id=kb_id, title=title, lang=lang)
     chunks = chunk_file(path)
     if not chunks:
         raise ValueError("document contains no extractable text")
     norms = [to_simplified(c.text) for c in chunks]
     # Dense encoding keeps original glyphs; sparse encoding shares a simplified vocabulary.
-    dense = enc.encode([c.text for c in chunks])
-    sparse = enc.encode(norms)
-    if len(dense) != len(chunks) or len(sparse) != len(chunks):
-        raise ValueError("encoder result count does not match document chunks")
+    dense = encode_checked(enc, [c.text for c in chunks])
+    sparse = encode_checked(enc, norms)
     # Encode before acquiring the lock; an expensive/failed encoder must not
     # block other uploads or mutate a document. Unique identity handles first uploads.
     db.execute(pg_insert(Document).values(kb_id=kb_id, title=title, source_lang=lang)
                .on_conflict_do_nothing(index_elements=["kb_id", "title"]))
     doc = db.scalar(select(Document).where(Document.kb_id == kb_id, Document.title == title).with_for_update())
     if doc.source_lang != lang:
-        raise ValueError("revision language must match the existing document")
+        raise DocumentMetadataError("revision language must match the existing document")
     last = db.scalar(
         select(Revision.version).where(Revision.document_id == doc.id).order_by(Revision.version.desc()).limit(1)
     )

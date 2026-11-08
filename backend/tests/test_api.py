@@ -57,6 +57,21 @@ def test_admin_list_documents(client):
     assert [r["status"] for r in e17["revisions"]] == ["PUBLISHED", "DRAFT"] and "hr" in d["kbs"]
 
 
+def test_upload_accepts_the_exact_byte_limit_and_keeps_the_previous_revision_published(client, monkeypatch):
+    from knoventra.config import settings
+    body = b"# VPN\n## Setup\nUse SSO to access VPN."
+    monkeypatch.setattr(settings, "upload_max_bytes", len(body))
+    headers = tok(client, "admin")
+    result = client.post('/api/v1/admin/documents', headers=headers,
+                         data={'kb': 'it-public', 'title': 'VPN 使用说明', 'lang': 'zh-Hans'},
+                         files={'file': ('exact.md', body, 'text/markdown')})
+    assert result.status_code == 200 and result.json()['status'] == 'DRAFT'
+    catalog = client.get('/api/v1/admin/documents', headers=headers).json()
+    assert catalog['upload_max_bytes'] == len(body)
+    doc = next(d for d in catalog['documents'] if d['title'] == 'VPN 使用说明')
+    assert [r['status'] for r in doc['revisions']] == ['PUBLISHED', 'DRAFT']
+
+
 @pytest.mark.parametrize("body,lang", [("# 仅标题", "zh-Hans"), ("# VPN\n正文。", "zh-Hant")])
 def test_invalid_upload_returns_validation_error_without_new_revision(client, body, lang):
     h = tok(client, "admin")

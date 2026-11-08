@@ -1,4 +1,10 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, ValidationInfo, field_validator
+from typing import Literal
+
+
+class ModelConfigurationError(RuntimeError):
+    """Invalid model selection or unsupported changes to a loaded encoder."""
 
 
 class Settings(BaseSettings):
@@ -8,15 +14,17 @@ class Settings(BaseSettings):
     jwt_secret: str = "dev-only-change-me-dev-only-change-me"
     jwt_ttl_minutes: int = 480
     env: str = "dev"
+    upload_max_bytes: int = Field(default=20 * 1024 * 1024, gt=0)
+    chat_max_chars: int = Field(default=4000, gt=0)
     # "bge-m3" loads the real model (needs the `ml` extra); "hash" is a deterministic
     # offline encoder used by tests and CI.
-    encoder: str = "hash"
-    dense_dim: int = 1024
-    sparse_dim: int = 250002  # BGE-M3 XLM-R vocabulary size
+    encoder: Literal["hash", "bge-m3"] = "hash"
+    dense_dim: int = Field(default=1024, gt=0)
+    sparse_dim: int = Field(default=250002, gt=0)  # BGE-M3 XLM-R vocabulary size
     recall_top_k: int = 20
     final_top_k: int = 5
     rrf_k: int = 60
-    rerank: str = "off"  # off | bge
+    rerank: Literal["off", "bge"] = "off"
     rerank_model: str = "BAAI/bge-reranker-v2-m3"
     rerank_candidates: int = 10
     # A separate sigmoid-score scale; 0.60 preserves the previous rerank default,
@@ -31,6 +39,13 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     llm_model: str = ""
     llm_timeout_s: float = 60.0
+
+    @field_validator("rerank_model")
+    @classmethod
+    def active_reranker_requires_name(cls, value: str, info: ValidationInfo) -> str:
+        if info.data.get("rerank") == "bge" and not value.strip():
+            raise ValueError("rerank_model must be nonblank when rerank=bge")
+        return value
 
 
 settings = Settings()

@@ -1,0 +1,1744 @@
+{
+  "schema_version": 1,
+  "report_sha256": "085aae52b99466b1d419b10a4a17cbe79d254418e2bf36a8649c54cfe855c71c",
+  "selected_case_ids": [
+    "ops-01",
+    "ops-02",
+    "ops-03",
+    "ops-04",
+    "ops-05",
+    "ops-06",
+    "ops-07",
+    "cross-01",
+    "cross-02",
+    "cross-03",
+    "access-01",
+    "access-02",
+    "access-03",
+    "access-04",
+    "access-05",
+    "no_basis-01",
+    "no_basis-02",
+    "no_basis-03",
+    "escalation-01",
+    "escalation-02"
+  ],
+  "cases": [
+    {
+      "id": "ops-01",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "E17 设备报代码 42 先查什么",
+        "answer": "E17 设备显示代码 42（完整码 E17-42）表示**主轴温度超过阈值** [S1]。建议按以下顺序排查：\n\n1. **先确认环境温度是否超过 35 摄氏度** [S2]。\n2. 检查冷却液液位，低于刻度线需补充 [S2]。\n3. 复位设备并观察 10 分钟 [S2]。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志 [S2]。\n\n因此「先查什么」的答案是：**先看环境温度是否高于 35 ℃** [S2]。",
+        "evidence": [
+          {
+            "alias": "S1",
+            "chunk_id": "387d6e7a5d74445386ce4ea4038511ff",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常",
+            "text": "设备显示代码 42（完整码 E17-42）表示主轴温度超过阈值。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "65ec1555278a46a0af9d146df518dba4",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常 > 排查步骤",
+            "text": "1. 确认环境温度是否超过 35 摄氏度。\n2. 检查冷却液液位，低于刻度线需补充。\n3. 复位设备并观察 10 分钟。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "sources": [
+          {
+            "alias": "S1",
+            "chunk_id": "387d6e7a5d74445386ce4ea4038511ff",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常",
+            "text": "设备显示代码 42（完整码 E17-42）表示主轴温度超过阈值。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "65ec1555278a46a0af9d146df518dba4",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常 > 排查步骤",
+            "text": "1. 确认环境温度是否超过 35 摄氏度。\n2. 检查冷却液液位，低于刻度线需补充。\n3. 复位设备并观察 10 分钟。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "error_code": null,
+        "sha256": "01fa015cd1df4294db92c5a6118677563c446db5098d3e295b790ae3a73c0958"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "E17 设备显示代码 42（完整码 E17-42）表示**主轴温度超过阈值** [S1]。",
+          "citations": [
+            "S1"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "建议按以下顺序排查：",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C3",
+          "text": "1. **先确认环境温度是否超过 35 摄氏度** [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C4",
+          "text": "2. 检查冷却液液位，低于刻度线需补充 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C5",
+          "text": "3. 复位设备并观察 10 分钟 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C6",
+          "text": "4. 若仍报 E17-42，联系 Ops 二线并附上日志 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C7",
+          "text": "因此「先查什么」的答案是：**先看环境温度是否高于 35 ℃** [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "ops-02",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "E17-42 主轴温度异常怎么处理",
+        "answer": "E17-42 表示主轴温度超过阈值 [S1]。可按以下步骤排查：\n\n1. 确认环境温度是否超过 35 摄氏度 [S2]。\n2. 检查冷却液液位；如果低于刻度线，需要补充 [S2]。\n3. 复位设备并观察 10 分钟 [S2]。\n4. 如果仍报 E17-42，请联系 Ops 二线，并附上日志 [S2]。\n\n如需转交人工专家跟进，请告诉我。",
+        "evidence": [
+          {
+            "alias": "S1",
+            "chunk_id": "387d6e7a5d74445386ce4ea4038511ff",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常",
+            "text": "设备显示代码 42（完整码 E17-42）表示主轴温度超过阈值。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "65ec1555278a46a0af9d146df518dba4",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常 > 排查步骤",
+            "text": "1. 确认环境温度是否超过 35 摄氏度。\n2. 检查冷却液液位，低于刻度线需补充。\n3. 复位设备并观察 10 分钟。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "sources": [
+          {
+            "alias": "S1",
+            "chunk_id": "387d6e7a5d74445386ce4ea4038511ff",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常",
+            "text": "设备显示代码 42（完整码 E17-42）表示主轴温度超过阈值。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "65ec1555278a46a0af9d146df518dba4",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常 > 排查步骤",
+            "text": "1. 确认环境温度是否超过 35 摄氏度。\n2. 检查冷却液液位，低于刻度线需补充。\n3. 复位设备并观察 10 分钟。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "error_code": null,
+        "sha256": "52dd5e561d90f42109f50c9e70b6712505723ab3ecd9dcc0f5bf65da1dc3a14f"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "E17-42 表示主轴温度超过阈值 [S1]。",
+          "citations": [
+            "S1"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "可按以下步骤排查：",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C3",
+          "text": "1. 确认环境温度是否超过 35 摄氏度 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C4",
+          "text": "2. 检查冷却液液位；",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C5",
+          "text": "如果低于刻度线，需要补充 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C6",
+          "text": "3. 复位设备并观察 10 分钟 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C7",
+          "text": "4. 如果仍报 E17-42，请联系 Ops 二线，并附上日志 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C8",
+          "text": "如需转交人工专家跟进，请告诉我。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "ops-03",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "E17-42 复位后仍然报警应该联系谁",
+        "answer": "E17-42 表示主轴温度超过阈值 [S2]。按手册排查步骤，复位设备后观察 10 分钟；若仍报 E17-42，请联系 **Ops 二线**，并附上日志 [S1]。\n\n（前序步骤：确认环境温度是否超过 35 摄氏度、检查冷却液液位是否低于刻度线 [S1]。）",
+        "evidence": [
+          {
+            "alias": "S1",
+            "chunk_id": "65ec1555278a46a0af9d146df518dba4",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常 > 排查步骤",
+            "text": "1. 确认环境温度是否超过 35 摄氏度。\n2. 检查冷却液液位，低于刻度线需补充。\n3. 复位设备并观察 10 分钟。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "387d6e7a5d74445386ce4ea4038511ff",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常",
+            "text": "设备显示代码 42（完整码 E17-42）表示主轴温度超过阈值。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "sources": [
+          {
+            "alias": "S2",
+            "chunk_id": "387d6e7a5d74445386ce4ea4038511ff",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常",
+            "text": "设备显示代码 42（完整码 E17-42）表示主轴温度超过阈值。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S1",
+            "chunk_id": "65ec1555278a46a0af9d146df518dba4",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常 > 排查步骤",
+            "text": "1. 确认环境温度是否超过 35 摄氏度。\n2. 检查冷却液液位，低于刻度线需补充。\n3. 复位设备并观察 10 分钟。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "error_code": null,
+        "sha256": "87160cefcf28a71537b2dc93d822a61d5a807d2d14f1867405ab16b48fd67558"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "E17-42 表示主轴温度超过阈值 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "按手册排查步骤，复位设备后观察 10 分钟；",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C3",
+          "text": "若仍报 E17-42，请联系 **Ops 二线**，并附上日志 [S1]。",
+          "citations": [
+            "S1"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C4",
+          "text": "（前序步骤：确认环境温度是否超过 35 摄氏度、检查冷却液液位是否低于刻度线 [S1]。",
+          "citations": [
+            "S1"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C5",
+          "text": "）",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "ops-04",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "E17-07 进料卡滞怎么办",
+        "answer": "**E17-07 进料卡滞**的处理方法：\n\n按照《E17 系列设备故障手册》的记载，需要**断电后手动清理进料口，然后重新上电**。[S1]\n\n如需进一步了解卡滞的原因排查或预防措施，手册当前条目未涉及，建议联系 Ops 团队。",
+        "evidence": [
+          {
+            "alias": "S1",
+            "chunk_id": "ab441c983875431e89d7710805b0a6ff",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-07：进料卡滞",
+            "text": "断电后手动清理进料口，重新上电。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "sources": [
+          {
+            "alias": "S1",
+            "chunk_id": "ab441c983875431e89d7710805b0a6ff",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-07：进料卡滞",
+            "text": "断电后手动清理进料口，重新上电。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "error_code": null,
+        "sha256": "fad7aa8a13deaaf881720cb68bc83678fc45ffb45be4a397efdf4a34256319c4"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "**E17-07 进料卡滞**的处理方法：",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "按照《E17 系列设备故障手册》的记载，需要**断电后手动清理进料口，然后重新上电**。[S1]",
+          "citations": [
+            "S1"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C3",
+          "text": "如需进一步了解卡滞的原因排查或预防措施，手册当前条目未涉及，建议联系 Ops 团队。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "ops-05",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "E17 手册适用于哪些设备",
+        "answer": "**E17 手册适用于 E17 系列设备**，由 Ops 团队维护。[S1]\n\n补充说明：E17 手册只按系列说明适用范围，未逐一列出具体型号清单；如果需要确认某一台具体型号是否属于 E17 系列，建议联系 Ops 团队核实。",
+        "evidence": [
+          {
+            "alias": "S1",
+            "chunk_id": "9d74f264bc8b491aab0474665b8857d2",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "E17 系列设备故障手册 > 适用范围",
+            "text": "本手册适用于示例精密设备公司 E17 系列设备，由 Ops 团队维护。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "65ec1555278a46a0af9d146df518dba4",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常 > 排查步骤",
+            "text": "1. 确认环境温度是否超过 35 摄氏度。\n2. 检查冷却液液位，低于刻度线需补充。\n3. 复位设备并观察 10 分钟。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S3",
+            "chunk_id": "387d6e7a5d74445386ce4ea4038511ff",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常",
+            "text": "设备显示代码 42（完整码 E17-42）表示主轴温度超过阈值。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S4",
+            "chunk_id": "6a898ddd6554437f80d92599433bd2f8",
+            "document_id": "e65ba8ffbc7340e381aafb5ac00e12cb",
+            "document_title": "感測器故障手冊",
+            "revision": 1,
+            "page": 1,
+            "section_path": "感測器故障手冊 > 適用範圍",
+            "text": "本手冊適用於 S5 系列感測器，由 Ops 團隊維護。",
+            "lang": "zh-Hant"
+          },
+          {
+            "alias": "S5",
+            "chunk_id": "ab441c983875431e89d7710805b0a6ff",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-07：进料卡滞",
+            "text": "断电后手动清理进料口，重新上电。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "sources": [
+          {
+            "alias": "S1",
+            "chunk_id": "9d74f264bc8b491aab0474665b8857d2",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "E17 系列设备故障手册 > 适用范围",
+            "text": "本手册适用于示例精密设备公司 E17 系列设备，由 Ops 团队维护。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "error_code": null,
+        "sha256": "6d17af121478b14cd33401f70abc98c17b70638f93f8ae9edd9ccd7539dfe2fc"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "**E17 手册适用于 E17 系列设备**，由 Ops 团队维护。[S1]",
+          "citations": [
+            "S1"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "补充说明：E17 手册只按系列说明适用范围，未逐一列出具体型号清单；",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C3",
+          "text": "如果需要确认某一台具体型号是否属于 E17 系列，建议联系 Ops 团队核实。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "ops-06",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "P03-11 泵组压力不足怎么处理",
+        "answer": "P03-11 是泵组压力不足的故障码 [S1]。手册给出的处置步骤如下：\n\n1. 检查进水阀是否全开 [S2]。\n2. 清洗滤网 [S2]。\n3. 如果压力仍然不足，更换密封圈，型号为 SEAL-9X [S2]。\n\n另外，日常维护中建议每周检查泵组的振动与异响 [S1]。如果上述三步处理完后压力仍然不达标，建议联系 Ops 团队进一步确认。",
+        "evidence": [
+          {
+            "alias": "S1",
+            "chunk_id": "d556298a1852485b858976229eeb89ad",
+            "document_id": "ae8de3ceddbd4a9eacd74eadd4d3bcac",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "泵组维护手册 > 泵组日常检查",
+            "text": "每周检查泵组振动与异响。故障码 P03-11 表示泵组压力不足。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "b648fd9bdf094de7a245476b38788831",
+            "document_id": "ae8de3ceddbd4a9eacd74eadd4d3bcac",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "泵组维护手册 > 故障码 P03-11 处置",
+            "text": "1. 检查进水阀是否全开。\n2. 清洗滤网。\n3. 压力仍不足时更换密封圈，型号 SEAL-9X。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "sources": [
+          {
+            "alias": "S1",
+            "chunk_id": "d556298a1852485b858976229eeb89ad",
+            "document_id": "ae8de3ceddbd4a9eacd74eadd4d3bcac",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "泵组维护手册 > 泵组日常检查",
+            "text": "每周检查泵组振动与异响。故障码 P03-11 表示泵组压力不足。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "b648fd9bdf094de7a245476b38788831",
+            "document_id": "ae8de3ceddbd4a9eacd74eadd4d3bcac",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "泵组维护手册 > 故障码 P03-11 处置",
+            "text": "1. 检查进水阀是否全开。\n2. 清洗滤网。\n3. 压力仍不足时更换密封圈，型号 SEAL-9X。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "error_code": null,
+        "sha256": "41f27f59bfb93edb9306809e63ab3946fac46d25a2e8d54749b51bc70a9a060b"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "P03-11 是泵组压力不足的故障码 [S1]。",
+          "citations": [
+            "S1"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "手册给出的处置步骤如下：",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C3",
+          "text": "1. 检查进水阀是否全开 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C4",
+          "text": "2. 清洗滤网 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C5",
+          "text": "3. 如果压力仍然不足，更换密封圈，型号为 SEAL-9X [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C6",
+          "text": "另外，日常维护中建议每周检查泵组的振动与异响 [S1]。",
+          "citations": [
+            "S1"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C7",
+          "text": "如果上述三步处理完后压力仍然不达标，建议联系 Ops 团队进一步确认。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "ops-07",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "泵组日常检查多久做一次",
+        "answer": "根据《泵组维护手册》，泵组应每周检查一次，检查内容是振动与异响 [S1]。",
+        "evidence": [
+          {
+            "alias": "S1",
+            "chunk_id": "d556298a1852485b858976229eeb89ad",
+            "document_id": "ae8de3ceddbd4a9eacd74eadd4d3bcac",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "泵组维护手册 > 泵组日常检查",
+            "text": "每周检查泵组振动与异响。故障码 P03-11 表示泵组压力不足。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "b648fd9bdf094de7a245476b38788831",
+            "document_id": "ae8de3ceddbd4a9eacd74eadd4d3bcac",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "泵组维护手册 > 故障码 P03-11 处置",
+            "text": "1. 检查进水阀是否全开。\n2. 清洗滤网。\n3. 压力仍不足时更换密封圈，型号 SEAL-9X。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S3",
+            "chunk_id": "43c2b295b95a45db9f7b6d85cc95a0c3",
+            "document_id": "985c8a1da4c34ca684ef388a2d3332b3",
+            "document_title": "冷卻系統維護手冊",
+            "revision": 1,
+            "page": 1,
+            "section_path": "冷卻系統維護手冊 > 故障碼 K08-03：冷卻液溫度過高",
+            "text": "檢查散熱風扇是否運轉，清潔散熱片。",
+            "lang": "zh-Hant"
+          },
+          {
+            "alias": "S4",
+            "chunk_id": "d86e1474b7ed4dd39eb0eb5119aad0e5",
+            "document_id": "e65ba8ffbc7340e381aafb5ac00e12cb",
+            "document_title": "感測器故障手冊",
+            "revision": 1,
+            "page": 2,
+            "section_path": "感測器故障手冊 > 故障碼 S5-19：訊號漂移 > 排查步驟",
+            "text": "1. 檢查感測器接頭是否鬆動。\n2. 執行零點校正。\n3. 仍異常則更換感測器，型號 SNS-5B。",
+            "lang": "zh-Hant"
+          },
+          {
+            "alias": "S5",
+            "chunk_id": "65ec1555278a46a0af9d146df518dba4",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常 > 排查步骤",
+            "text": "1. 确认环境温度是否超过 35 摄氏度。\n2. 检查冷却液液位，低于刻度线需补充。\n3. 复位设备并观察 10 分钟。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "sources": [
+          {
+            "alias": "S1",
+            "chunk_id": "d556298a1852485b858976229eeb89ad",
+            "document_id": "ae8de3ceddbd4a9eacd74eadd4d3bcac",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "泵组维护手册 > 泵组日常检查",
+            "text": "每周检查泵组振动与异响。故障码 P03-11 表示泵组压力不足。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "error_code": null,
+        "sha256": "69fd6398df9b849129d9c17b0904ed4fba7d208580038f09be9839c6b407fb0f"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "根据《泵组维护手册》，泵组应每周检查一次，检查内容是振动与异响 [S1]。",
+          "citations": [
+            "S1"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "cross-01",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "泵組壓力不足 P03-11 怎麼處理",
+        "answer": "依《泵組維護手冊》的記載，故障碼 **P03-11 表示泵組壓力不足** [S1]，建議的處置步驟如下 [S2]：\n\n1. **檢查進水閥是否全開**。\n2. **清洗濾網**。\n3. **若壓力仍不足，更換密封圈，型號 SEAL-9X**。\n\n此外，手冊在日常檢查部分也提到應每週檢查泵組的振動與異響 [S1]，處置後可一併留意這項檢查。\n\n如按上述步驟處理後問題仍未解決，建議聯絡 Ops 團隊進一步確認。",
+        "evidence": [
+          {
+            "alias": "S1",
+            "chunk_id": "d556298a1852485b858976229eeb89ad",
+            "document_id": "ae8de3ceddbd4a9eacd74eadd4d3bcac",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "泵组维护手册 > 泵组日常检查",
+            "text": "每周检查泵组振动与异响。故障码 P03-11 表示泵组压力不足。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "b648fd9bdf094de7a245476b38788831",
+            "document_id": "ae8de3ceddbd4a9eacd74eadd4d3bcac",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "泵组维护手册 > 故障码 P03-11 处置",
+            "text": "1. 检查进水阀是否全开。\n2. 清洗滤网。\n3. 压力仍不足时更换密封圈，型号 SEAL-9X。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "sources": [
+          {
+            "alias": "S1",
+            "chunk_id": "d556298a1852485b858976229eeb89ad",
+            "document_id": "ae8de3ceddbd4a9eacd74eadd4d3bcac",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "泵组维护手册 > 泵组日常检查",
+            "text": "每周检查泵组振动与异响。故障码 P03-11 表示泵组压力不足。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "b648fd9bdf094de7a245476b38788831",
+            "document_id": "ae8de3ceddbd4a9eacd74eadd4d3bcac",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "泵组维护手册 > 故障码 P03-11 处置",
+            "text": "1. 检查进水阀是否全开。\n2. 清洗滤网。\n3. 压力仍不足时更换密封圈，型号 SEAL-9X。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "error_code": null,
+        "sha256": "47756e7f556884d674bea0dfcf65108a1aca0804da9793790d6e81782395968c"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "依《泵組維護手冊》的記載，故障碼 **P03-11 表示泵組壓力不足** [S1]，建議的處置步驟如下 [S2]：",
+          "citations": [
+            "S1",
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "1. **檢查進水閥是否全開**。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C3",
+          "text": "2. **清洗濾網**。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C4",
+          "text": "3. **若壓力仍不足，更換密封圈，型號 SEAL-9X**。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C5",
+          "text": "此外，手冊在日常檢查部分也提到應每週檢查泵組的振動與異響 [S1]，處置後可一併留意這項檢查。",
+          "citations": [
+            "S1"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C6",
+          "text": "如按上述步驟處理後問題仍未解決，建議聯絡 Ops 團隊進一步確認。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "cross-02",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "泵組日常檢查要做什麼",
+        "answer": "現有知識庫中沒有「泵組每日檢查」的清單或點檢項目可供依據。檢索到的泵組相關資料（如《泵組維護手冊》）記載的是每週頻率的檢查以及故障碼 P03-11（壓力不足）的處置步驟，並非每日點檢內容，頻率與您所問的不一致，因此我無法据此回答每日應做哪些檢查，也不作推測。\n\n建議您聯絡 Ops 團隊，確認泵組是否另有每日點檢表，或請其提供正式版本。",
+        "evidence": [
+          {
+            "alias": "S1",
+            "chunk_id": "d556298a1852485b858976229eeb89ad",
+            "document_id": "ae8de3ceddbd4a9eacd74eadd4d3bcac",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "泵组维护手册 > 泵组日常检查",
+            "text": "每周检查泵组振动与异响。故障码 P03-11 表示泵组压力不足。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "b648fd9bdf094de7a245476b38788831",
+            "document_id": "ae8de3ceddbd4a9eacd74eadd4d3bcac",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "泵组维护手册 > 故障码 P03-11 处置",
+            "text": "1. 检查进水阀是否全开。\n2. 清洗滤网。\n3. 压力仍不足时更换密封圈，型号 SEAL-9X。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S3",
+            "chunk_id": "43c2b295b95a45db9f7b6d85cc95a0c3",
+            "document_id": "985c8a1da4c34ca684ef388a2d3332b3",
+            "document_title": "冷卻系統維護手冊",
+            "revision": 1,
+            "page": 1,
+            "section_path": "冷卻系統維護手冊 > 故障碼 K08-03：冷卻液溫度過高",
+            "text": "檢查散熱風扇是否運轉，清潔散熱片。",
+            "lang": "zh-Hant"
+          },
+          {
+            "alias": "S4",
+            "chunk_id": "d86e1474b7ed4dd39eb0eb5119aad0e5",
+            "document_id": "e65ba8ffbc7340e381aafb5ac00e12cb",
+            "document_title": "感測器故障手冊",
+            "revision": 1,
+            "page": 2,
+            "section_path": "感測器故障手冊 > 故障碼 S5-19：訊號漂移 > 排查步驟",
+            "text": "1. 檢查感測器接頭是否鬆動。\n2. 執行零點校正。\n3. 仍異常則更換感測器，型號 SNS-5B。",
+            "lang": "zh-Hant"
+          },
+          {
+            "alias": "S5",
+            "chunk_id": "65ec1555278a46a0af9d146df518dba4",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常 > 排查步骤",
+            "text": "1. 确认环境温度是否超过 35 摄氏度。\n2. 检查冷却液液位，低于刻度线需补充。\n3. 复位设备并观察 10 分钟。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S6",
+            "chunk_id": "9d74f264bc8b491aab0474665b8857d2",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "E17 系列设备故障手册 > 适用范围",
+            "text": "本手册适用于示例精密设备公司 E17 系列设备，由 Ops 团队维护。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "sources": [],
+        "error_code": "INSUFFICIENT_EVIDENCE",
+        "sha256": "b45b584a25cee2f1cff602f4fee52442546c170bced1c3264ba955c55dc0dbe3"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "現有知識庫中沒有「泵組每日檢查」的清單或點檢項目可供依據。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "檢索到的泵組相關資料（如《泵組維護手冊》）記載的是每週頻率的檢查以及故障碼 P03-11（壓力不足）的處置步驟，並非每日點檢內容，頻率與您所問的不一致，因此我無法据此回答每日應做哪些檢查，也不作推測。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C3",
+          "text": "建議您聯絡 Ops 團隊，確認泵組是否另有每日點檢表，或請其提供正式版本。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "cross-03",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "E17-42 主軸溫度異常怎麼排查",
+        "answer": "**E17-42 主軸溫度異常排查**\n\n此代碼表示主軸溫度超過閾值 [S1]。手冊列出的排查步驟如下 [S2]：\n\n1. 確認環境溫度是否超過 35°C [S2]。\n2. 檢查冷卻液液位，若低於刻度線需補充 [S2]。\n3. 重設設備並觀察 10 分鐘 [S2]。\n4. 若仍報 E17-42，請聯繫 Ops 二線並附上日誌 [S2]。",
+        "evidence": [
+          {
+            "alias": "S1",
+            "chunk_id": "387d6e7a5d74445386ce4ea4038511ff",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常",
+            "text": "设备显示代码 42（完整码 E17-42）表示主轴温度超过阈值。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "65ec1555278a46a0af9d146df518dba4",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常 > 排查步骤",
+            "text": "1. 确认环境温度是否超过 35 摄氏度。\n2. 检查冷却液液位，低于刻度线需补充。\n3. 复位设备并观察 10 分钟。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "sources": [
+          {
+            "alias": "S1",
+            "chunk_id": "387d6e7a5d74445386ce4ea4038511ff",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常",
+            "text": "设备显示代码 42（完整码 E17-42）表示主轴温度超过阈值。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "65ec1555278a46a0af9d146df518dba4",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常 > 排查步骤",
+            "text": "1. 确认环境温度是否超过 35 摄氏度。\n2. 检查冷却液液位，低于刻度线需补充。\n3. 复位设备并观察 10 分钟。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "error_code": null,
+        "sha256": "213930e55fb8ed0aa7d2c6bcbd8a777b28330f39bffa22d5d976a8b813d797b2"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "**E17-42 主軸溫度異常排查**",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "此代碼表示主軸溫度超過閾值 [S1]。",
+          "citations": [
+            "S1"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C3",
+          "text": "手冊列出的排查步驟如下 [S2]：",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C4",
+          "text": "1. 確認環境溫度是否超過 35°C [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C5",
+          "text": "2. 檢查冷卻液液位，若低於刻度線需補充 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C6",
+          "text": "3. 重設設備並觀察 10 分鐘 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C7",
+          "text": "4. 若仍報 E17-42，請聯繫 Ops 二線並附上日誌 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "access-01",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "E17-42 报警怎么处理",
+        "answer": "资料中没有可靠依据，无法回答该问题。请联系对应职能团队。",
+        "evidence": [],
+        "sources": [],
+        "error_code": "INSUFFICIENT_EVIDENCE",
+        "sha256": "08e9f66c81df7822a0413cd2f8e9343a5a9124dbe09b32c4fa275c87d7a1108f"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "资料中没有可靠依据，无法回答该问题。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "请联系对应职能团队。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "access-02",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "P03-11 泵组压力不足",
+        "answer": "资料中没有可靠依据，无法回答该问题。请联系对应职能团队。",
+        "evidence": [],
+        "sources": [],
+        "error_code": "INSUFFICIENT_EVIDENCE",
+        "sha256": "98b6a9d2ecfb3c26f9c0084b14d059a5396616dc9d680aad9ddfe85a2d06644b"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "资料中没有可靠依据，无法回答该问题。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "请联系对应职能团队。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "access-03",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "C21-05 校准过期",
+        "answer": "资料中没有可靠依据，无法回答该问题。请联系对应职能团队。",
+        "evidence": [],
+        "sources": [],
+        "error_code": "INSUFFICIENT_EVIDENCE",
+        "sha256": "252b939cf7089772aa60479f350fc0acfa00baf444de8a4094338aefcf1c138a"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "资料中没有可靠依据，无法回答该问题。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "请联系对应职能团队。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "access-04",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "E17-07 进料卡滞怎么办",
+        "answer": "资料中没有可靠依据，无法回答该问题。请联系对应职能团队。",
+        "evidence": [],
+        "sources": [],
+        "error_code": "INSUFFICIENT_EVIDENCE",
+        "sha256": "0d7e4ed36240ac7dddb25fff519181d7eb65899edcb32f08b9d3d733b8dfd700"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "资料中没有可靠依据，无法回答该问题。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "请联系对应职能团队。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "access-05",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "S5-19 感測器訊號漂移",
+        "answer": "资料中没有可靠依据，无法回答该问题。请联系对应职能团队。",
+        "evidence": [],
+        "sources": [],
+        "error_code": "INSUFFICIENT_EVIDENCE",
+        "sha256": "1b340ca38ef25e68099e9a28759a03ff9714f7cd2528bbc245f7c3fb9be9d6b8"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "资料中没有可靠依据，无法回答该问题。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "请联系对应职能团队。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "no_basis-01",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "Z99-01 故障码怎么处理",
+        "answer": "资料中没有可靠依据，无法回答该问题。请联系对应职能团队。",
+        "evidence": [],
+        "sources": [],
+        "error_code": "INSUFFICIENT_EVIDENCE",
+        "sha256": "84206a14ef579e4fc8ca54c164c93dc2be71894a0623ef35b6a2a4b3981b6be7"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "资料中没有可靠依据，无法回答该问题。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "请联系对应职能团队。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "no_basis-02",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "E17 设备的保修期是多长",
+        "answer": "知识库中检索到的资料只涉及 E17 系列设备的故障码排查（如 E17-42 主轴温度异常），以及冷却液更换周期 、电源模组过载处理 ，**并没有任何关于保修期限的内容**，因此我无法回答 E17 设备的保修期是多长，也不作推测。\n\n建议联系 Ops 团队或负责商务合同的同事（如涉及采购条款可一并咨询 FIN）获取准确的保修条款信息。",
+        "evidence": [
+          {
+            "alias": "S1",
+            "chunk_id": "9d74f264bc8b491aab0474665b8857d2",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "E17 系列设备故障手册 > 适用范围",
+            "text": "本手册适用于示例精密设备公司 E17 系列设备，由 Ops 团队维护。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "387d6e7a5d74445386ce4ea4038511ff",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常",
+            "text": "设备显示代码 42（完整码 E17-42）表示主轴温度超过阈值。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S3",
+            "chunk_id": "65ec1555278a46a0af9d146df518dba4",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常 > 排查步骤",
+            "text": "1. 确认环境温度是否超过 35 摄氏度。\n2. 检查冷却液液位，低于刻度线需补充。\n3. 复位设备并观察 10 分钟。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S4",
+            "chunk_id": "003d0660bb864de5aa7a6869271bba79",
+            "document_id": "985c8a1da4c34ca684ef388a2d3332b3",
+            "document_title": "冷卻系統維護手冊",
+            "revision": 1,
+            "page": 1,
+            "section_path": "冷卻系統維護手冊 > 冷卻液更換週期",
+            "text": "冷卻液每六個月更換一次，更換時須排空管路。",
+            "lang": "zh-Hant"
+          },
+          {
+            "alias": "S5",
+            "chunk_id": "d88005d3ed924606b372a9196a9670d5",
+            "document_id": "640c2824ba6445e3af630a2c96d152d7",
+            "document_title": "電源模組排障手冊",
+            "revision": 1,
+            "page": 1,
+            "section_path": "電源模組排障手冊 > 故障碼 W12-30：電源模組過載",
+            "text": "立即關機，拔除非必要負載，十分鐘後重新啟動。",
+            "lang": "zh-Hant"
+          }
+        ],
+        "sources": [],
+        "error_code": "INSUFFICIENT_EVIDENCE",
+        "sha256": "fe779f96025876cf62d50b4522eda39c091ca5d2a14dabde186673a4eddb3664"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "知识库中检索到的资料只涉及 E17 系列设备的故障码排查（如 E17-42 主轴温度异常），以及冷却液更换周期 、电源模组过载处理 ，**并没有任何关于保修期限的内容**，因此我无法回答 E17 设备的保修期是多长，也不作推测。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "建议联系 Ops 团队或负责商务合同的同事（如涉及采购条款可一并咨询 FIN）获取准确的保修条款信息。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "no_basis-03",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "公司食堂几点开饭",
+        "answer": "知识库中没有关于公司食堂开饭时间的资料，检索结果都是设备手册和 IT 入职指南，与食堂无关，因此我无法回答，也不猜测。\n\n建议你联系 HR 或 Ops 行政团队确认食堂供餐时间。",
+        "evidence": [
+          {
+            "alias": "S1",
+            "chunk_id": "43c2b295b95a45db9f7b6d85cc95a0c3",
+            "document_id": "985c8a1da4c34ca684ef388a2d3332b3",
+            "document_title": "冷卻系統維護手冊",
+            "revision": 1,
+            "page": 1,
+            "section_path": "冷卻系統維護手冊 > 故障碼 K08-03：冷卻液溫度過高",
+            "text": "檢查散熱風扇是否運轉，清潔散熱片。",
+            "lang": "zh-Hant"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "d88005d3ed924606b372a9196a9670d5",
+            "document_id": "640c2824ba6445e3af630a2c96d152d7",
+            "document_title": "電源模組排障手冊",
+            "revision": 1,
+            "page": 1,
+            "section_path": "電源模組排障手冊 > 故障碼 W12-30：電源模組過載",
+            "text": "立即關機，拔除非必要負載，十分鐘後重新啟動。",
+            "lang": "zh-Hant"
+          },
+          {
+            "alias": "S3",
+            "chunk_id": "ab441c983875431e89d7710805b0a6ff",
+            "document_id": "9fc4cdf1c29a4c748d88a6cda338c79c",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-07：进料卡滞",
+            "text": "断电后手动清理进料口，重新上电。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S4",
+            "chunk_id": "b648fd9bdf094de7a245476b38788831",
+            "document_id": "ae8de3ceddbd4a9eacd74eadd4d3bcac",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "泵组维护手册 > 故障码 P03-11 处置",
+            "text": "1. 检查进水阀是否全开。\n2. 清洗滤网。\n3. 压力仍不足时更换密封圈，型号 SEAL-9X。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S5",
+            "chunk_id": "2620d989a05d477fa683bb04a74b7120",
+            "document_id": "176d7c968a0f484f87a0c88f142b81a4",
+            "document_title": "IT 入职指南",
+            "revision": 1,
+            "page": 1,
+            "section_path": "IT 入职指南 > 账号开通",
+            "text": "新员工入职当天由 IT 开通邮箱与内网账号，首次登录须修改初始密码。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "sources": [],
+        "error_code": "INSUFFICIENT_EVIDENCE",
+        "sha256": "91de408adcd72b617f57dbc0da154d5201a71000c25b99efc5ad9f2b698b142b"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "知识库中没有关于公司食堂开饭时间的资料，检索结果都是设备手册和 IT 入职指南，与食堂无关，因此我无法回答，也不猜测。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "建议你联系 HR 或 Ops 行政团队确认食堂供餐时间。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "escalation-01",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "E17-42 复位后仍报警，帮我转人工专家",
+        "answer": "已经为你创建转交记录，请核对以下信息：\n\n- **问题摘要**：E17-42 报警在复位后仍未消除，持续复现；故障原因待专家定位。\n- **记录编号**：7fb9d7694d5207709c59c760d1503210\n- **状态**：OPEN（已提交，等待专家处理）\n\n如果需要补充设备型号、报警发生时的运行工况或已尝试的排查项，可以告诉我，我会一并补充给专家。",
+        "evidence": [],
+        "sources": [],
+        "error_code": null,
+        "sha256": "73e21389078fecba4e80270209f828b18bb71d8a25c451ab9780791f50be7f61"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "已经为你创建转交记录，请核对以下信息：",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "- **问题摘要**：E17-42 报警在复位后仍未消除，持续复现；",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C3",
+          "text": "故障原因待专家定位。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C4",
+          "text": "- **记录编号**：7fb9d7694d5207709c59c760d1503210",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C5",
+          "text": "- **状态**：OPEN（已提交，等待专家处理）",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C6",
+          "text": "如果需要补充设备型号、报警发生时的运行工况或已尝试的排查项，可以告诉我，我会一并补充给专家。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "escalation-02",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "这个问题我想转人工",
+        "answer": "我已为您提交转人工申请，转交记录编号是 **46b450eaba01d55fc0e7b42c8a7233b1**，当前状态为 **OPEN**（待处理）。\n\n不过需要说明：本轮对话中您还没有具体描述问题内容，所以提交给专家的摘要中暂时不包含具体问题细节。您可以在确认卡中核对并补充，或直接把具体现象（设备型号、故障码、发生场景等）告诉我，我再帮您补充给专家。\n\n如需查询转交进度，随时告诉我。",
+        "evidence": [],
+        "sources": [],
+        "error_code": null,
+        "sha256": "736a0ab599c3e90af33cd4cfd37528dd4e69798104dcd7001cef565ad7533137"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "我已为您提交转人工申请，转交记录编号是 **46b450eaba01d55fc0e7b42c8a7233b1**，当前状态为 **OPEN**（待处理）。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "不过需要说明：本轮对话中您还没有具体描述问题内容，所以提交给专家的摘要中暂时不包含具体问题细节。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C3",
+          "text": "您可以在确认卡中核对并补充，或直接把具体现象（设备型号、故障码、发生场景等）告诉我，我再帮您补充给专家。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C4",
+          "text": "如需查询转交进度，随时告诉我。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    }
+  ]
+}

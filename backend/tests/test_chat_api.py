@@ -1,5 +1,6 @@
 import datetime as dt
 import json
+import uuid
 
 import pytest
 from fastapi.testclient import TestClient
@@ -74,9 +75,59 @@ def test_no_basis_refusal_emits_error_code(client):
     assert dict(ev)["sources"] == []
 
 
-def test_near_miss_refuses_even_when_model_searches_a_real_code(client):
+@pytest.mark.parametrize("query,code", [("E17-42 排查", "MODEL_CITATION_MISSING"),
+                                         ("E17-44 排查", "INSUFFICIENT_EVIDENCE")])
+def test_retrieval_citation_gate_controls_final_answer_and_saved_history(client, db, enc, monkeypatch, query, code):
+    def script(msgs):
+        if isinstance(msgs[-1], ToolMessage):
+            return AIMessage("未经来源支持的操作建议 [S99]")
+        return call("search_knowledge", {"query": query})
+    saver, pool = make_checkpointer(settings.database_url)
+    try:
+        graph = build_graph(AgentDeps(session_factory_for(db), enc, None, ScriptedModel(script=script), saver))
+        monkeypatch.setitem(app.dependency_overrides, get_graph, lambda: graph)
+        headers = auth(client, "sg-ops")
+        ev = events(client.post("/api/v1/chat", json={"message": query}, headers=headers))
+        assert ("error", {"code": code}) in ev and dict(ev)["sources"] == []
+        assert "未经来源支持" not in dict(ev)["done"]["answer"]
+        cid = dict(ev)["meta"]["conversation_id"]
+        history = client.get(f"/api/v1/conversations/{cid}/messages", headers=headers).json()
+        assert history[-1]["error_code"] == code and history[-1]["sources"] == []
+        assert history[-1]["content"] == dict(ev)["done"]["answer"]
+    finally:
+        pool.close()
+
+
+@pytest.mark.parametrize("invalid,code", [(False, "MODEL_OUTPUT_TRUNCATED"), (True, "MODEL_TOOL_CALL_INVALID")])
+def test_model_output_failure_is_saved_and_restored_without_retry(client, db, enc, monkeypatch, invalid, code):
+    response = AIMessage("不能当成完整答案 [S1]", response_metadata={"finish_reason": "length"})
+    if invalid:
+        response.response_metadata = {"finish_reason": "tool_calls"}
+        response.invalid_tool_calls = [{"name": "escalate_to_expert", "args": '{"summary":',
+                                        "id": "broken", "error": "invalid JSON", "type": "invalid_tool_call"}]
+    model = ScriptedModel(script=lambda msgs: response)
+    saver, pool = make_checkpointer(settings.database_url)
+    try:
+        graph = build_graph(AgentDeps(session_factory_for(db), enc, None, model, saver))
+        monkeypatch.setitem(app.dependency_overrides, get_graph, lambda: graph)
+        headers = auth(client, "sg-ops")
+        ev = events(client.post("/api/v1/chat", json={"message": "请求处理"}, headers=headers))
+        assert ("error", {"code": code}) in ev and dict(ev)["sources"] == []
+        assert "不能当成完整答案" not in dict(ev)["done"]["answer"]
+        cid = dict(ev)["meta"]["conversation_id"]
+        state = client.get(f"/api/v1/conversations/{cid}/state", headers=headers).json()
+        assert state["messages"][-1]["error_code"] == code and state["messages"][-1]["sources"] == []
+        assert state["blocked"] is False and state["retry_checkpoint_id"] is None
+        assert state["messages"][-1]["content"] == dict(ev)["done"]["answer"]
+        assert count(db) == 0
+    finally:
+        pool.close()
+
+
+@pytest.mark.parametrize("message", ["E17-44 怎么处理", "E17設備報代碼45 怎么处理"])
+def test_near_miss_refuses_even_when_model_searches_a_real_code(client, message):
     # The fixture's model always searches E17-42, regardless of user wording.
-    r = client.post("/api/v1/chat", json={"message": "E17-44 怎么处理"}, headers=auth(client, "sg-ops"))
+    r = client.post("/api/v1/chat", json={"message": message}, headers=auth(client, "sg-ops"))
     ev = events(r)
     assert ("error", {"code": "INSUFFICIENT_EVIDENCE"}) in ev
     assert dict(ev)["sources"] == [] and "冷却液" not in dict(ev)["done"]["answer"]
@@ -132,6 +183,8 @@ def test_confirm_twice_creates_one_record(client, db):
     flip = events(client.post("/api/v1/chat/confirm", json={"confirmation_id": cid, "approve": False}, headers=h))
     assert count(db) == 1 and dict(again)["meta"]["status"] == "APPROVED" and dict(flip)["meta"]["status"] == "APPROVED"
     eid = db.scalar(select(Escalation.id))
+    listed = client.get("/api/v1/escalations", headers=h).json()["items"]
+    assert len(listed) == 1 and listed[0]["id"] == eid and listed[0]["created_at"]
     assert client.get(f"/api/v1/escalations/{eid}", headers=h).status_code == 200
     assert client.get(f"/api/v1/escalations/{eid}", headers=auth(client, "hr")).status_code == 404
 
@@ -143,6 +196,7 @@ def test_confirm_reject_and_foreign_user(client, db):
     ev = events(client.post("/api/v1/chat/confirm", json={"confirmation_id": cid, "approve": False},
                             headers=auth(client, "sg-ops")))
     assert count(db) == 0 and "取消" in dict(ev)["done"]["answer"]
+    assert client.get("/api/v1/escalations", headers=auth(client, "sg-ops")).json()["items"] == []
 
 
 def test_confirm_expired(client, db):
@@ -190,10 +244,18 @@ def test_state_exposes_expiry_without_resuming(client, db):
     confirmation_id = _start_escalation(client)
     db.execute(Confirmation.__table__.update().where(Confirmation.id == confirmation_id)
                .values(expires_at=dt.datetime.now(dt.UTC) - dt.timedelta(minutes=1)))
+    # Core SQL bypasses ORM synchronization. The shared test Session must
+    # discard cached cards to model a real request's fresh DB session.
+    db.expire_all()
     h = auth(client, "sg-ops")
-    cid = client.get("/api/v1/conversations", headers=h).json()[0]["id"]
+    conf = db.get(Confirmation, confirmation_id)
+    cid = db.scalar(select(Conversation.id).where(Conversation.thread_id == conf.thread_id))
     state = client.get(f"/api/v1/conversations/{cid}/state", headers=h).json()
-    assert state["blocked"] and state["pending_confirmation"]["expired"]
+    assert state["pending_confirmation"]["confirmation_id"] == confirmation_id
+    db.refresh(conf)
+    assert state["blocked"] and state["pending_confirmation"]["expired"], {
+        "card": state["pending_confirmation"], "stored_expiry": conf.expires_at.isoformat(),
+        "now": dt.datetime.now(dt.UTC).isoformat()}
     assert count(db) == 0 and db.get(Confirmation, confirmation_id).status == "PENDING"
 
 
@@ -243,3 +305,64 @@ def test_pending_confirmation_error_does_not_leak_run_lock(client, db):
     assert rejected.status_code == 409 and rejected.json()["detail"] != "CONVERSATION_BUSY"
     retry = ConversationLease.acquire(db.get_bind().engine, conv.id)
     retry.close()
+
+
+@pytest.mark.parametrize("first_approve", [True, False])
+@pytest.mark.parametrize("replay_approve", [True, False])
+def test_old_confirmation_cannot_resume_a_later_turn(client, db, first_approve, replay_approve):
+    h = auth(client, "sg-ops")
+    first_id = _start_escalation(client)
+    first = db.get(Confirmation, first_id)
+    conv = db.scalar(select(Conversation).where(Conversation.thread_id == first.thread_id))
+    assert client.post("/api/v1/chat/confirm", headers=h,
+                       json={"confirmation_id": first_id, "approve": first_approve}).status_code == 200
+    original_status = first.status
+    before = count(db)
+    # The scripted model reuses exactly the same tool-call ID in each turn.
+    next_turn = dict(events(client.post("/api/v1/chat", headers=h,
+                                       json={"conversation_id": conv.id, "message": "再次转人工"})))
+    second_id = next_turn["confirm"]["confirmation_id"]
+    assert second_id != first_id
+    second = db.get(Confirmation, second_id)
+    assert second.operation_id != first.operation_id
+    stale = client.post("/api/v1/chat/confirm", headers=h,
+                        json={"confirmation_id": first_id, "approve": replay_approve})
+    assert stale.status_code == 409 and stale.json()["detail"] == "CONFIRMATION_NOT_ACTIVE"
+    db.refresh(first)
+    db.refresh(second)
+    assert first.status == original_status and second.status == "PENDING" and count(db) == before
+    state = client.get(f"/api/v1/conversations/{conv.id}/state", headers=h).json()
+    assert state["blocked"] and state["pending_confirmation"]["confirmation_id"] == second_id
+    assert client.post("/api/v1/chat/confirm", headers=h,
+                       json={"confirmation_id": second_id, "approve": True}).status_code == 200
+    assert count(db) == before + 1
+    # Once the thread is complete, replaying the old request remains an idempotent no-op.
+    assert client.post("/api/v1/chat/confirm", headers=h,
+                       json={"confirmation_id": first_id, "approve": not first_approve}).status_code == 200
+    assert count(db) == before + 1
+
+
+def test_orphan_pending_confirmation_cannot_claim_a_decision(client, db):
+    h = auth(client, "sg-ops")
+    ev = dict(events(client.post("/api/v1/chat", headers=h, json={"message": "E17-42 排查"})))
+    conv = db.get(Conversation, ev["meta"]["conversation_id"])
+    orphan = Confirmation(user_id=conv.user_id, thread_id=conv.thread_id, operation_id=uuid.uuid4().hex,
+                          summary="不在检查点中的确认", status="PENDING",
+                          expires_at=dt.datetime.now(dt.UTC) + dt.timedelta(minutes=5))
+    db.add(orphan)
+    db.flush()
+    r = client.post("/api/v1/chat/confirm", headers=h, json={"confirmation_id": orphan.id, "approve": True})
+    assert r.status_code == 409 and r.json()["detail"] == "CONFIRMATION_NOT_ACTIVE"
+    db.refresh(orphan)
+    assert orphan.status == "PENDING" and count(db) == 0
+
+
+def test_saved_decision_on_active_interrupt_wins_over_retry_body(client, db):
+    confirmation_id = _start_escalation(client)
+    conf = db.get(Confirmation, confirmation_id)
+    conf.status = "APPROVED"  # Simulate a process stopping after saving the decision, before resume.
+    db.commit()
+    r = client.post("/api/v1/chat/confirm", headers=auth(client, "sg-ops"),
+                    json={"confirmation_id": confirmation_id, "approve": False})
+    assert r.status_code == 200 and count(db) == 1
+    assert "已创建转交记录" in dict(events(r))["done"]["answer"]

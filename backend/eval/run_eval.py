@@ -5,23 +5,30 @@
     flags: --no-sparse  --no-opencc  --rerank  --threshold 0.6  --mode retrieval|agent
 
 `retrieval` mode needs no LLM: Recall@5 / MRR, leakage, gate refusal. `agent` mode additionally needs
-KNV_LLM_* and checks cited sources, refusal codes and escalation record counts end to end.
+KNV_LLM_*, --allow-llm and explicit input/output prices. Inspect --dry-run first; estimates are not
+billing caps. Agent mode checks cited sources, refusal codes and escalation record counts end to end.
 The database must already be seeded with `python -m knoventra.db.seed` using the encoder you report.
 """
 from __future__ import annotations
 
 import argparse
+from contextlib import nullcontext
 import copy
 import datetime as dt
 import hashlib
 import json
+import os
 import platform
 import sys
 import time
 import uuid
 from pathlib import Path
+from importlib.metadata import PackageNotFoundError, version
 
 from answer_review import make_snapshot
+from preflight import plan, select_cases
+from progress import ProgressJournal
+from knoventra.retrieval.identifiers import IDENTIFIER_POLICY
 
 HERE = Path(__file__).resolve().parent
 CASES = HERE / "cases.jsonl"
@@ -40,6 +47,36 @@ def load_cases(split: str) -> list[dict]:
 def matches(e, exp: dict) -> bool:
     return (e.document_title == exp["title"] and e.page in exp["pages"] and e.revision == exp["revision"]
             and exp.get("support_text", "") in e.text)
+
+
+def corpus_fingerprints(db) -> dict:
+    """Bind comparisons to actual published text and grants, excluding random IDs."""
+    from sqlalchemy import select
+    from knoventra.db.models import Chunk, Document, KbGrant, KnowledgeBase, Revision
+
+    rows = db.execute(select(KnowledgeBase.name, Document.title, Document.source_lang, Revision.version,
+                             Revision.content_hash, Chunk.page, Chunk.section_path, Chunk.text, Chunk.text_norm)
+                      .join(Document, Document.kb_id == KnowledgeBase.id)
+                      .join(Revision, Revision.document_id == Document.id)
+                      .join(Chunk, Chunk.revision_id == Revision.id).where(Revision.status == "PUBLISHED")).all()
+    grants = db.execute(select(KnowledgeBase.name, KbGrant.region, KbGrant.department, KbGrant.role)
+                        .join(KbGrant, KbGrant.kb_id == KnowledgeBase.id)).all()
+
+    def fingerprint(values):
+        encoded = sorted(json.dumps(list(row), ensure_ascii=False, separators=(",", ":")) for row in values)
+        return hashlib.sha256("\n".join(encoded).encode()).hexdigest()
+
+    return {"published_text_sha256": fingerprint(rows), "grants_sha256": fingerprint(grants)}
+
+
+def dependency_versions() -> dict:
+    versions = {}
+    for package in ("FlagEmbedding", "torch", "transformers", "pgvector", "sqlalchemy"):
+        try:
+            versions[package] = version(package)
+        except PackageNotFoundError:
+            versions[package] = None
+    return versions
 
 
 def eval_retrieval(db, enc, rr, users, cases, *, use_sparse, use_opencc, threshold) -> list[dict]:
@@ -108,7 +145,7 @@ def summarize(results: list[dict]) -> dict:
 
 # ---- agent mode (needs a real LLM) -------------------------------------------------------------
 
-def eval_agent(graph, db, users, cases) -> list[dict]:
+def eval_agent(graph, db, users, cases, *, on_start=None, on_complete=None) -> list[dict]:
     """End-to-end per case. Escalation cases drive interrupt/resume with the listed decisions."""
     from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
     from langgraph.types import Command
@@ -120,6 +157,8 @@ def eval_agent(graph, db, users, cases) -> list[dict]:
     for c in cases:
         user = users[c["user"]]
         cfg = {"configurable": {"thread_id": uuid.uuid4().hex, "user_id": user.id}}
+        if on_start:
+            on_start(c["id"], cfg["configurable"]["thread_id"])
         t0 = time.perf_counter()
         st = graph.invoke({"messages": [HumanMessage(c["question"])], "evidence": {}, "sources": [], "error_code": None}, cfg)
         r = {"id": c["id"], "category": c["category"], "user": c["user"]}
@@ -157,9 +196,12 @@ def eval_agent(graph, db, users, cases) -> list[dict]:
         r["expect"] = copy.deepcopy(exp)
         r["diagnostics"] = {"schema_version": 1,
                             "retrieval_trace": copy.deepcopy(st.get("retrieval_trace") or []),
-                            "model_declared_refusal": bool(st.get("model_declared_refusal"))}
+                            "model_declared_refusal": bool(st.get("model_declared_refusal")),
+                            "model_finish_reason": st.get("model_finish_reason")}
         r["latency_ms"] = round((time.perf_counter() - t0) * 1000, 1)
         out.append(r)
+        if on_complete:
+            on_complete(r)
     return out
 
 
@@ -180,6 +222,34 @@ def summarize_agent(rs: list[dict]) -> dict:
     return m
 
 
+def make_evaluation_graph(enc, rr, max_output_tokens: int):
+    """Separate from the cached web graph: evaluation caps/retry policy are explicit."""
+    from contextlib import contextmanager
+    from langchain_openai import ChatOpenAI
+    from knoventra.agent.checkpoint import make_checkpointer
+    from knoventra.agent.graph import AgentDeps, build_graph
+    from knoventra.config import settings
+    from knoventra.db.session import SessionLocal
+
+    if not settings.llm_model:
+        raise ValueError("LLM model is not configured")
+    llm = ChatOpenAI(base_url=settings.llm_base_url or None, api_key=settings.llm_api_key or "none",
+                     model=settings.llm_model, timeout=settings.llm_timeout_s, max_retries=0,
+                     max_tokens=max_output_tokens, streaming=False)
+
+    @contextmanager
+    def session():
+        with SessionLocal() as db:
+            yield db
+
+    saver, pool = make_checkpointer(settings.database_url)
+    try:
+        return build_graph(AgentDeps(session, enc, rr, llm, saver)), pool
+    except BaseException:
+        pool.close()
+        raise
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--split", choices=["dev", "holdout", "all", "val2", "val3", "val4", "val5"], default="dev")
@@ -191,17 +261,70 @@ def main() -> None:
     ap.add_argument("--threshold", type=float, default=None)
     ap.add_argument("--confirm-final", action="store_true", help="required for holdout/all/val3/val4/val5")
     ap.add_argument("--out", type=Path)
+    ap.add_argument("--progress-out", type=Path, help="agent-only durable JSONL progress; never resumes a run")
+    ap.add_argument("--dry-run", action="store_true", help="offline plan only; no DB/model/network calls")
+    ap.add_argument("--case-id", action="append", help="select a case from the split (repeatable)")
+    ap.add_argument("--allow-llm", action="store_true", help="explicitly enable real agent evaluation")
+    ap.add_argument("--max-output-tokens", type=int, default=1024)
+    ap.add_argument("--assumed-input-tokens", type=int, default=4000, help="scenario estimate, not an input limit")
+    ap.add_argument("--input-price-per-million", type=float)
+    ap.add_argument("--output-price-per-million", type=float)
+    ap.add_argument("--currency", default="USD", help="unit of the supplied prices; no exchange-rate conversion")
     a = ap.parse_args()
+    if a.out is not None and a.out.exists():
+        ap.error("output already exists; choose a new result path")
+    if a.progress_out is not None and a.mode != "agent":
+        ap.error("--progress-out only applies to agent mode")
+    if a.progress_out is not None and a.progress_out.exists():
+        ap.error("progress output already exists; choose a new path")
+    if a.out is not None and a.progress_out is not None and a.out.resolve() == a.progress_out.resolve():
+        ap.error("report and progress paths must differ")
     if a.rerank_model and not a.rerank:
         ap.error("--rerank-model requires --rerank")
     if a.mode == "agent" and (a.no_sparse or a.no_opencc or a.threshold is not None):
         ap.error("--no-sparse, --no-opencc and --threshold are retrieval-only options")
+    if a.mode != "agent" and a.allow_llm:
+        ap.error("--allow-llm only applies to agent mode")
     if a.split in ("holdout", "all", "val3", "val4", "val5") and not a.confirm_final:
         sys.exit(f"{a.split} is for final reporting only; pass --confirm-final to proceed")
 
+    from knoventra.config import settings
+    try:
+        cases = select_cases(load_cases(a.split), a.case_id)
+        preflight = plan(cases, mode=a.mode, split=a.split, tool_limit=settings.max_tool_calls_per_turn,
+                         model=settings.llm_model if a.mode == "agent" else "", max_output_tokens=a.max_output_tokens,
+                         assumed_input_tokens=a.assumed_input_tokens, input_price=a.input_price_per_million,
+                         output_price=a.output_price_per_million, currency=a.currency)
+    except ValueError as error:
+        ap.error(str(error))
+    if a.dry_run:
+        if a.out:
+            a.out.parent.mkdir(parents=True, exist_ok=True)
+            with a.out.open("x", encoding="utf-8") as output:
+                output.write(json.dumps(preflight, ensure_ascii=False, indent=2, allow_nan=False) + "\n")
+        print(json.dumps(preflight, ensure_ascii=False, indent=2, allow_nan=False))
+        return
+    if a.mode == "agent" and not a.allow_llm:
+        ap.error("agent evaluation requires --allow-llm; inspect --dry-run first")
+    if a.mode == "agent" and a.input_price_per_million is None:
+        ap.error("agent evaluation requires input/output prices for the preflight estimate")
+    if a.mode == "agent" and not settings.llm_model:
+        ap.error("LLM model is not configured")
+
+    a.out = a.out or HERE / "results" / f"{a.split}-{a.mode}-{dt.datetime.now():%Y%m%d-%H%M%S}.json"
+    progress_path = a.progress_out or Path(str(a.out) + ".progress.jsonl")
+    if a.mode == "agent" and (a.out.resolve() == progress_path.resolve() or a.out.exists()):
+        ap.error("choose separate, unused report and progress paths")
+    journal_context = ProgressJournal(progress_path, preflight) if a.mode == "agent" else nullcontext(None)
+    with journal_context as journal:
+        run_evaluation(a, cases, preflight, journal)
+
+
+def run_evaluation(a, cases, preflight, journal=None):
+    from knoventra.retrieval.search import QUERY_ENCODING_POLICY, QUERY_VECTOR_POLICY
+    from knoventra.config import settings
     from sqlalchemy import func, select
 
-    from knoventra.config import settings
     from knoventra.db.models import Chunk, Document, Revision, User
     from knoventra.db.session import SessionLocal
     from knoventra.ingestion.encoder import get_encoder
@@ -211,7 +334,6 @@ def main() -> None:
         settings.rerank = "bge"
     if a.rerank_model:
         settings.rerank_model = a.rerank_model
-    cases = load_cases(a.split)
     enc, rr = get_encoder(), get_reranker()
     th = (settings.rerank_threshold if rr else settings.gate_threshold) if a.threshold is None else a.threshold
     with SessionLocal() as db:
@@ -222,39 +344,62 @@ def main() -> None:
             "published_chunks": db.scalar(select(func.count()).select_from(Chunk).join(Revision)
                                            .where(Revision.status == "PUBLISHED")),
         }
+        corpus.update(corpus_fingerprints(db))
+        if journal:
+            journal.record("corpus_captured", corpus=corpus)
         if a.mode == "retrieval":
             res = eval_retrieval(db, enc, rr, users, cases, use_sparse=not a.no_sparse,
                                  use_opencc=not a.no_opencc, threshold=th)
             metrics = summarize(res)
         else:
-            from knoventra.api.chat import get_graph
-            res = eval_agent(get_graph(), db, users, cases)
-            metrics = summarize_agent(res)
-            db.rollback()
+            graph, pool = make_evaluation_graph(enc, rr, a.max_output_tokens)
+            try:
+                res = eval_agent(graph, db, users, cases,
+                                 on_start=journal.start_case if journal else None,
+                                 on_complete=journal.complete_case if journal else None)
+                metrics = summarize_agent(res)
+                db.rollback()
+            finally:
+                pool.close()
     prompt_sha256 = None
+    citation_policy = None
     if a.mode == "agent":
-        from knoventra.agent.graph import SYSTEM_PROMPT
+        from knoventra.agent.graph import CITATION_POLICY, SYSTEM_PROMPT
         prompt_sha256 = hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()
+        citation_policy = CITATION_POLICY
     report = {
         "date": dt.date.today().isoformat(), "split": a.split, "mode": a.mode, "n_cases": len(cases),
         "config": {"encoder": settings.encoder, "rerank": "bge" if rr else "off", "sparse": not a.no_sparse,
+                   "encoder_model": getattr(enc, "model_name", None),
+                   "encoder_model_revision": getattr(enc, "model_revision", None),
                    "opencc": not a.no_opencc, "gate_threshold": th,
-                   "gate_sparse_threshold": settings.gate_sparse_threshold, "identifier_policy": "exact-v1",
+                   "gate_sparse_threshold": settings.gate_sparse_threshold, "identifier_policy": IDENTIFIER_POLICY,
                    "rerank_model": settings.rerank_model if rr else None,
+                   "rerank_model_revision": getattr(rr, "model_revision", None) if rr else None,
                    "rerank_candidates": settings.rerank_candidates if rr else None,
                    "rerank_input": "section_path+text-v1" if rr else None,
                    "rank_metric_stage": "post_rerank_pre_gate" if rr else "post_rrf_pre_gate",
                    "llm_model": settings.llm_model or None,
                    "review_snapshot_schema": 1 if a.mode == "agent" else None,
+                   "citation_policy": citation_policy,
+                   "query_vector_policy": QUERY_VECTOR_POLICY,
+                   "query_encoding_policy": QUERY_ENCODING_POLICY,
                    "prompt_sha256": prompt_sha256},
         "corpus": corpus,
         "cases_sha256": hashlib.sha256(json.dumps(cases, sort_keys=True, ensure_ascii=False).encode()).hexdigest(),
-        "env": {"python": platform.python_version(), "platform": platform.platform()},
+        "env": {"python": platform.python_version(), "platform": platform.platform(), "packages": dependency_versions()},
         "metrics": metrics, "cases": res,
+        "preflight": preflight if a.mode == "agent" else None,
+        "progress_path": str(journal.path) if journal else None,
     }
     path = a.out or HERE / "results" / f"{a.split}-{a.mode}-{dt.datetime.now():%Y%m%d-%H%M%S}.json"
-    path.parent.mkdir(exist_ok=True)
-    path.write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("x", encoding="utf-8") as output:
+        output.write(json.dumps(report, ensure_ascii=False, indent=1, allow_nan=False))
+        output.flush()
+        os.fsync(output.fileno())
+    if journal:
+        journal.record("run_completed", report_path=str(path), completed_cases=len(res))
     print(json.dumps({"config": report["config"], "metrics": metrics}, ensure_ascii=False, indent=1))
     print("wrote", path)
 

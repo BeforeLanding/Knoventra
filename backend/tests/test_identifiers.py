@@ -7,6 +7,7 @@ import pytest
 from knoventra.access.scope import AccessScope, NoAccess
 from knoventra.retrieval import pipeline
 from knoventra.retrieval.identifiers import evidence_identifiers, extract_identifiers, normalize_identifiers
+from knoventra.retrieval.identifiers import extract_query_identifiers, normalize_query_identifiers
 from knoventra.retrieval.search import Evidence, SearchResult, search
 
 
@@ -36,6 +37,37 @@ def test_inherited_heading_is_evidence_without_changing_original_glyphs():
 
 def test_code_normalization_preserves_prose_and_traditional_glyphs():
     assert normalize_identifiers("Check ｅ１７－０７ 感測器 sign-in") == "Check E17-07 感測器 sign-in"
+
+
+@pytest.mark.parametrize("query,expected", [
+    ("E17 设备报代码 42 先查什么", {"E17-42"}),
+    ("ｅ１７ 設備報代碼：０７ 怎麼處理", {"E17-07"}),
+    ("p03设备故障码11", {"P03-11"}),
+    ("S5 報錯誤碼 19", {"S5-19"}),
+    ("C21故障碼05 校準", {"C21-05"}),
+    ("E17代码42 与 P03代码11", {"E17-42", "P03-11"}),
+    ("E17代码42、E17-07", {"E17-42", "E17-07"}),
+    ("ZE17代码42", {"ZE17-42"}),
+])
+def test_bounded_split_query_codes(query, expected):
+    assert extract_query_identifiers(query) == expected
+
+
+@pytest.mark.parametrize("query", [
+    "E17 温度 42 摄氏度", "E17 42", "E17 环境温度超过35", "E17设备，代码42", "E17\n代码42",
+    "E17故障码4", "E17故障码420", "E17代码42B", "E17代码42.0", "E17代码42-43",
+    "E17代码42/43", "E17代码42、43", "E17代码42 或 43", "E17代码42至43",
+    "E17代码42分钟", "E17代码42元", "E17代码42℃", "E17代码42度", "E17代码42 摄氏度", "E17代码42米",
+    "_E17代码42", "E17 日期 2026-11-07",
+])
+def test_ambiguous_numbers_and_unsupported_split_forms_are_not_inferred(query):
+    assert extract_query_identifiers(query) == set()
+
+
+def test_query_joining_does_not_modify_source_matching_or_unrelated_prose():
+    assert normalize_query_identifiers("Check ｅ１７設備報代碼４２，感測器正常") == "Check E17-42,感測器正常"
+    assert normalize_query_identifiers("環境溫度 ４２ 度") == "環境溫度 ４２ 度"
+    assert evidence_identifiers("E17设备代码42", "检查液位") == set()
 
 
 def test_match_happens_before_top_k_and_ignores_document_title(enc):

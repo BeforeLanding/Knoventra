@@ -98,6 +98,7 @@ class Conversation(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey("knv_user.id"), index=True)
     thread_id: Mapped[str] = mapped_column(String(64), unique=True, default=_id)
     title: Mapped[str] = mapped_column(String(255), default="")
+    active_turn_id: Mapped[str | None] = mapped_column(String(32))
     created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -109,6 +110,8 @@ class Message(Base):
     content: Mapped[str] = mapped_column(Text)
     evidence_json: Mapped[list | None] = mapped_column(JSON)
     error_code: Mapped[str | None] = mapped_column(String(64))
+    completion_turn_id: Mapped[str | None] = mapped_column(String(32))
+    __table_args__ = (UniqueConstraint("conversation_id", "completion_turn_id", name="uq_knv_message_completion"),)
     # now() is fixed at transaction start, so multiple messages can receive the
     # same timestamp and replay in random UUID order. Capture insertion time.
     created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())
@@ -133,6 +136,7 @@ class Escalation(Base):
     summary: Mapped[str] = mapped_column(Text)
     evidence_refs: Mapped[list | None] = mapped_column(JSON)
     status: Mapped[str] = mapped_column(String(16), default="OPEN")
+    created_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())
     __table_args__ = (UniqueConstraint("user_id", "operation_id"),)
 
 
@@ -144,3 +148,5 @@ Index("ix_knv_chunk_sparse", Chunk.sparse, postgresql_using="hnsw",
       postgresql_ops={"sparse": "sparsevec_ip_ops"})
 Index("uq_knv_revision_published", Revision.document_id, unique=True,
       postgresql_where=Revision.status == "PUBLISHED")
+Index("ix_knv_escalation_user_created", Escalation.user_id,
+      Escalation.created_at.desc().nulls_last(), Escalation.id.desc())

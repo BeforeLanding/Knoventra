@@ -82,6 +82,9 @@ def test_independent_http_requests_cannot_advance_same_checkpoint(engine, enc, m
                 chat = TestClient(app).post("/api/v1/chat", headers=headers,
                                             json={"conversation_id": cid, "message": "并发消息"})
                 assert chat.status_code == 409 and chat.json()["detail"] == "CONVERSATION_BUSY"
+                retry = TestClient(app).post("/api/v1/chat/retry", headers=headers,
+                                             json={"conversation_id": cid, "checkpoint_id": "during-run"})
+                assert retry.status_code == 409 and retry.json()["detail"] == "CONVERSATION_BUSY"
                 with sessions() as db:
                     assert db.scalar(select(func.count()).select_from(Message)
                                      .where(Message.conversation_id == cid)) == before

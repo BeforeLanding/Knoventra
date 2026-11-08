@@ -15,6 +15,8 @@ header a.on { color: #1d4ed8; font-weight: 600 }
 .err { color: #b91c1c }
 .chat { flex: 1; display: flex; min-height: 0 }
 .chat aside { width: 220px; background: #fff; border-right: 1px solid #e1e5ea; padding: 8px; overflow: auto }
+.chat aside form { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 0 }
+.chat aside form input { flex: 1 0 100%; width: 100%; min-width: 0; box-sizing: border-box }
 .conv { display: block; width: 100%; text-align: left; border: 0; padding: 6px 8px; border-radius: 6px; cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
 .conv.on, .conv:hover { background: #eef2ff }
 .chat main { flex: 1; display: flex; flex-direction: column; min-width: 0 }
@@ -27,10 +29,10 @@ header a.on { color: #1d4ed8; font-weight: 600 }
 .tag.err { color: #b91c1c }
 .status { color: #7b8794 }
 .sources { display: grid; gap: 8px; margin-top: 8px }
-.card { border: 1px solid #e1e5ea; border-radius: 8px; padding: 6px 10px; cursor: pointer; background: #fafbfc }
+.card { border: 1px solid #e1e5ea; border-radius: 8px; padding: 6px 10px; cursor: pointer; background: #fafbfc; text-align: left; font: inherit }
 .card:hover { border-color: #1d4ed8 }
 .card small { display: block; color: #7b8794 }
-.card p { margin: 4px 0 0; color: #3e4c59 }
+.card .snippet { display: block; margin: 4px 0 0; color: #3e4c59 }
 .confirm { margin-top: 8px; padding: 8px 12px; border: 1px dashed #1d4ed8; border-radius: 8px }
 .confirm button { margin-right: 8px }
 .chat form { display: flex; gap: 8px; padding: 12px 24px; background: #fff; border-top: 1px solid #e1e5ea }
@@ -40,6 +42,10 @@ header a.on { color: #1d4ed8; font-weight: 600 }
 .panel pre { white-space: pre-wrap }
 .admin { padding: 16px 24px; overflow: auto }
 .admin form { display: flex; gap: 8px; flex-wrap: wrap }
+.admin fieldset { display: flex; gap: 8px; flex-wrap: wrap; border: 0; margin: 0; padding: 0; min-width: 0 }
+.catalog-filters { display: flex; align-items: end; flex-wrap: wrap; gap: 12px }
+.catalog-filters label { display: flex; flex-direction: column; gap: 4px; max-width: 100% }
+.catalog-filters input, .catalog-filters select { box-sizing: border-box; max-width: 100%; padding: 6px }
 table { border-collapse: collapse; background: #fff }
 td, th { border: 1px solid #e1e5ea; padding: 4px 10px; text-align: left }
 .rev { margin-right: 12px }
@@ -47,3 +53,9 @@ td, th { border: 1px solid #e1e5ea; padding: 4px 10px; text-align: left }
 .rev.RETIRED { color: #9aa5b1 }
 .rev.DRAFT { color: #b45309 }
 .rev button { margin-left: 4px; padding: 0 6px }
+.escalations { padding: 16px 24px; overflow: auto; width: min(100%, 960px); margin: 0 auto }
+.escalation-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap }
+.escalation-list { list-style: none; padding: 0; display: grid; gap: 12px }
+.escalation-list li { background: #fff; border: 1px solid #e1e5ea; border-radius: 8px; padding: 12px 16px }
+.escalation-list .text { white-space: pre-wrap; overflow-wrap: anywhere }
+.escalation-list time { color: #52606d }

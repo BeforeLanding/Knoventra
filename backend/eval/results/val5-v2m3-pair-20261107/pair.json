@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "mode": "retrieval",
+  "split": "val5",
+  "runs_per_configuration": 1,
+  "model": "BAAI/bge-reranker-v2-m3",
+  "cases_sha256": "60ab87221c2e3b016e501122cc33561045b0f7fc01abb42a98d949b90fe32596",
+  "corpus": {
+    "documents": 12,
+    "published_revisions": 12,
+    "published_chunks": 21,
+    "published_text_sha256": "6705997dad3a8365a995cabddaaa7929276191949ae8e1213a494837d36416e7",
+    "grants_sha256": "1f01e113180b25cbdce511459f9620e0876c3359fb20464d54e6db0d837c00d7"
+  },
+  "outputs": [
+    "off.json",
+    "rerank.json"
+  ],
+  "llm_calls": 0,
+  "isolation": "fresh disposable PostgreSQL database; cached local models only"
+}

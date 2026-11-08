@@ -8,6 +8,18 @@ from pathlib import Path
 MAX_CHARS = 700
 _HEADING = re.compile(r"^(#{1,4})\s+(.*\S)\s*$")
 _PAGE_MARK = re.compile(r"^<!--\s*page:\s*(\d+)\s*-->\s*$")
+# Boundary heuristic only; identifier recognition remains in retrieval.identifiers.
+_WORD = re.compile(r"[A-Za-z0-9Ａ-Ｚａ-ｚ０-９_]+(?:[ \t]*[-‐‑‒–—−﹘﹣－][ \t]*[A-Za-z0-9Ａ-Ｚａ-ｚ０-９_]+)*")
+
+
+class DocumentParseError(ValueError):
+    """A recognized unsupported or malformed source document."""
+
+
+def _check_text(text: str) -> str:
+    if '\x00' in text:
+        raise DocumentParseError('document text must not contain NUL')
+    return text
 
 
 @dataclass
@@ -17,15 +29,38 @@ class RawChunk:
     text: str
 
 
+def _bounded_parts(text: str):
+    """Hard limit with short Latin/fullwidth words/codes kept across boundaries.
+
+    Scan a bounded window instead of repeatedly copying the remaining long text.
+    A token longer than MAX_CHARS must itself be split to keep the hard limit.
+    """
+    start = 0
+    while len(text) - start > MAX_CHARS:
+        end = start + MAX_CHARS
+        for token in _WORD.finditer(text, start, min(len(text), end + MAX_CHARS)):
+            if token.start() >= end:
+                break
+            if token.start() < end < token.end() and token.end() - token.start() <= MAX_CHARS:
+                end = token.start()
+                break
+        yield text[start:end]
+        start = end
+    if start < len(text):
+        yield text[start:]
+
+
 def _split_long(text: str) -> list[str]:
     if len(text) <= MAX_CHARS:
         return [text]
     parts, cur = [], ""
-    for para in re.split(r"(?<=[。！？.!?\n])", text):
-        if cur and len(cur) + len(para) > MAX_CHARS:
-            parts.append(cur.strip())
-            cur = ""
-        cur += para
+    for sentence in re.split(r"(?<=[。！？.!?\n])", text):
+        for piece in _bounded_parts(sentence):
+            if cur and len(cur) + len(piece) > MAX_CHARS:
+                if cur.strip():
+                    parts.append(cur.strip())
+                cur = ""
+            cur += piece
     if cur.strip():
         parts.append(cur.strip())
     return parts
@@ -74,12 +109,23 @@ def chunk_markdown(md: str) -> list[RawChunk]:
 
 
 def chunk_pdf(path: Path) -> list[RawChunk]:
-    import fitz  # PyMuPDF
+    import pymupdf
 
     out: list[RawChunk] = []
-    with fitz.open(path) as doc:
+    # A failed native path-based open can retain the Windows file handle.
+    # Own the read in Python, so malformed PDFs cannot block temp-file cleanup.
+    data = path.read_bytes()
+    try:
+        doc = pymupdf.open(stream=data, filetype='pdf')
+    except pymupdf.FileDataError:
+        raise DocumentParseError('PDF is empty or cannot be opened as a valid document') from None
+    with doc:
+        if not doc.is_pdf:
+            raise DocumentParseError('file must be a PDF document')
+        if doc.needs_pass:
+            raise DocumentParseError('password-protected PDFs are not supported; upload an unlocked copy')
         for i, pg in enumerate(doc, start=1):
-            for piece in re.split(r"\n\s*\n", pg.get_text()):
+            for piece in re.split(r"\n\s*\n", _check_text(pg.get_text())):
                 piece = piece.strip()
                 if piece:
                     out += [RawChunk(i, "", p) for p in _split_long(piece)]
@@ -89,4 +135,10 @@ def chunk_pdf(path: Path) -> list[RawChunk]:
 def chunk_file(path: Path) -> list[RawChunk]:
     if path.suffix.lower() == ".pdf":
         return chunk_pdf(path)
-    return chunk_markdown(path.read_text(encoding="utf-8"))
+    if path.suffix.lower() != ".md":
+        raise DocumentParseError('only .md and .pdf documents are supported')
+    try:
+        text = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        raise DocumentParseError('Markdown must use UTF-8 encoding') from None
+    return chunk_markdown(_check_text(text))

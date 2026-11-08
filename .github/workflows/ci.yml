@@ -1,0 +1,86 @@
+name: Knoventra CI
+
+on:
+  push:
+    branches: [main, 'feat/**', 'fix/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: knoventra-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend and migrations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: knoventra
+          POSTGRES_PASSWORD: knoventra
+          POSTGRES_DB: postgres
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U knoventra -d postgres"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 20
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      KNV_TEST_ADMIN_URL: postgresql+psycopg://knoventra:knoventra@localhost:55432/postgres
+      KNV_ENCODER: hash
+      KNV_RERANK: 'off'
+      KNV_LLM_API_KEY: ''
+      KNV_LLM_BASE_URL: ''
+      KNV_LLM_MODEL: ''
+      HF_HUB_OFFLINE: '1'
+    steps:
+      - uses: actions/checkout@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.12.13'
+          python-version: '3.12'
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - name: Install locked base and test dependencies
+        run: uv sync --locked --group dev
+      - name: Check fresh migration chain, schema and seed replay
+        run: uv run --no-sync python dev/check_migrations.py
+      - name: Run offline integration and regression tests
+        run: uv run --no-sync pytest -q --tb=short
+
+  web:
+    name: Web tests and build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Run component and API tests
+        run: npm test
+      - name: Build production bundle
+        run: npm run build
+      - name: Lint
+        run: npm run lint

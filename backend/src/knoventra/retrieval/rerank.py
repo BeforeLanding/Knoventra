@@ -5,11 +5,12 @@ from dataclasses import replace
 from functools import lru_cache
 from numbers import Real
 from typing import Protocol
+from threading import Lock
 
 import numpy as np
 
-from knoventra.config import settings
-from knoventra.retrieval.identifiers import extract_identifiers, normalize_identifiers
+from knoventra.config import ModelConfigurationError, settings
+from knoventra.retrieval.identifiers import normalize_query_identifiers
 from knoventra.retrieval.search import Evidence
 
 
@@ -23,6 +24,7 @@ class BgeReranker:
 
         self.model_name = name
         self.m = FlagReranker(name, use_fp16=True)
+        self.model_revision = getattr(self.m.model.config, "_commit_hash", None)
 
     def score(self, query, texts):
         if not texts:
@@ -36,9 +38,15 @@ class BgeReranker:
 def _load_reranker(name: str) -> Reranker:
     return BgeReranker(name)
 
+_load_lock = Lock()
 
 def get_reranker() -> Reranker | None:
-    return _load_reranker(settings.rerank_model) if settings.rerank == "bge" else None
+    if settings.rerank == "off":
+        return None
+    if settings.rerank != "bge" or not isinstance(settings.rerank_model, str) or not settings.rerank_model.strip():
+        raise ModelConfigurationError("rerank must be off or bge with a nonblank model name")
+    with _load_lock:
+        return _load_reranker(settings.rerank_model)
 
 
 def rerank(rr: Reranker, query: str, ev: list[Evidence], top_k: int) -> list[Evidence]:
@@ -46,7 +54,7 @@ def rerank(rr: Reranker, query: str, ev: list[Evidence], top_k: int) -> list[Evi
         raise ValueError("rerank top_k must be positive")
     if not ev:
         return []
-    query = normalize_identifiers(query) if extract_identifiers(query) else query
+    query = normalize_query_identifiers(query)
     # Headings carry fault codes and context that may not be repeated in the body.
     passages = [f"{e.section_path}\n{e.text}" if e.section_path else e.text for e in ev]
     scores = rr.score(query, passages)

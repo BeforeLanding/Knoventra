@@ -109,6 +109,38 @@ def test_parallel_uploads_share_document_and_receive_unique_versions(engine, enc
                          .where(Document.kb_id == kb_id, Document.title == title)) == 1
 
 
+def test_first_upload_language_race_is_rechecked_after_encoding(engine, enc, revision_case):
+    from knoventra.ingestion.service import DocumentMetadataError
+    kb_id, _, path = revision_case
+    gate = threading.Barrier(2)
+    class GatedEncoder:
+        def __init__(self):
+            self.first = True
+        def encode(self, texts):
+            if self.first:
+                self.first = False
+                gate.wait(timeout=5)  # Both metadata preflights saw no existing document.
+            return enc.encode(texts)
+    def upload(lang):
+        try:
+            with Session(engine) as session, session.begin():
+                session.execute(text("SET LOCAL lock_timeout = '8s'"))
+                add_revision(session, GatedEncoder(), kb_id=kb_id, title='不同语言首次上传', lang=lang, path=path)
+            return 'CREATED', lang
+        except DocumentMetadataError:
+            return 'REJECTED', lang
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        futures = [pool.submit(upload, lang) for lang in ('zh-Hans', 'en')]
+        outcomes = [future.result(timeout=15) for future in futures]
+    assert sorted(status for status, _ in outcomes) == ['CREATED', 'REJECTED']
+    winner = next(lang for status, lang in outcomes if status == 'CREATED')
+    with Session(engine) as session:
+        doc = session.scalar(select(Document).where(Document.kb_id == kb_id, Document.title == '不同语言首次上传'))
+        assert doc.source_lang == winner
+        revisions = session.scalars(select(Revision).where(Revision.document_id == doc.id)).all()
+        assert len(revisions) == 1 and revisions[0].status == 'DRAFT'
+
+
 def test_database_rejects_two_published_revisions_even_when_bypassing_service(db):
     doc = db.scalar(select(Document).where(Document.title.like("E17%")))
     draft = db.scalar(select(Revision).where(Revision.document_id == doc.id, Revision.status == "DRAFT"))

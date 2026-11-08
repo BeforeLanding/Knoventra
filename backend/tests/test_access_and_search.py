@@ -153,3 +153,30 @@ def test_exact_code_in_unreadable_kb_is_not_considered_present(db, enc, users):
     allowed = retrieve(db, enc, None, users["cn-ops"], "C21-05", threshold=0.0)
     assert denied.status == INSUFFICIENT and denied.missing_identifiers == ["C21-05"]
     assert allowed.status == OK and allowed.evidence
+
+
+@pytest.mark.parametrize("query,code", [("E17设备代码45 如何恢复", "E17-45"),
+                                      ("P03 設備報故障碼 13", "P03-13"), ("E19设备报代码42", "E19-42")])
+def test_split_near_misses_are_refused_without_model_help(db, enc, users, query, code):
+    from knoventra.retrieval.pipeline import INSUFFICIENT, retrieve
+    out = retrieve(db, enc, None, users["sg-ops"], query, threshold=0.0)
+    assert out.status == INSUFFICIENT and out.reason == "IDENTIFIER_MISMATCH" and out.missing_identifiers == [code]
+    assert out.evidence == []
+
+
+@pytest.mark.parametrize("query,code", [("E17设备报代码42", "E17-42"), ("P03設備故障碼11", "P03-11"),
+                                      ("S5錯誤碼19", "S5-19")])
+def test_split_query_matches_explicit_authorized_source_without_rewriting_it(db, enc, users, query, code):
+    from knoventra.retrieval.pipeline import OK, retrieve
+    from knoventra.retrieval.identifiers import evidence_identifiers
+    out = retrieve(db, enc, None, users["sg-ops"], query, threshold=0.0)
+    assert out.status == OK and out.required_identifiers == [code]
+    assert all(code in evidence_identifiers(e.section_path, e.text) for e in out.evidence)
+
+
+def test_split_code_does_not_disclose_a_region_restricted_manual(db, enc, users):
+    from knoventra.retrieval.pipeline import INSUFFICIENT, OK, retrieve
+    denied = retrieve(db, enc, None, users["sg-ops"], "C21設備故障碼05", threshold=0.0)
+    allowed = retrieve(db, enc, None, users["cn-ops"], "C21設備故障碼05", threshold=0.0)
+    assert denied.status == INSUFFICIENT and denied.evidence == [] and denied.missing_identifiers == ["C21-05"]
+    assert allowed.status == OK
