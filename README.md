@@ -73,6 +73,7 @@ uv run python eval/run_eval.py --split dev --mode agent --case-id ops-01 --dry-r
 - [关键架构决策](docs/DECISIONS.md)
 - [评测报告](docs/evaluation-report.md)
 - [回答支持度审核流程](backend/eval/REVIEW.md)
+- [真实 dev 回答的未标注人工审核页](backend/eval/results/dev-agent-20261108-review-qa-human.html)
 - [演示与会话恢复验证](docs/demo-guide.md)
 - [本地浏览器流程录像（脚本模型）](docs/demo/README.md)
 - [自动化验收与 CI](docs/ci.md)

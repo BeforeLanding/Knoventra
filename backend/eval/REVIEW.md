@@ -54,6 +54,19 @@ uv run python eval/review_answers.py prepare eval/results/new-agent-run.json --o
 
 审核包包含来源快照和建议审核单元。按行和中文句末标点划分，句末引用保留在对应句子中；标题、问候、建议等也可能被分成单元，由审核者判定是否是事实论断。当前不提供重新分句功能；一个单元包含多个论断时，需整体判断，部分有依据就标记 `partially_supported` 并在理由中区分。
 
+### 离线浏览器审核页
+
+不便直接编辑 JSON 时，可从**未标注**审核包生成一个单文件页面；页面只读取报告和审核包，不连接数据库或模型：
+
+```bash
+uv run python eval/render_review_html.py eval/results/new-agent-review.json \
+  --report eval/results/new-agent-run.json --out eval/results/new-agent-review-human.html
+```
+
+打开 HTML 后逐句核对答案与可展开的当轮原文，填写审核者、判定、理由及逐字引句。可随时导出部分进度 JSON，之后用页面的“导入进度”继续；“完全 / 部分支持”的引句先在浏览器校验，最终仍须按第 4 节用原报告运行 `summarize`。页面不会自动标注，也不会把 Codex 审核转成人工审核。只有真人实际阅读和填写后才能使用 `reviewer_kind: human`。
+
+旧 12 份语料真实 dev 运行的 10 个可答例已有[未标注浏览器审核页](results/dev-agent-20261108-review-qa-human.html)，共 50 个建议单元。它包含当轮冻结来源，页面本身不代表已经有人审核。新提示词复测若获授权并实际运行，须从新报告重新准备审核包，不能沿用旧快照。
+
 ## 3. 编辑审核意见
 
 只修改每个 `claims` 项目的 `verdict`、`reviewer`、`reviewer_kind`、`notes` 和 `supports`，保留原文、引用、ID、来源和用例顺序。支持 / 部分支持必须提供原文引句，其他已审核项也必须注明审核者和理由。
