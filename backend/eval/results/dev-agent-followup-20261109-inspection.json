@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "mode": "progress_inspection",
+  "status": "completed",
+  "error_type": null,
+  "selected_case_ids": [
+    "ops-02",
+    "cross-01",
+    "cross-02",
+    "escalation-02"
+  ],
+  "completed_case_ids": [
+    "ops-02",
+    "cross-01",
+    "cross-02",
+    "escalation-02"
+  ],
+  "in_flight": null,
+  "not_started_case_ids": [],
+  "ignored_truncated_tail": false,
+  "complete_event_count": 11,
+  "events_sha256": "b93a7d8c761c06b59ec814de76fc287c061bf12e77f8659dd89a503c01e1c934",
+  "report_verified": true,
+  "report_sha256": "b71b8a014decf25b219aa0fe72348970aa6fd42b2ccaac8fc0c568714324c710",
+  "limitation": "Offline inspection only; checksums are not signatures. Unclosed does not mean running. In-flight cases may have incurred charges or committed writes. No automatic resume. Report verification covers preflight/selection, corpus, results and metrics, not unlogged configuration."
+}

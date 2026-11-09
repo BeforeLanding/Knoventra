@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "mode": "preflight",
+  "evaluation_mode": "agent",
+  "split": "dev",
+  "case_ids": [
+    "ops-02",
+    "cross-01",
+    "cross-02",
+    "escalation-02"
+  ],
+  "n_cases": 4,
+  "confirmation_decision_cases": [
+    "escalation-02"
+  ],
+  "categories": {
+    "cross": 2,
+    "escalation": 1,
+    "ops": 1
+  },
+  "cases_sha256": "c5b575735bc9119858d0d08a393e39e965ac9c097e0a1f8242c0f4362a876d48",
+  "model": "deepseek-flash",
+  "max_tool_calls_per_turn": 4,
+  "graph_model_call_bound": 20,
+  "automatic_provider_retries": 0,
+  "max_output_tokens_per_call": 1024,
+  "requested_output_token_bound": 20480,
+  "assumed_input_tokens_per_call": 4000,
+  "input_price_per_million": 0.3,
+  "output_price_per_million": 1.2,
+  "currency": "USD",
+  "scenario_cost_estimate": 0.048576,
+  "limitation": "Scenario estimate, not a billing cap. Input length is assumed, not measured; provider token semantics, reasoning/cache charges and failed requests may differ. Output bound depends on provider honoring max_tokens. No calls made by preflight.",
+  "llm_thinking": "disabled",
+  "llm_streaming": true
+}

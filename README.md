@@ -28,7 +28,7 @@
 
 - 评测规模很小：早期真实 LLM 报告使用 12 份虚构资料、21 个生效块；2026-11-09 已在当前 13 份资料、23 个生效块上完成一次真实 dev 20 例及留出集三组本地检索消融。评测集为 60 + 112 例，结果只说明对应语料与用例，不代表通用效果；Recall@5 在小语料下仍饱和。
 - 新一次真实 LLM dev 20 例已保存当轮来源快照，来源位置指标 9/10、无依据 3/3 拒答、转交 2/2；Codex 审核全部 10 个可答例，49 个事实单元中 43 个完全支持、3 个部分支持、3 个不支持。**真人审核数仍为 0，不能把 agent 审核率当成人工支持率**。审核流程见[说明](backend/eval/REVIEW.md)，原始报告和边界见[评测报告](docs/evaluation-report.md)第 20 节。
-- 编码校验覆盖显式 ASCII 编码和有限的带标签两位分写语法；无标签数字、跨句关联、省略型号、范围 / 多选表达不自动推断，编码存在也不证明资料支持所问内容。2026-11-09 dev 复测仍出现“日常检查”语义误拒和字形不跟随；运行后新增保守的终稿简繁转换并明确不得擅加“完整清单”要求。字形机制通过离线测试，后一次提示词修改尚未真实复测。
+- 编码校验覆盖显式 ASCII 编码和有限的带标签两位分写语法；无标签数字、跨句关联、省略型号、范围 / 多选表达不自动推断，编码存在也不证明资料支持所问内容。首轮dev仍误拒“日常检查”并未跟随字形；修订后4例定向验证的三个可答例命中3/3、该误拒例这次回答正确，但转交例追问而未创建确认。其后新增明确短中文请求的确定性确认路径与真实interrupt评测标记，尚无额外付费验证，不能把小样本写成全面修复；详见评测报告第23、24节。
 - Rerank 各配置只做单次小语料对照；另行冻结的 24 例阈值校准 / 验证没有得到可稳定采用的新阈值，仍需更大、外部独立的数据。`base` 与 `v2-m3` 属于不同日期 / 策略的测量，不能直接比较其净效果。OCR、数据驻留、长期记忆、异步入库、MCP 服务化的原因与扩展方向见[开发方案](docs/knoventra-development-plan.md)第 12 节。
 - 端到端只用单个 LLM（deepseek-flash），各报告均为单次运行，没有估计波动。
 
@@ -76,7 +76,8 @@ uv run python eval/run_eval.py --split dev --mode agent --case-id ops-01 --dry-r
 - [关键架构决策](docs/DECISIONS.md)
 - [评测报告](docs/evaluation-report.md)
 - [回答支持度审核流程](backend/eval/REVIEW.md)
-- [最新真实 dev 回答的未标注人工审核页](backend/eval/results/dev-agent-stream-nothinking-20261109-review-qa-human.html)
+- [20例dev的10个可答例真人审核页](backend/eval/results/dev-agent-stream-nothinking-20261109-review-qa-human.html)
+- [4例定向验证的3个可答例真人审核页](backend/eval/results/dev-agent-followup-20261109-review-qa-human.html)
 - [演示与会话恢复验证](docs/demo-guide.md)
 - [本地浏览器流程录像（脚本模型）](docs/demo/README.md)
 - [自动化验收与 CI](docs/ci.md)

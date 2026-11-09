@@ -50,6 +50,8 @@ npm run lint
 
 2026-11-09 首次远端运行在初始化阶段失败：checkout 与 setup-node 的固定 SHA 被写入了错误的 Action 仓库。通过官方发布标签 API 核对后修复，提交 `9e938b1e` 的[远端运行](https://github.com/BeforeLanding/Knoventra/actions/runs/42579143319)两个 job 均通过：后端 587 项（34.60 秒）、迁移全链 / ORM 差异 / 种子重放通过；前端 145 项、生产构建和零警告 lint 通过。此运行早于后续回答字形改动，不把它当作新改动的远端验证。
 
+随后提交 `60e7277f` 的[远端运行](https://github.com/BeforeLanding/Knoventra/actions/runs/42581321382)也通过：包含终稿字形处理的后端600项（37.65秒），以及迁移验证、前端145项、构建和零警告lint。后续六账号矩阵与明确转交监督路径仍须随各自提交单独验证，不以此运行替代。
+
 该工作流覆盖独立 Python 后端和 `web/`，保留的上游 Java 模块不在此 CI 范围内；Actions 通过不自动设置分支保护。
 
 ## 固定工具版本

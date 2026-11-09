@@ -161,7 +161,8 @@ def test_incomplete_response_never_executes_even_valid_sibling_tool_call(db, enc
                                         "id": "broken", "error": "invalid JSON", "type": "invalid_tool_call"}]
     model.bind_tools.return_value.invoke.return_value = response
     graph = build_graph(AgentDeps(session_factory_for(db), enc, None, model, saver))
-    out, cfg = run(graph, users["sg-ops"], "转人工")
+    # Exercise the model-response path, rather than the direct-request supervisor.
+    out, cfg = run(graph, users["sg-ops"], "请把当前问题交给合适的团队")
     assert out["error_code"] == expected and not graph.get_state(cfg).next
     assert out["sources"] == [] and out["pending"] is None
     assert not out["messages"][-1].tool_calls and not out["messages"][-1].invalid_tool_calls
@@ -200,7 +201,7 @@ def test_truncated_acknowledgement_does_not_repeat_or_undo_confirmed_escalation(
     assert esc_count(db, users["sg-ops"]) == 0
     out = graph.invoke(Command(resume={"approve": True}), cfg)
     assert out["error_code"] == "MODEL_OUTPUT_TRUNCATED" and out["sources"] == []
-    assert not graph.get_state(cfg).next and len(invocations) == 2
+    assert not graph.get_state(cfg).next and len(invocations) == 1  # Initial direct confirmation needs no model call.
     assert esc_count(db, users["sg-ops"]) == 1
 
 
@@ -220,7 +221,7 @@ def test_escalation_interrupt_approve_is_idempotent_across_restart(db, enc, save
     out, cfg = run(g, user, "帮我转人工")
     assert g.get_state(cfg).next and esc_count(db, user) == 0
     payload = g.get_state(cfg).tasks[0].interrupts[0].value
-    assert payload["summary"].startswith("E17-42")
+    assert payload["summary"] == "帮我转人工"  # Direct routing does not invent missing issue details.
 
     # process "restart": a brand-new graph object over the same checkpointer
     g2 = make_graph(db, enc, saver, esc_script)

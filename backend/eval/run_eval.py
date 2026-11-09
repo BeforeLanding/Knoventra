@@ -180,11 +180,17 @@ def eval_agent(graph, db, users, cases, *, on_start=None, on_complete=None) -> l
         exp = c["expect"]
         if c["category"] == "escalation":
             before = db.scalar(select(func.count()).select_from(Escalation).where(Escalation.user_id == user.id))
+            snapshot = graph.get_state(cfg)
+            asked = any(task.interrupts for task in snapshot.tasks)
             for approve in exp["decisions"]:
-                if graph.get_state(cfg).next:
+                if any(task.interrupts for task in snapshot.tasks):
                     st = graph.invoke(Command(resume={"approve": approve}), cfg)
+                    snapshot = graph.get_state(cfg)
+                    asked = asked or any(task.interrupts for task in snapshot.tasks)
             n = db.scalar(select(func.count()).select_from(Escalation).where(Escalation.user_id == user.id)) - before
-            r.update(records=n, ok=n == exp["records"], asked_confirmation=bool(exp["decisions"]))
+            r.update(records=n, record_count_ok=n == exp["records"],
+                     ok=n == exp["records"] and asked == bool(exp["decisions"]) and not snapshot.next,
+                     asked_confirmation=asked)
         else:
             srcs = st.get("sources", [])
             tool_text = " ".join(m.content for m in st["messages"] if isinstance(m, ToolMessage))
@@ -393,6 +399,7 @@ def run_evaluation(a, cases, preflight, journal=None):
         prompt_sha256 = hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()
         citation_policy = CITATION_POLICY
         from knoventra.agent.language import ANSWER_SCRIPT_POLICY
+        from knoventra.agent.escalation_intent import ESCALATION_ROUTING_POLICY
         answer_script_policy = ANSWER_SCRIPT_POLICY
     report = {
         "date": dt.date.today().isoformat(), "split": a.split, "mode": a.mode, "n_cases": len(cases),
@@ -414,6 +421,8 @@ def run_evaluation(a, cases, preflight, journal=None):
                    "llm_thinking": settings.llm_thinking if a.mode == "agent" else None,
                    "citation_policy": citation_policy,
                    "answer_script_policy": answer_script_policy,
+                   "escalation_routing_policy": ESCALATION_ROUTING_POLICY if a.mode == "agent" else None,
+                   "escalation_metric_policy": "observed-interrupt-and-records-v2" if a.mode == "agent" else None,
                    "query_vector_policy": QUERY_VECTOR_POLICY,
                    "query_encoding_policy": QUERY_ENCODING_POLICY,
                    "prompt_sha256": prompt_sha256},

@@ -28,6 +28,7 @@ from sqlalchemy.orm import Session
 
 from knoventra.config import settings
 from knoventra.agent.language import format_answer
+from knoventra.agent.escalation_intent import direct_escalation_summary
 from knoventra.db.models import Confirmation, Escalation, User
 from knoventra.ingestion.encoder import Encoder
 from knoventra.retrieval.pipeline import OK, retrieve
@@ -160,6 +161,11 @@ def build_graph(deps: AgentDeps):
         return {"retrieval_trace": [], "model_declared_refusal": False, "model_finish_reason": None}
 
     def agent(state: State):
+        summary = direct_escalation_summary(state["messages"])
+        if summary is not None:
+            return {"messages": [AIMessage("", tool_calls=[{"name": "escalate_to_expert",
+                       "args": {"summary": summary}, "id": "explicit-escalation", "type": "tool_call"}])],
+                    "model_finish_reason": None}
         msgs = [SystemMessage(SYSTEM_PROMPT), *state["messages"]]
         response = deps.llm.bind_tools(TOOLS).invoke(msgs)
         reason = response.response_metadata.get("finish_reason")

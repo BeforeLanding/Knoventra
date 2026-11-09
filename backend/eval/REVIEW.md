@@ -171,3 +171,5 @@ uv run python eval/review_answers.py summarize eval/results/my-human-review.json
 ```
 
 `cross-02` 仍为应优先复核的误拒：当轮原文标题是“泵组日常检查”，正文写每周检查振动与异响；模型却据“并非每日”和额外的“完整清单”要求整体拒答。该语义结论来自逐句对照，不是自动词面诊断。原报告不含此后新增的字形转换或更强完整性提示，不能将后续代码修改写成该次真实运行已改善的结果。
+
+后续另获批准的[4例定向报告](results/dev-agent-followup-20261109.json)中，`cross-02` 当次回答了有依据的日常检查范围；但转交例失败，不能说4例全通过。[3个可答例的真人页](results/dev-agent-followup-20261109-review-qa-human.html)同样未标注，用户已选择稍后安排审核。对应[Codex汇总](results/dev-agent-followup-20261109-review-qa-agent-summary.json)为14个事实单元中13个完全支持、1个部分支持，human仍为0；不要与20例审核中的重复问题合并成独立样本支持率。

@@ -471,6 +471,33 @@ applies the formatter to captured answers without making another model call, and
 over-refusal or count as a new quality run. The revised completeness instruction likewise has no new
 real-model measurement; see evaluation report sections 20–22.
 
+## Direct escalation requests and observed confirmations
+
+The Agent now routes short, clear Chinese requests such as `这个问题我想转人工` through the existing
+escalation tool and confirmation workflow before calling a model. The confirmation summary preserves
+the user's current request and any earlier user statements, rather than treating prior model prose as
+facts. It must fit the tool's existing 2,000-character contract; if the request or combined context is
+longer, the model summarization route is retained rather than silently dropping details. A first-turn
+request is preserved verbatim except edge whitespace. It does not invent issue details or route to a
+specific expert team.
+
+Recognition uses a bounded grammar, not general intent understanding. Negated, conditional, quoted,
+informational, ambiguous and unrecognized requests retain the model path. Matching is only performed
+when the latest message is a new user message; tool returns and interrupt resumes do not start another
+direct operation. The normal tool validation, call limit, owned confirmation, expiry, conversation lock
+and operation-id uniqueness rules still apply. No escalation record is written until approval.
+New reports record `escalation_routing_policy=unambiguous-chinese-request-v1`.
+
+Evaluation now records `asked_confirmation` from actual checkpoint interrupts. A cancellation case
+cannot pass merely because it created zero records if it never showed the expected confirmation.
+An unexpected or unresolved confirmation also fails; `record_count_ok` separately preserves the pure
+record-count check.
+`escalation_metric_policy=observed-interrupt-and-records-v2` identifies the new metric. Older reports
+used the nonempty expected-decision list for that boolean and cannot prove a card was observed from
+that field alone. Their files are not rewritten; the failed follow-up case has a separate checkpoint
+audit. The direct route was implemented after that real run and validated offline, not by an additional
+paid rerun.
+
 ## Refusal diagnostics
 
 New agent reports preserve per-search status/reason, returned chunk IDs, target expectations and a

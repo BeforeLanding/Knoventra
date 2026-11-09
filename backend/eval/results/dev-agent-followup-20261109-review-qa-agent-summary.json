@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "report_sha256": "b71b8a014decf25b219aa0fe72348970aa6fd42b2ccaac8fc0c568714324c710",
+  "review_packet_sha256": "b5829e624e83d7a38af5b07ffa3ad6893d01c0f058dd86da5898ccf76fb3e8b4",
+  "report_cases": 4,
+  "n_cases": 3,
+  "selected_case_ids": [
+    "ops-02",
+    "cross-01",
+    "cross-02"
+  ],
+  "claim_units": 18,
+  "unreviewed_units": 0,
+  "annotation_coverage": 1.0,
+  "uncited_reviewed_factual_claims": 2,
+  "by_reviewer_kind": {
+    "human": {
+      "reviewed_factual_claims": 0,
+      "supported": 0,
+      "partially_supported": 0,
+      "unsupported": 0,
+      "not_a_claim": 0,
+      "uncited_factual_claims": 0,
+      "fully_supported_rate": null
+    },
+    "agent": {
+      "reviewed_factual_claims": 14,
+      "supported": 13,
+      "partially_supported": 1,
+      "unsupported": 0,
+      "not_a_claim": 4,
+      "uncited_factual_claims": 2,
+      "fully_supported_rate": 0.9286
+    }
+  }
+}

@@ -1,0 +1,439 @@
+{
+  "schema_version": 1,
+  "report_sha256": "b71b8a014decf25b219aa0fe72348970aa6fd42b2ccaac8fc0c568714324c710",
+  "selected_case_ids": [
+    "ops-02",
+    "cross-01",
+    "cross-02"
+  ],
+  "cases": [
+    {
+      "id": "ops-02",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "E17-42 主轴温度异常怎么处理",
+        "answer": "E17-42 表示主轴温度超过阈值 [S1]。按《E17 系列设备故障手册》的排查步骤处理：\n\n1. 确认环境温度是否超过 35 摄氏度 [S2]。\n2. 检查冷却液液位，低于刻度线需补充 [S2]。\n3. 复位设备并观察 10 分钟 [S2]。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志 [S2]。",
+        "evidence": [
+          {
+            "alias": "S1",
+            "chunk_id": "0120db912d694039bc23632207b2923f",
+            "document_id": "925c4169667a4a58be85948b3cdf0718",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常",
+            "text": "设备显示代码 42（完整码 E17-42）表示主轴温度超过阈值。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "9f8e67a4da6e4ddaa770994bb189389d",
+            "document_id": "925c4169667a4a58be85948b3cdf0718",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常 > 排查步骤",
+            "text": "1. 确认环境温度是否超过 35 摄氏度。\n2. 检查冷却液液位，低于刻度线需补充。\n3. 复位设备并观察 10 分钟。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "sources": [
+          {
+            "alias": "S1",
+            "chunk_id": "0120db912d694039bc23632207b2923f",
+            "document_id": "925c4169667a4a58be85948b3cdf0718",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常",
+            "text": "设备显示代码 42（完整码 E17-42）表示主轴温度超过阈值。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "9f8e67a4da6e4ddaa770994bb189389d",
+            "document_id": "925c4169667a4a58be85948b3cdf0718",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常 > 排查步骤",
+            "text": "1. 确认环境温度是否超过 35 摄氏度。\n2. 检查冷却液液位，低于刻度线需补充。\n3. 复位设备并观察 10 分钟。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "error_code": null,
+        "sha256": "4a44cb6b05f5ded45fe385f244b51828f35b903400169cc21dddb59484b70ec6"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "E17-42 表示主轴温度超过阈值 [S1]。",
+          "citations": [
+            "S1"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "按《E17 系列设备故障手册》的排查步骤处理：",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C3",
+          "text": "1. 确认环境温度是否超过 35 摄氏度 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C4",
+          "text": "2. 检查冷却液液位，低于刻度线需补充 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C5",
+          "text": "3. 复位设备并观察 10 分钟 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C6",
+          "text": "4. 若仍报 E17-42，联系 Ops 二线并附上日志 [S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "cross-01",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "泵組壓力不足 P03-11 怎麼處理",
+        "answer": "P03-11 表示泵組壓力不足 [S1]。手冊給出的處置步驟是：\n\n1. 檢查進水閥是否全開 [S2]\n2. 清洗濾網 [S2]\n3. 若壓力仍不足，更換密封圈，型號 SEAL-9X [S2]\n\n另外，日常檢查章節要求每週檢查泵組振動與異響 [S1]。",
+        "evidence": [
+          {
+            "alias": "S1",
+            "chunk_id": "96e73d99eb9a4d4b9b5d22cbaf7bab5e",
+            "document_id": "506f924476874054be7775681c66b633",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "泵组维护手册 > 泵组日常检查",
+            "text": "每周检查泵组振动与异响。故障码 P03-11 表示泵组压力不足。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "7c1669ad838646fa9509d6c799897d79",
+            "document_id": "506f924476874054be7775681c66b633",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "泵组维护手册 > 故障码 P03-11 处置",
+            "text": "1. 检查进水阀是否全开。\n2. 清洗滤网。\n3. 压力仍不足时更换密封圈，型号 SEAL-9X。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "sources": [
+          {
+            "alias": "S1",
+            "chunk_id": "96e73d99eb9a4d4b9b5d22cbaf7bab5e",
+            "document_id": "506f924476874054be7775681c66b633",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "泵组维护手册 > 泵组日常检查",
+            "text": "每周检查泵组振动与异响。故障码 P03-11 表示泵组压力不足。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "7c1669ad838646fa9509d6c799897d79",
+            "document_id": "506f924476874054be7775681c66b633",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "泵组维护手册 > 故障码 P03-11 处置",
+            "text": "1. 检查进水阀是否全开。\n2. 清洗滤网。\n3. 压力仍不足时更换密封圈，型号 SEAL-9X。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "error_code": null,
+        "sha256": "7f56a53d74077d297316c1bb51c60f0570ce4b6c4db2579becb6f86cf11fce6b"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "P03-11 表示泵組壓力不足 [S1]。",
+          "citations": [
+            "S1"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "手冊給出的處置步驟是：",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C3",
+          "text": "1. 檢查進水閥是否全開 [S2]",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C4",
+          "text": "2. 清洗濾網 [S2]",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C5",
+          "text": "3. 若壓力仍不足，更換密封圈，型號 SEAL-9X [S2]",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C6",
+          "text": "另外，日常檢查章節要求每週檢查泵組振動與異響 [S1]。",
+          "citations": [
+            "S1"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    },
+    {
+      "id": "cross-02",
+      "snapshot": {
+        "schema_version": 1,
+        "question": "泵組日常檢查要做什麼",
+        "answer": "依據《泵組維護手冊》修訂1，「泵組日常檢查」章節所列的檢查項目為：**每週檢查泵組振動與異響** [S1]。\n\n手冊在該處僅記載這一項，未列出其他日常檢查項目；我無法據此補充更多項目。另外，同手冊提到故障碼 P03-11 代表泵組壓力不足，其處置步驟為檢查進水閥是否全開、清洗濾網、壓力仍不足時更換密封圈（型號 SEAL-9X）[S2]。這屬於故障處置，並非日常檢查項目。\n\n如需確認是否還有其他檢查項目，建議向 Ops 團隊查詢完整清單。",
+        "evidence": [
+          {
+            "alias": "S1",
+            "chunk_id": "96e73d99eb9a4d4b9b5d22cbaf7bab5e",
+            "document_id": "506f924476874054be7775681c66b633",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "泵组维护手册 > 泵组日常检查",
+            "text": "每周检查泵组振动与异响。故障码 P03-11 表示泵组压力不足。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "7c1669ad838646fa9509d6c799897d79",
+            "document_id": "506f924476874054be7775681c66b633",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "泵组维护手册 > 故障码 P03-11 处置",
+            "text": "1. 检查进水阀是否全开。\n2. 清洗滤网。\n3. 压力仍不足时更换密封圈，型号 SEAL-9X。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S3",
+            "chunk_id": "b629902f81e5419faafcc020dd9b9740",
+            "document_id": "cba52424cc954a9691466eab85ebd1a7",
+            "document_title": "冷卻系統維護手冊",
+            "revision": 1,
+            "page": 1,
+            "section_path": "冷卻系統維護手冊 > 故障碼 K08-03：冷卻液溫度過高",
+            "text": "檢查散熱風扇是否運轉，清潔散熱片。",
+            "lang": "zh-Hant"
+          },
+          {
+            "alias": "S4",
+            "chunk_id": "808f9835423447c29e2b0e4b4d35b336",
+            "document_id": "116e50936bd24dadac5a8b645f37fc06",
+            "document_title": "感測器故障手冊",
+            "revision": 1,
+            "page": 2,
+            "section_path": "感測器故障手冊 > 故障碼 S5-19：訊號漂移 > 排查步驟",
+            "text": "1. 檢查感測器接頭是否鬆動。\n2. 執行零點校正。\n3. 仍異常則更換感測器，型號 SNS-5B。",
+            "lang": "zh-Hant"
+          },
+          {
+            "alias": "S5",
+            "chunk_id": "9f8e67a4da6e4ddaa770994bb189389d",
+            "document_id": "925c4169667a4a58be85948b3cdf0718",
+            "document_title": "E17 系列设备故障手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常 > 排查步骤",
+            "text": "1. 确认环境温度是否超过 35 摄氏度。\n2. 检查冷却液液位，低于刻度线需补充。\n3. 复位设备并观察 10 分钟。\n4. 若仍报 E17-42，联系 Ops 二线并附上日志。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S6",
+            "chunk_id": "d35df01b88da442ebcf07ef9e1738ba3",
+            "document_id": "cba52424cc954a9691466eab85ebd1a7",
+            "document_title": "冷卻系統維護手冊",
+            "revision": 1,
+            "page": 1,
+            "section_path": "冷卻系統維護手冊 > 冷卻液更換週期",
+            "text": "冷卻液每六個月更換一次，更換時須排空管路。",
+            "lang": "zh-Hant"
+          }
+        ],
+        "sources": [
+          {
+            "alias": "S1",
+            "chunk_id": "96e73d99eb9a4d4b9b5d22cbaf7bab5e",
+            "document_id": "506f924476874054be7775681c66b633",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 1,
+            "section_path": "泵组维护手册 > 泵组日常检查",
+            "text": "每周检查泵组振动与异响。故障码 P03-11 表示泵组压力不足。",
+            "lang": "zh-Hans"
+          },
+          {
+            "alias": "S2",
+            "chunk_id": "7c1669ad838646fa9509d6c799897d79",
+            "document_id": "506f924476874054be7775681c66b633",
+            "document_title": "泵组维护手册",
+            "revision": 1,
+            "page": 2,
+            "section_path": "泵组维护手册 > 故障码 P03-11 处置",
+            "text": "1. 检查进水阀是否全开。\n2. 清洗滤网。\n3. 压力仍不足时更换密封圈，型号 SEAL-9X。",
+            "lang": "zh-Hans"
+          }
+        ],
+        "error_code": null,
+        "sha256": "714666beefc0fd2d963dc85f4e008b63604aa4f64cebf060cf093d1206238c4c"
+      },
+      "claims": [
+        {
+          "id": "C1",
+          "text": "依據《泵組維護手冊》修訂1，「泵組日常檢查」章節所列的檢查項目為：**每週檢查泵組振動與異響** [S1]。",
+          "citations": [
+            "S1"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C2",
+          "text": "手冊在該處僅記載這一項，未列出其他日常檢查項目；",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C3",
+          "text": "我無法據此補充更多項目。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C4",
+          "text": "另外，同手冊提到故障碼 P03-11 代表泵組壓力不足，其處置步驟為檢查進水閥是否全開、清洗濾網、壓力仍不足時更換密封圈（型號 SEAL-9X）[S2]。",
+          "citations": [
+            "S2"
+          ],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C5",
+          "text": "這屬於故障處置，並非日常檢查項目。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        },
+        {
+          "id": "C6",
+          "text": "如需確認是否還有其他檢查項目，建議向 Ops 團隊查詢完整清單。",
+          "citations": [],
+          "verdict": "unreviewed",
+          "reviewer": null,
+          "reviewer_kind": null,
+          "notes": "",
+          "supports": []
+        }
+      ]
+    }
+  ]
+}

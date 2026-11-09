@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "input_report_sha256": "b71b8a014decf25b219aa0fe72348970aa6fd42b2ccaac8fc0c568714324c710",
+  "case_id": "escalation-02",
+  "thread_id": "5544a793ac4b4aea84568074ca9a43e0",
+  "reported_asked_confirmation": true,
+  "observed_confirmation_rows": 0,
+  "checkpoint_tool_call_names": [],
+  "observed_asked_confirmation": false,
+  "records": 0,
+  "finding": "Legacy asked_confirmation used expected decisions instead of observed interrupts; raw report is preserved. The failed workflow result remains failed."
+}
