@@ -451,6 +451,26 @@ New streaming evaluation timings should not be compared directly with old non-st
 performance improvement. No historical reports are modified and no real LLM measurement is implied by
 the scripted-model tests.
 
+## Final answer script
+
+The graph's citation-check stage now formats final Chinese answer prose using the **current user
+question**, with policy `unambiguous-question-opencc-v1`. OpenCC signals must identify one script
+unambiguously: Traditional questions receive Traditional final prose, Simplified questions receive
+Simplified prose. Shared characters, non-Chinese and mixed/ambiguous inputs leave model output unchanged.
+This is script conversion, not language translation or a region-based preference.
+
+Citation aliases, fault codes, inline/fenced code and HTTP URLs remain intact. The evidence registry,
+source-card text, section paths and stored documents retain their original spelling; only answer prose
+is formatted. Refusal-marker detection and citation validation run first, and refusal/error semantics
+are preserved. Each new turn uses its own question rather than inferring a preference from history.
+The web stream may show raw model text until `done`; history and final evaluation snapshots contain
+the formatted answer. This final formatting is after the first-chunk timing observation.
+
+The 2026-11-09 real dev report predates this formatting change. Its separate script-replay artifact
+applies the formatter to captured answers without making another model call, and does not fix semantic
+over-refusal or count as a new quality run. The revised completeness instruction likewise has no new
+real-model measurement; see evaluation report sections 20–22.
+
 ## Refusal diagnostics
 
 New agent reports preserve per-search status/reason, returned chunk IDs, target expectations and a

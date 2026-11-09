@@ -1,0 +1,13 @@
+{
+  "models": {
+    "BAAI/bge-m3": {
+      "cached_snapshot": "5617a9f61b028005a4858fdac845db406aefb181",
+      "config_sha256": "26159e7ad065073448460117eb24b7a4572f6f4e78eadff65dc0a11c052449fa"
+    },
+    "BAAI/bge-reranker-v2-m3": {
+      "cached_snapshot": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e",
+      "config_sha256": "13dcd6c31d9fec9d1d8e158702072f62d7fa7d312a64b9fe057bec9a08cfe41a"
+    }
+  },
+  "method": "Post-run cache inspection; model object revision fields in the reports were null. Not a provider signature."
+}

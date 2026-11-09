@@ -157,3 +157,17 @@ uv run python eval/analyze_refusals.py eval/results/new-agent-run.json --out eva
 拒答率分母仅为 `ops` / `cross` 的预期可答用例，分子为明确携带 `NO_ACCESS` / `INSUFFICIENT_EVIDENCE` 的用例；运行错误保留在分母并另计，便于看出故障占比。`access`、`no_basis`、`escalation` 不进入该分母。分母为空时为 `null`。拒绝原因统计的是检索尝试次数，不是用例数；一个用例可以先失败、后成功。
 
 没有控制标记且没有错误码的自然语言拒答不会被自动认定为拒答，仍需人工阅读。目标片段出现也不证明资料足以回答；人工复核必须结合完整问题、答案和当轮快照。可将候选 ID 传给 `review_answers.py prepare --case-id ...` 准备审核包，人工与 agent 标注继续分开统计。本轮只以脚本模型验证诊断链路，没有新增真实 LLM 评测结果或调整提示词 / 阈值。
+
+## 6. 2026-11-09 真实 dev 审核交接
+
+最新 [20 例报告](results/dev-agent-stream-nothinking-20261109.json)已与逐例进度日志核对。全部 10 个可答例的[真人离线页面](results/dev-agent-stream-nothinking-20261109-review-qa-human.html)和[未标注包](results/dev-agent-stream-nothinking-20261109-review-qa.json)均绑定该次真实问题、答案及来源；页面不含 Codex 的预设判定。请由真人逐句阅读后填写，再导出 JSON。
+
+[Codex 标注](results/dev-agent-stream-nothinking-20261109-review-qa-agent.json)与[汇总](results/dev-agent-stream-nothinking-20261109-review-qa-agent-summary.json)单独保留为 agent，不得将其 reviewer_kind 改为 human 冒充真人审核。该包有 65 个单元、49 个事实单元；26 个事实单元缺少逐句引用（包括只在列表引导句引用的条目）。另有结构性标题和建议，不计为事实断言。真人已审核数当前仍为 0。
+
+将真人实际导出的文件放到本地后，从 backend 目录校验，例如：
+
+```bash
+uv run python eval/review_answers.py summarize eval/results/my-human-review.json --report eval/results/dev-agent-stream-nothinking-20261109.json --out eval/results/my-human-review-summary.json
+```
+
+`cross-02` 仍为应优先复核的误拒：当轮原文标题是“泵组日常检查”，正文写每周检查振动与异响；模型却据“并非每日”和额外的“完整清单”要求整体拒答。该语义结论来自逐句对照，不是自动词面诊断。原报告不含此后新增的字形转换或更强完整性提示，不能将后续代码修改写成该次真实运行已改善的结果。

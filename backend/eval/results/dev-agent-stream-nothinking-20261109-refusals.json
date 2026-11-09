@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "report_sha256": "ccead571e9b7f5721a85e07d854d35074c788a0a9d0e28638e30734a3dd7d369",
+  "report_cases": 20,
+  "answerable_cases": 10,
+  "excluded_cases": 10,
+  "refused_cases": 1,
+  "refusal_rate": 0.1,
+  "operational_failures": 0,
+  "review_candidates_with_target_span": 0,
+  "buckets": {
+    "answer_with_sources": 9,
+    "model_refusal_with_target_location_only": 1
+  },
+  "blocked_search_reasons": {},
+  "limitation": "Target location/span matches are lexical diagnostics, not semantic proof of over-refusal. Refusal rate includes only explicit refusal codes; unmarked prose refusals need manual review.",
+  "cases": [
+    {
+      "id": "ops-01",
+      "category": "ops",
+      "bucket": "answer_with_sources",
+      "refused": false,
+      "error_code": null,
+      "model_declared_refusal": false,
+      "search_calls": 1,
+      "successful_search_calls": 1,
+      "target_location_aliases": [
+        "S2"
+      ],
+      "target_span_aliases": [],
+      "blocked_search_reasons": [],
+      "snapshot_sha256": "ec7338f3802d54e58c495accf5b7219cdfba067cc8648e0d611481b88ed153b5"
+    },
+    {
+      "id": "ops-02",
+      "category": "ops",
+      "bucket": "answer_with_sources",
+      "refused": false,
+      "error_code": null,
+      "model_declared_refusal": false,
+      "search_calls": 1,
+      "successful_search_calls": 1,
+      "target_location_aliases": [
+        "S2"
+      ],
+      "target_span_aliases": [],
+      "blocked_search_reasons": [],
+      "snapshot_sha256": "4c4e7de9509c72db9ad3384ace11b46c6a6e02c851c7a4ade33bacfa2099ffcd"
+    },
+    {
+      "id": "ops-03",
+      "category": "ops",
+      "bucket": "answer_with_sources",
+      "refused": false,
+      "error_code": null,
+      "model_declared_refusal": false,
+      "search_calls": 2,
+      "successful_search_calls": 2,
+      "target_location_aliases": [
+        "S1"
+      ],
+      "target_span_aliases": [],
+      "blocked_search_reasons": [],
+      "snapshot_sha256": "8c8cae9911867473f78788a231168524440260c7b5efbec369db89a4d9fcd4e5"
+    },
+    {
+      "id": "ops-04",
+      "category": "ops",
+      "bucket": "answer_with_sources",
+      "refused": false,
+      "error_code": null,
+      "model_declared_refusal": false,
+      "search_calls": 2,
+      "successful_search_calls": 2,
+      "target_location_aliases": [
+        "S1"
+      ],
+      "target_span_aliases": [],
+      "blocked_search_reasons": [],
+      "snapshot_sha256": "438687d3f4f76083a61f688c0c86413ea4d2d78ab27b241c67a2ab5f75ad1366"
+    },
+    {
+      "id": "ops-05",
+      "category": "ops",
+      "bucket": "answer_with_sources",
+      "refused": false,
+      "error_code": null,
+      "model_declared_refusal": false,
+      "search_calls": 1,
+      "successful_search_calls": 1,
+      "target_location_aliases": [
+        "S1",
+        "S3"
+      ],
+      "target_span_aliases": [],
+      "blocked_search_reasons": [],
+      "snapshot_sha256": "5153625945c31bd6d9dac6dbe9b94a23512864aac6f0199066e9cbbf4144e54b"
+    },
+    {
+      "id": "ops-06",
+      "category": "ops",
+      "bucket": "answer_with_sources",
+      "refused": false,
+      "error_code": null,
+      "model_declared_refusal": false,
+      "search_calls": 1,
+      "successful_search_calls": 1,
+      "target_location_aliases": [
+        "S2"
+      ],
+      "target_span_aliases": [],
+      "blocked_search_reasons": [],
+      "snapshot_sha256": "a38214e671e9c589f783ca929087ac8dd09ea93121a75ddca948949dc965649c"
+    },
+    {
+      "id": "ops-07",
+      "category": "ops",
+      "bucket": "answer_with_sources",
+      "refused": false,
+      "error_code": null,
+      "model_declared_refusal": false,
+      "search_calls": 2,
+      "successful_search_calls": 2,
+      "target_location_aliases": [
+        "S1"
+      ],
+      "target_span_aliases": [],
+      "blocked_search_reasons": [],
+      "snapshot_sha256": "c613878de30028e56f242d358c8df9677e09575f9bb3165bd91afa21f1a2cf02"
+    },
+    {
+      "id": "cross-01",
+      "category": "cross",
+      "bucket": "answer_with_sources",
+      "refused": false,
+      "error_code": null,
+      "model_declared_refusal": false,
+      "search_calls": 1,
+      "successful_search_calls": 1,
+      "target_location_aliases": [
+        "S2"
+      ],
+      "target_span_aliases": [],
+      "blocked_search_reasons": [],
+      "snapshot_sha256": "daf811ac2f295c16df76361865759890cf8fff2f83f4a9fbeedc6130a117398f"
+    },
+    {
+      "id": "cross-02",
+      "category": "cross",
+      "bucket": "model_refusal_with_target_location_only",
+      "refused": true,
+      "error_code": "INSUFFICIENT_EVIDENCE",
+      "model_declared_refusal": true,
+      "search_calls": 1,
+      "successful_search_calls": 1,
+      "target_location_aliases": [
+        "S1"
+      ],
+      "target_span_aliases": [],
+      "blocked_search_reasons": [],
+      "snapshot_sha256": "d8c470f9cc6861513e4186531e091dee199c6720497209200ba4cca0d2d057f4"
+    },
+    {
+      "id": "cross-03",
+      "category": "cross",
+      "bucket": "answer_with_sources",
+      "refused": false,
+      "error_code": null,
+      "model_declared_refusal": false,
+      "search_calls": 1,
+      "successful_search_calls": 1,
+      "target_location_aliases": [
+        "S2"
+      ],
+      "target_span_aliases": [],
+      "blocked_search_reasons": [],
+      "snapshot_sha256": "d3eb8f5330084afa20d2f6979637934b729c2124d4099ddf8cc341d3f8d10bad"
+    }
+  ]
+}

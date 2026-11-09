@@ -1,8 +1,8 @@
 # Knoventra 评测报告（检索与端到端）
 
-更新：2026-11-08。第 1–12 节保留原历史配置与数字，不代表当前代码重新测量；其中第 7–9 节为较早的真实 LLM 验证，第 10–12 节不调用 LLM。第 13 节为真实本地 bge-reranker-v2-m3 检索对照，第 14 节为当前代码的 dev 检索复跑，第 15 节为新一次真实 LLM dev 运行与 Codex 来源审核。真人回答支持度审核仍未完成。
+更新：2026-11-09。第 1–19 节保留对应历史配置与状态，不代表当前代码重新测量；第 20 节为当前 13 份语料上的真实 dev 20 例及 Codex 来源审核，第 21 节为三组留出集检索消融，第 22 节记录运行后修改及其验证边界。真人回答支持度审核仍未完成。
 
-第 1–15 节的已保存实测均使用新增 PDF 前的 12 份资料。当前 `data/demo/manifest.json` 含 13 份资料（新增两页 IT 门禁 PDF）；第 16 节为该语料版本的本地检索对照，尚未复跑真实 LLM 指标。
+第 1–15 节的已保存实测均使用新增 PDF 前的 12 份资料。当前 `data/demo/manifest.json` 含 13 份资料（新增两页 IT 门禁 PDF），第 16、20、21 节使用该语料；2026-11-09 的真实 dev 与本地消融均为每例 / 配置单次运行。
 
 ## 1. 配置
 
@@ -362,7 +362,7 @@ PDF 最终改用内嵌 Noto 字体后，重新生成的文件内容哈希改变�
 
 ## 19. 显式非思考 / 流式 dev 复测准备（2026-11-09）
 
-本节是运行准备记录，**尚未启动真实模型复测，不包含新的效果或延迟测量**。待明确授权发送虚构评测内容至 DeepSeek 并产生付费调用后，才执行一次冻结的 dev 20 例；真人审核仍为 0。
+本节保留复测启动前的准备记录，本节本身不包含效果或延迟测量。此后用户明确授权，已执行一次冻结的 dev 20 例，结果见第 20 节；真人审核仍为 0。
 
 准备时核对了 [DeepSeek 思考模式协议](https://api-docs.deepseek.com/guides/thinking_mode/)：当前默认启用思考，带 tools 的后续请求须回传 reasoning_content。当前安装的通用 ChatOpenAI 适配器不保留该供应商字段。为避免以不完整工具历史运行，新增明确的 `KNV_LLM_THINKING=disabled`；不宣称已通过付费调用观测到协议报错。新评测同时启用此前实现的流式输出与首回答分片计时。
 
@@ -371,3 +371,44 @@ PDF 最终改用内嵌 Noto 字体后，重新生成的文件内容哈希改变�
 [费用预检](../backend/eval/results/dev-agent-stream-nothinking-20261109-plan.json)保留原 dev 20 例和用例哈希 `2640ed0341c9221799e9b827a6cb772f705f88d907b53e500e4c8aa8dd182d99`，并记录 disabled / streaming 配置；其中 2 例在专用库执行脚本确认与转交。按 2026-11-09 核对的[官方峰时单价](https://api-docs.deepseek.com/quick_start/pricing/)（每百万输入 US$0.30、输出 US$1.20，按未命中缓存计），最多 100 次图模型调用、假设每次 4,000 输入 / 请求最多 1,024 输出 token，场景估算 **US$0.24288**。该估算不是账单上限，实际输入、缓存、失败请求和供应商计费均可能不同。评测禁用供应商自动重试，输出和进度文件均不得覆盖已有结果。
 
 拟运行的提示词哈希仍为 `7bc8cb46439c42eeb58725d92a9276d776acfe72f8556c757a899dc309a2b40a`。后续即使运行完成，也不能只把差异归因于提示词：相对于第 15 节，语料、流式接收方式和显式思考模式设置也有变化，且每例仅一次运行。当前设备可用 NVIDIA GeForce RTX 5060 Laptop GPU，本轮 BGE 种子为本地模型执行；没有新增远程 LLM 实测数字。
+
+## 20. 显式非思考 / 流式 dev 单次真实运行（2026-11-09）
+
+用户明确批准向 DeepSeek 发送本次 20 例问题、系统提示词、工具结果及相关虚构资料片段后，按第 19 节预检执行了一次真实运行；没有自动重跑。模型为 `deepseek-flash`，streaming=true、thinking=disabled，输出请求上限 1,024 token、供应商自动重试为 0。编码使用本机缓存 BGE-M3、RTX 5060 Laptop GPU，精排关闭。13 份资料 / 23 个生效块及授权指纹与第 19 节一致。预检 US$0.24288 是峰价场景估算，不是实际账单；本运行没有记录可核对的供应商账单或实际总费用。
+
+[正式报告](../backend/eval/results/dev-agent-stream-nothinking-20261109.json)与[43 条逐例日志](../backend/eval/results/dev-agent-stream-nothinking-20261109.json.progress.jsonl)通过[离线绑定校验](../backend/eval/results/dev-agent-stream-nothinking-20261109-inspection.json)，20/20 完成、运行故障 0。提示词哈希为 `7bc8cb46439c42eeb58725d92a9276d776acfe72f8556c757a899dc309a2b40a`，没有把后续修改回填到本次结果。
+
+- 10 个可答例的目标文档 / 修订 / 页码来源指标为 **9/10**；该指标不自动证明回答支持度。5 个权限用例均无展示来源并拒答，无依据 3 例均拒答；2 个转交用例各新建 1 条符合预期的记录。
+- [拒答诊断](../backend/eval/results/dev-agent-stream-nothinking-20261109-refusals.json)仍标记 `cross-02`。完整问题问“泵組日常檢查要做什麼”，原文标题为“泵组日常检查”，正文明确“每周检查泵组振动与异响”；模型却要求“完整项目清单”，并称每周不属于日常检查。由此可见前一轮提示修改**没有消除该例语义误拒**，不能把 9/10 写成质量改善。
+- 20 例整轮耗时 P50 **3,149.0 ms**、P95 **3,804.7 ms**、最大 **6,015.4 ms**；最终纯文本模型回复首分片 P50 **2,197.823 ms**、P95 **2,879.452 ms**、最大 **5,825.160 ms**（n=20）。24 次已完成检索的 P50 **124.565 ms**、P95 **185.268 ms**、最大 **843.251 ms**。首分片在后处理前测量，不是单个 token 的精确耗时或浏览器显示延迟；整例含脚本确认，不包含真人等待。
+- 全部 10 个可答例的[Codex 标注](../backend/eval/results/dev-agent-stream-nothinking-20261109-review-qa-agent.json)与[校验汇总](../backend/eval/results/dev-agent-stream-nothinking-20261109-review-qa-agent-summary.json)包含 65 个审核单元：49 个事实单元中 43 个完全支持、3 个部分支持、3 个不支持，另有 16 个结构性标题 / 建议，26 个事实单元缺少逐句引用。这里的审核者是 agent；**真人审核仍为 0**。与第 15 节的单元切分 / 回答不同，不能据两次审核率差值证明净改善。
+
+除 `cross-02` 外，审核发现引用粒度问题：例如 `ops-03` 一句中的处置由 [S1] 支持，但括号中的“超过阈值”来自未在该句引用的 [S2]；部分列表只在引导句加引用。`ops-02` 承诺可以转给“Ops 专家”，而当前写工具只有通用转交记录、没有目标团队参数，不能保证团队分派。`cross-01` 与 `cross-02` 还使用了不跟随问题的简体字形。已生成[不预填判定的真人审核页](../backend/eval/results/dev-agent-stream-nothinking-20261109-review-qa-human.html)，操作见[审核交接](../backend/eval/REVIEW.md#6-2026-11-09-真实-dev-审核交接)。旧报告及原始来源不改写。
+
+## 21. 当前语料的三组留出集检索消融（2026-11-09）
+
+按方案第 9.3 节在看本轮分数前[冻结四配置与 40 例清单](../backend/eval/results/holdout-ablation-20261109/frozen.json)，依次各执行一次 full、仅稠密、无 OpenCC、v2-m3；37 例有检索指标，3 例转交不进入检索评测。四组共享同一 13 份资料 / 23 块、授权指纹、用例哈希 `627a70f3834ffec8bedc5da104faf2e127c1badd25ab291511ab8326a36934d0`，代码提交为 `9e938b1e`。完整输出与汇总见[运行清单](../backend/eval/results/holdout-ablation-20261109/manifest.json)，本轮 LLM 调用为 0。
+
+- [full](../backend/eval/results/holdout-ablation-20261109/full.json)：Ops 13 例 / 简繁 7 例 Recall@5 均为 1.0，MRR 为 0.885 / 0.857；可答命中中闸门误拒 1/20（`ops-11`）；无依据 4/7 在检索层拒绝，10 个权限用例泄露 0。
+- [仅稠密](../backend/eval/results/holdout-ablation-20261109/dense-only.json)：上述 Recall@5 与 MRR 不变，但可答误拒增至 5/20（`ops-08`、`ops-11`、`ops-13`、`cross-05`、`cross-08`）；无依据 7/7 拒绝、权限泄露 0。说明本组稀疏通道影响的是闸门通过范围，不能只据 Recall@5 说没有差异。
+- [无 OpenCC](../backend/eval/results/holdout-ablation-20261109/no-opencc.json)：Recall@5 与 MRR 仍相同，可答误拒 2/20（`ops-11`、`ops-13`），无依据 4/7 拒绝、权限泄露 0。此有限样本有一例闸门差异，不证明大语料上的稳定收益。
+- [v2-m3](../backend/eval/results/holdout-ablation-20261109/rerank-v2-m3.json)：Recall@5 仍为 1.0，Ops / 简繁 MRR 均为 1.0；可答误拒 2/20（`ops-08`、`ops-09`），无依据 7/7 拒绝、权限泄露 0。检索 P50 为 140.4 ms，full 为 83.9 ms；单次冷 / 热状态与硬件差异未估计，不据此给出稳定性能倍数。
+
+本轮不据结果调阈值，精排继续默认关闭。Recall@5 使用各配置的实际 Top-5（精排组为精排后、闸门前），这些旧用例按目标文档 / 修订 / 页码判断，不是逐句语义支持。full 放过的三个无依据问题为 `no_basis-04`、`no_basis-07`、`no_basis-08`；“检索层未拒绝”不等于模型一定编造，还需要端到端测量。该留出集已在历史分析中见过，不能重新包装成全新的盲测集；语料很小导致召回饱和，单次运行无法估计波动。
+
+报告模型 revision 字段为 null；另有[运行后缓存来源记录](../backend/eval/results/holdout-ablation-20261109/cache-provenance.json)注明当前 BGE-M3 快照 `5617a9f61b028005a4858fdac845db406aefb181`、v2-m3 快照 `953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e` 与 config 文件指纹。它是缓存检查，不是模型对象在本次调用中返回的 revision 或供应商签名。
+
+复现时使用已种子化的独立评测库，显式设置 `KNV_ENCODER=bge-m3`、`KNV_RERANK=off`、`HF_HUB_OFFLINE=1` 并清空三个 `KNV_LLM_*` 字段；为每组选择新的输出路径，依次运行：
+
+```bash
+uv run --no-sync python eval/run_eval.py --mode retrieval --split holdout --confirm-final --out eval/results/new-full.json
+uv run --no-sync python eval/run_eval.py --mode retrieval --split holdout --confirm-final --no-sparse --out eval/results/new-dense-only.json
+uv run --no-sync python eval/run_eval.py --mode retrieval --split holdout --confirm-final --no-opencc --out eval/results/new-no-opencc.json
+uv run --no-sync python eval/run_eval.py --mode retrieval --split holdout --confirm-final --rerank --rerank-model BAAI/bge-reranker-v2-m3 --out eval/results/new-rerank.json
+```
+
+## 22. 本次测量之后的修改与边界（2026-11-09）
+
+第 20 节完成后，根据 dev 失败例进一步明确提示：用户未要求完整清单时不得添加完整性要求；标题类别与正文频率可以并存，例如日常检查章节下的每周检查。另明确转交只创建待处理记录，不保证已通知、已受理、已分派到特定团队或响应时间，工具描述同步限定该能力。新提示词哈希为 `cbc0d9f0fff1d7bd8b37e4d0aa678850259771267cf07b2f7c4ab178029110fb`，**尚未再次调用真实模型验证其效果**，不能声称已修复语义误拒或承诺范围问题。
+
+另在 cite_check 的引用校验之后对终稿应用保守的 OpenCC 字形转换，只在本轮问题提供明确单一简 / 繁信号时使用。来源正文不转换，代码、URL、引用与编码保留，混排 / 中性文字不猜测；这不是语言翻译，也不改变拒答、权限和证据闸门。对冻结三个简繁 dev 回答执行[离线重放](../backend/eval/results/dev-agent-stream-nothinking-20261109-script-replay.json)，改变了 `cross-01`、`cross-02` 的终稿字形，但 `cross-02` 的拒答含义保持原样。这不算新模型复测。完整本地后端 600 项通过（85.80 秒），其中新增 13 项覆盖字形、字面值、来源原文和轮次隔离。

@@ -387,10 +387,13 @@ def run_evaluation(a, cases, preflight, journal=None):
                 pool.close()
     prompt_sha256 = None
     citation_policy = None
+    answer_script_policy = None
     if a.mode == "agent":
         from knoventra.agent.graph import CITATION_POLICY, SYSTEM_PROMPT
         prompt_sha256 = hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()
         citation_policy = CITATION_POLICY
+        from knoventra.agent.language import ANSWER_SCRIPT_POLICY
+        answer_script_policy = ANSWER_SCRIPT_POLICY
     report = {
         "date": dt.date.today().isoformat(), "split": a.split, "mode": a.mode, "n_cases": len(cases),
         "config": {"encoder": settings.encoder, "rerank": "bge" if rr else "off", "sparse": not a.no_sparse,
@@ -410,6 +413,7 @@ def run_evaluation(a, cases, preflight, journal=None):
                    "llm_streaming": True if a.mode == "agent" else None,
                    "llm_thinking": settings.llm_thinking if a.mode == "agent" else None,
                    "citation_policy": citation_policy,
+                   "answer_script_policy": answer_script_policy,
                    "query_vector_policy": QUERY_VECTOR_POLICY,
                    "query_encoding_policy": QUERY_ENCODING_POLICY,
                    "prompt_sha256": prompt_sha256},

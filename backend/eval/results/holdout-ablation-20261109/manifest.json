@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "mode": "retrieval",
+  "split": "holdout",
+  "llm_calls": 0,
+  "runs_per_configuration": 1,
+  "case_ids": [
+    "ops-08",
+    "ops-09",
+    "ops-10",
+    "ops-11",
+    "ops-12",
+    "ops-13",
+    "ops-14",
+    "ops-15",
+    "ops-16",
+    "ops-17",
+    "ops-18",
+    "ops-19",
+    "ops-20",
+    "cross-04",
+    "cross-05",
+    "cross-06",
+    "cross-07",
+    "cross-08",
+    "cross-09",
+    "cross-10",
+    "access-06",
+    "access-07",
+    "access-08",
+    "access-09",
+    "access-10",
+    "access-11",
+    "access-12",
+    "access-13",
+    "access-14",
+    "access-15",
+    "no_basis-04",
+    "no_basis-05",
+    "no_basis-06",
+    "no_basis-07",
+    "no_basis-08",
+    "no_basis-09",
+    "no_basis-10",
+    "escalation-03",
+    "escalation-04",
+    "escalation-05"
+  ],
+  "selected_cases": 40,
+  "cases_sha256": "627a70f3834ffec8bedc5da104faf2e127c1badd25ab291511ab8326a36934d0",
+  "source_commit": "9e938b1e8bdb993fd5d8adc4e4e5dff5e82fde86",
+  "configurations": {
+    "full": [],
+    "dense-only": [
+      "--no-sparse"
+    ],
+    "no-opencc": [
+      "--no-opencc"
+    ],
+    "rerank-v2-m3": [
+      "--rerank",
+      "--rerank-model",
+      "BAAI/bge-reranker-v2-m3"
+    ]
+  },
+  "database": "knoventra_eval_stream_20261109",
+  "limitation": "Previously inspected holdout; regression/ablation only, not a fresh blind test. No threshold tuning.",
+  "corpus": {
+    "documents": 13,
+    "published_revisions": 13,
+    "published_chunks": 23,
+    "published_text_sha256": "c276aa551b877eb89ec71bee8cfb5b3a9aba5dba0e4384af90cc344c998c7111",
+    "grants_sha256": "1f01e113180b25cbdce511459f9620e0876c3359fb20464d54e6db0d837c00d7"
+  },
+  "evaluated_cases": 37,
+  "outputs": [
+    "full.json",
+    "dense-only.json",
+    "no-opencc.json",
+    "rerank-v2-m3.json"
+  ],
+  "metrics": {
+    "full": {
+      "ops": {
+        "n": 13,
+        "recall@5": 1.0,
+        "mrr": 0.885,
+        "gated_out_of_hits": 1
+      },
+      "cross": {
+        "n": 7,
+        "recall@5": 1.0,
+        "mrr": 0.857,
+        "gated_out_of_hits": 0
+      },
+      "access": {
+        "n": 10,
+        "leaks": 0
+      },
+      "no_basis": {
+        "n": 7,
+        "refusal_rate": 0.571
+      },
+      "latency_ms": {
+        "p50": 83.9,
+        "max": 889.9
+      }
+    },
+    "dense-only": {
+      "ops": {
+        "n": 13,
+        "recall@5": 1.0,
+        "mrr": 0.885,
+        "gated_out_of_hits": 3
+      },
+      "cross": {
+        "n": 7,
+        "recall@5": 1.0,
+        "mrr": 0.857,
+        "gated_out_of_hits": 2
+      },
+      "access": {
+        "n": 10,
+        "leaks": 0
+      },
+      "no_basis": {
+        "n": 7,
+        "refusal_rate": 1.0
+      },
+      "latency_ms": {
+        "p50": 92.2,
+        "max": 824.5
+      }
+    },
+    "no-opencc": {
+      "ops": {
+        "n": 13,
+        "recall@5": 1.0,
+        "mrr": 0.885,
+        "gated_out_of_hits": 2
+      },
+      "cross": {
+        "n": 7,
+        "recall@5": 1.0,
+        "mrr": 0.857,
+        "gated_out_of_hits": 0
+      },
+      "access": {
+        "n": 10,
+        "leaks": 0
+      },
+      "no_basis": {
+        "n": 7,
+        "refusal_rate": 0.571
+      },
+      "latency_ms": {
+        "p50": 88.4,
+        "max": 787.9
+      }
+    },
+    "rerank-v2-m3": {
+      "ops": {
+        "n": 13,
+        "recall@5": 1.0,
+        "mrr": 1.0,
+        "gated_out_of_hits": 2
+      },
+      "cross": {
+        "n": 7,
+        "recall@5": 1.0,
+        "mrr": 1.0,
+        "gated_out_of_hits": 0
+      },
+      "access": {
+        "n": 10,
+        "leaks": 0
+      },
+      "no_basis": {
+        "n": 7,
+        "refusal_rate": 1.0
+      },
+      "latency_ms": {
+        "p50": 140.4,
+        "max": 2274.6
+      }
+    }
+  }
+}

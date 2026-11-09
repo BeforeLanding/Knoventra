@@ -27,6 +27,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
 from knoventra.config import settings
+from knoventra.agent.language import format_answer
 from knoventra.db.models import Confirmation, Escalation, User
 from knoventra.ingestion.encoder import Encoder
 from knoventra.retrieval.pipeline import OK, retrieve
@@ -40,8 +41,8 @@ SYSTEM_PROMPT = """你是示例精密设备公司的内部知识助手。
 2. 若资料无法回答问题——检索返回 NO_ACCESS 或 INSUFFICIENT_EVIDENCE，或检索到的资料并不涉及所问内容（例如只是型号或故障码相近）——回答必须以「【无依据】」开头，说明没有可靠依据并拒答，不得使用 [S1] 之类的引用标记，建议联系对应职能团队（Ops/HR/FIN/IT），不要猜测。
 3. 回答语言与字形跟随用户的提问（简体问简体答，繁体问繁体答）。
 4. 用户明确要求转人工/转交专家时，立即调用 escalate_to_expert，即使信息不全也不要先追问；summary 依据已有对话写成可直接交给专家的问题摘要（确认卡会让用户核对）。其他情况不要调用。
-5. 查询转交进度用 get_escalation_status。只报告工具实际返回的记录和状态；没有执行相应工具时，不承诺能修改已提交的转交，也不要让用户在已完成的确认卡中补充内容。
-6. 严格保留用户问题中的时间、频率、对象和编码约束，不自行增加条件（例如“日常”不等于“每日”）。资料只支持问题的一部分时，清楚说明可证实的范围，对其余部分拒绝推断。"""
+5. 查询转交进度用 get_escalation_status。只报告工具实际返回的记录和状态；转交工具仅创建待处理记录，不代表已通知、已受理或已分派到特定团队，不承诺响应时间。没有执行相应工具时，不承诺能修改已提交的转交，也不要让用户在已完成的确认卡中补充内容。
+6. 严格保留用户问题中的时间、频率、对象和编码约束，不自行增加条件（例如“日常”不等于“每日”）。用户未明确要求全部项目或完整清单时，不擅自增加完整性要求。章节标题给出的类别与正文频率可以同时成立，例如“日常检查”章节中的“每周检查”仍属于该类检查；回答时保留原频率，不因它不是每日而判作无关。资料只支持问题的一部分时，先引用并回答可证实的范围，对其余部分拒绝推断，不因无法证明清单完整就整体拒答。"""
 
 
 class _ToolArgs(BaseModel):
@@ -79,7 +80,7 @@ class _EscArgs(_ToolArgs):
 
 @tool(args_schema=_EscArgs)
 def escalate_to_expert(summary: str) -> str:
-    """把当前问题转交给人工专家（需用户确认）。"""
+    """创建待处理的专家转交记录（需用户确认，不通知或分派具体团队）。"""
 
 
 TOOLS = [search_knowledge, get_escalation_status, escalate_to_expert]
@@ -291,6 +292,11 @@ def build_graph(deps: AgentDeps):
     def cite_check(state: State):
         reg = state.get("evidence") or {}
         last = state["messages"][-1]
+        question = next((m.content for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), "")
+
+        def reply(text: str):
+            return AIMessage(format_answer(question, text), id=last.id)
+
         cited: list[str] = []
 
         def sub(m):
@@ -317,18 +323,19 @@ def build_graph(deps: AgentDeps):
         if retrieval_reply and not reg and state.get("error_code") in {"NO_ACCESS", "INSUFFICIENT_EVIDENCE"}:
             text = ("你当前没有可检索的资料权限，请联系对应职能团队。" if state["error_code"] == "NO_ACCESS"
                     else "资料中没有可靠依据，无法回答该问题。请联系对应职能团队。")
-            return {"sources": [], "messages": [AIMessage(text, id=last.id)],
+            return {"sources": [], "messages": [reply(text)],
                     "model_declared_refusal": bool(refusal_mark)}
         if refusal_mark:
             # Model-declared refusal: show no source cards (they would "prove" an absence) and flag the turn.
             text = _MARK.sub("", stripped[len(refusal_mark):]).strip()
             return {"sources": [], "error_code": state.get("error_code") or "INSUFFICIENT_EVIDENCE",
                     "model_declared_refusal": True,
-                    "messages": [AIMessage(text, id=last.id)]}
+                    "messages": [reply(text)]}
         text = _MARK.sub(sub, content)
         if retrieval_reply and not cited and state.get("error_code") is None:
             return {"sources": [], "error_code": "MODEL_CITATION_MISSING",
-                    "messages": [AIMessage("检索回答缺少有效引用，本轮未提供可核验的答案。请重新提问。", id=last.id)]}
+                    "messages": [reply("检索回答缺少有效引用，本轮未提供可核验的答案。请重新提问。")]}
+        text = format_answer(question, text)
         upd: dict[str, Any] = {"sources": [reg[a] for a in cited]}
         if text != content:
             upd["messages"] = [AIMessage(text, id=last.id)]

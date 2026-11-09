@@ -48,10 +48,12 @@ npm run lint
 
 2026-11-08 当前分支在 Windows 本地隔离 PostgreSQL 库验证：后端 546 项、前端 145 项通过；空库迁移 / 降级 / 重升、ORM 差异和含 PDF 的种子重放通过；前端生产构建与 lint 通过。此轮没有调用 LLM。该验证不等于新增改动已在 Linux CI 或 GitHub Actions 运行。
 
-工作流须随代码推送后才会在 GitHub 上运行；本地容器通过不等于远端 Actions 已通过，也不自动设置分支保护。该工作流覆盖独立 Python 后端和 `web/`，保留的上游 Java 模块不在此 CI 范围内。
+2026-11-09 首次远端运行在初始化阶段失败：checkout 与 setup-node 的固定 SHA 被写入了错误的 Action 仓库。通过官方发布标签 API 核对后修复，提交 `9e938b1e` 的[远端运行](https://github.com/BeforeLanding/Knoventra/actions/runs/42579143319)两个 job 均通过：后端 587 项（34.60 秒）、迁移全链 / ORM 差异 / 种子重放通过；前端 145 项、生产构建和零警告 lint 通过。此运行早于后续回答字形改动，不把它当作新改动的远端验证。
+
+该工作流覆盖独立 Python 后端和 `web/`，保留的上游 Java 模块不在此 CI 范围内；Actions 通过不自动设置分支保护。
 
 ## 固定工具版本
 
-checkout 和 setup-node 使用经核实的 v7 提交 SHA；setup-uv 使用 v10.3.3 提交 SHA，uv CLI 单独固定为 0.12.13。更新 Action 时一起核对官方配置和兼容条件，再跑静态与 Linux 验证。
+checkout 使用 v7.0.1 的 `3d3c42e5aac5ba805825da76410c181273ba90b1`，setup-node 使用 v7.1.0 的 `949feb2413d6458794dcd2491c4babbbce0c15c1`；两个 SHA 不能互换。二者官方 action.yml 均使用 Node 24，已核对当前所用输入。setup-uv 使用 v10.3.3 的 `68559e99cc807c1eb7e9238fd43a15bba460eec2`，uv CLI 单独固定为 0.12.13。更新时既核对 SHA 归属与配置，也检查实际远端运行；静态语法检查无法证明固定提交属于正确仓库。
 
 参考：[checkout](https://github.com/actions/checkout)、[setup-node](https://github.com/actions/setup-node)、[setup-uv](https://github.com/astral-sh/setup-uv)、[actionlint 安装说明](https://github.com/rhysd/actionlint/blob/main/docs/install.md)。
