@@ -45,6 +45,9 @@ def inspect(events: list[dict], *, ignored_tail: bool = False, report: dict | No
             or any(not isinstance(i, str) or not i for i in ids) or len(set(ids)) != len(ids)
             or type(preflight.get("n_cases")) is not int or preflight["n_cases"] != len(ids)):
         raise ValueError("invalid agent preflight case selection")
+    if ("llm_thinking" in preflight and preflight["llm_thinking"] not in ("provider-default", "disabled")
+            or "llm_streaming" in preflight and preflight["llm_streaming"] is not True):
+        raise ValueError("unsupported preflight model options")
     corpus, active, terminal, completion, error_type = None, None, None, None, None
     started, completed, threads = [], [], set()
     for index, event in enumerate(events):
@@ -109,8 +112,25 @@ def inspect(events: list[dict], *, ignored_tail: bool = False, report: dict | No
                 or report.get("cases_sha256") != preflight.get("cases_sha256")
                 or report.get("split") != preflight.get("split")):
             raise ValueError("report differs from captured progress")
-        from run_eval import summarize_agent
-        if report.get("metrics") != summarize_agent(completed):
+        for option in ("llm_thinking", "llm_streaming"):
+            if option in preflight and (report.get("config") or {}).get(option) != preflight[option]:
+                raise ValueError("report model options differ from captured preflight")
+        from run_eval import AGENT_LATENCY_POLICY, summarize_agent
+        expected_metrics = summarize_agent(completed)
+        policy = (report.get("config") or {}).get("latency_policy")
+        if policy is None:
+            # Historical reports predate latency aggregation. Keep their original contract.
+            expected_metrics.pop("latency_ms")
+            expected_metrics.pop("retrieval_latency_ms")
+        elif policy != AGENT_LATENCY_POLICY:
+            raise ValueError("unsupported report latency policy")
+        from answer_timing import ANSWER_TIMING_POLICY
+        answer_policy = (report.get("config") or {}).get("answer_timing_policy")
+        if answer_policy is None:
+            expected_metrics.pop("first_answer_chunk_ms")
+        elif answer_policy != ANSWER_TIMING_POLICY:
+            raise ValueError("unsupported report answer timing policy")
+        if report.get("metrics") != expected_metrics:
             raise ValueError("report metrics differ from completed cases")
         report_digest = digest(report)
     return {"schema_version": 1, "mode": "progress_inspection", "status": terminal or "unclosed",

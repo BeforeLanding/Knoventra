@@ -102,5 +102,5 @@ def test_eval_graph_sets_output_cap_and_disables_automatic_provider_retries(monk
     assert graph is not None and returned_pool is pool
     assert constructor.call_args.kwargs["max_tokens"] == 700
     assert constructor.call_args.kwargs["max_retries"] == 0
-    assert constructor.call_args.kwargs["streaming"] is False
+    assert constructor.call_args.kwargs["streaming"] is True
     pool.close()

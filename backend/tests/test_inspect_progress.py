@@ -61,6 +61,69 @@ def test_complete_report_binding_and_post_save_failure():
     assert inspect(events, report=report)["status"] == "completed_with_error"
 
 
+@pytest.mark.parametrize("answer_timing", [False, True])
+def test_timed_report_binding_validates_new_metrics_and_keeps_legacy_reports_valid(answer_timing):
+    from run_eval import AGENT_LATENCY_POLICY, summarize_agent
+    from answer_timing import ANSWER_TIMING_POLICY
+
+    events = completed_events()
+    report = report_for(events)
+    report["config"] = {"latency_policy": AGENT_LATENCY_POLICY}
+    if answer_timing:
+        report["config"]["answer_timing_policy"] = ANSWER_TIMING_POLICY
+    for i, row in enumerate(report["cases"], 1):
+        row["latency_ms"] = i * 100
+        row["first_answer_chunk_ms"] = i * 20
+        row["diagnostics"] = {"retrieval_trace": [{"latency_ms": i * 10}]}
+    report["metrics"] = summarize_agent(report["cases"])
+    if not answer_timing:
+        report["metrics"].pop("first_answer_chunk_ms")
+    assert inspect(events, report=report)["report_verified"]
+    for metric in ("latency_ms", "retrieval_latency_ms", *(["first_answer_chunk_ms"] if answer_timing else [])):
+        changed = copy.deepcopy(report)
+        changed["metrics"][metric]["p95"] += 1
+        with pytest.raises(ValueError, match="metrics"):
+            inspect(events, report=changed)
+        changed = copy.deepcopy(report)
+        del changed["metrics"][metric]
+        with pytest.raises(ValueError, match="metrics"):
+            inspect(events, report=changed)
+    report["config"]["latency_policy"] = "unknown"
+    with pytest.raises(ValueError, match="latency policy"):
+        inspect(events, report=report)
+    del report["config"]
+    with pytest.raises(ValueError, match="metrics"):
+        inspect(events, report=report)
+    assert inspect(completed_events(), report=report_for(completed_events()))["report_verified"]
+
+
+def test_unknown_answer_timing_policy_is_rejected():
+    events = completed_events()
+    report = report_for(events)
+    report["config"] = {"answer_timing_policy": "unknown"}
+    with pytest.raises(ValueError, match="answer timing policy"):
+        inspect(events, report=report)
+
+
+@pytest.mark.parametrize("option,value", [("llm_thinking", "disabled"), ("llm_streaming", True)])
+def test_logged_model_options_must_match_report(option, value):
+    events = completed_events()
+    events[0]["preflight"][option] = value
+    report = report_for(events)
+    with pytest.raises(ValueError, match="model options"):
+        inspect(events, report=report)
+    report["config"] = {option: value}
+    assert inspect(events, report=report)["report_verified"]
+
+
+@pytest.mark.parametrize("option,value", [("llm_thinking", "enabled"), ("llm_streaming", "true")])
+def test_unknown_logged_model_options_are_rejected(option, value):
+    events = completed_events()
+    events[0]["preflight"][option] = value
+    with pytest.raises(ValueError, match="model options"):
+        inspect(events)
+
+
 @pytest.mark.parametrize("field,value", [
     ("mode", "retrieval"), ("n_cases", 1), ("cases_sha256", "other"), ("split", "holdout"),
     ("preflight", {}), ("corpus", {}), ("cases", []), ("metrics", {"refusal_correct": 0}),

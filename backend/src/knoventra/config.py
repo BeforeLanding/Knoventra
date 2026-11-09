@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     llm_model: str = ""
     llm_timeout_s: float = 60.0
+    # Opt in only for providers accepting DeepSeek's thinking switch. The generic
+    # OpenAI adapter does not preserve provider-specific reasoning tool history.
+    llm_thinking: Literal["provider-default", "disabled"] = "provider-default"
 
     @field_validator("rerank_model")
     @classmethod

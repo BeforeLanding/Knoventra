@@ -125,6 +125,9 @@ def test_cli_agent_persists_per_case_and_only_publishes_complete_report(engine, 
         report = json.loads(output.read_text(encoding="utf-8"))
         assert report["cases"] == completed
         assert report["metrics"]["refusal_correct"] == 1
+        assert report["config"]["answer_timing_policy"] == "last-model-content-chunk-v1"
+        assert report["config"]["llm_streaming"] is True
+        assert report["metrics"]["first_answer_chunk_ms"]["n"] == 0
     else:
         assert "secret" not in (tmp_path / "report.json.progress.jsonl").read_text(encoding="utf-8")
     pool.close.assert_called_once()

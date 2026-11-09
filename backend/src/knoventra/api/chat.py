@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from knoventra.access.scope import NoAccess, compute_scope
 from knoventra.agent.checkpoint import make_checkpointer
 from knoventra.agent.graph import AgentDeps, build_graph
+from knoventra.agent.model import chat_model_kwargs
 from knoventra.api.deps import current_user, get_db
 from knoventra.api.run_lock import ConversationLease, ConversationStreamingResponse
 from knoventra.config import settings
@@ -42,8 +43,7 @@ def get_graph():
         raise HTTPException(503, "LLM_NOT_CONFIGURED")
     from langchain_openai import ChatOpenAI
 
-    llm = ChatOpenAI(base_url=settings.llm_base_url or None, api_key=settings.llm_api_key or "none",
-                     model=settings.llm_model, timeout=settings.llm_timeout_s, max_retries=1, streaming=True)
+    llm = ChatOpenAI(**chat_model_kwargs(), max_retries=1, streaming=True)
     saver, _pool = make_checkpointer(settings.database_url)
     return build_graph(AgentDeps(_session, get_encoder(), get_reranker(), llm, saver))
 

@@ -17,6 +17,7 @@ import copy
 import datetime as dt
 import hashlib
 import json
+import math
 import os
 import platform
 import sys
@@ -26,6 +27,7 @@ from pathlib import Path
 from importlib.metadata import PackageNotFoundError, version
 
 from answer_review import make_snapshot
+from answer_timing import ANSWER_TIMING_POLICY, AnswerChunkTimer
 from preflight import plan, select_cases
 from progress import ProgressJournal
 from knoventra.retrieval.identifiers import IDENTIFIER_POLICY
@@ -36,6 +38,7 @@ CASES_V2 = HERE / "cases_v2.jsonl"
 CASES_V3 = HERE / "cases_v3.jsonl"
 CASES_V4 = HERE / "cases_v4.jsonl"
 CASES_V5 = HERE / "cases_v5.jsonl"
+AGENT_LATENCY_POLICY = "agent-wall-and-completed-search-v1"
 
 
 def load_cases(split: str) -> list[dict]:
@@ -145,6 +148,16 @@ def summarize(results: list[dict]) -> dict:
 
 # ---- agent mode (needs a real LLM) -------------------------------------------------------------
 
+def latency_summary(values) -> dict:
+    """Nearest-rank percentiles over recorded samples; missing timings are not zeros."""
+    samples = sorted(v for v in values if isinstance(v, (int, float)) and not isinstance(v, bool)
+                     and math.isfinite(v) and v >= 0)
+    if not samples:
+        return {"n": 0, "p50": None, "p95": None, "max": None}
+    return {"n": len(samples), "p50": samples[math.ceil(len(samples) * 0.50) - 1],
+            "p95": samples[math.ceil(len(samples) * 0.95) - 1], "max": samples[-1]}
+
+
 def eval_agent(graph, db, users, cases, *, on_start=None, on_complete=None) -> list[dict]:
     """End-to-end per case. Escalation cases drive interrupt/resume with the listed decisions."""
     from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
@@ -160,6 +173,8 @@ def eval_agent(graph, db, users, cases, *, on_start=None, on_complete=None) -> l
         if on_start:
             on_start(c["id"], cfg["configurable"]["thread_id"])
         t0 = time.perf_counter()
+        answer_timer = AnswerChunkTimer(t0)
+        cfg["callbacks"] = [answer_timer]
         st = graph.invoke({"messages": [HumanMessage(c["question"])], "evidence": {}, "sources": [], "error_code": None}, cfg)
         r = {"id": c["id"], "category": c["category"], "user": c["user"]}
         exp = c["expect"]
@@ -190,6 +205,8 @@ def eval_agent(graph, db, users, cases, *, on_start=None, on_complete=None) -> l
                         for tc in m.tool_calls if tc["name"] == "search_knowledge"]
         r["answer"] = next((m.content for m in reversed(st["messages"]) if isinstance(m, AIMessage) and not m.tool_calls), "")
         r["error_code"] = st.get("error_code")
+        r["first_answer_chunk_ms"] = (answer_timer.first_answer_chunk_ms
+                                       if r["error_code"] in (None, "INSUFFICIENT_EVIDENCE", "NO_ACCESS") else None)
         r["review_snapshot"] = make_snapshot(c["question"], r["answer"], st.get("evidence") or {},
                                               st.get("sources") or [], st.get("error_code"))
         r["thread_id"] = cfg["configurable"]["thread_id"]
@@ -219,6 +236,11 @@ def summarize_agent(rs: list[dict]) -> dict:
     if cat("escalation"):
         m["escalation_ok"] = sum(r["ok"] for r in cat("escalation"))
         m["escalation_n"] = len(cat("escalation"))
+    m["latency_ms"] = latency_summary(r.get("latency_ms") for r in rs)
+    m["first_answer_chunk_ms"] = latency_summary(r.get("first_answer_chunk_ms") for r in rs)
+    traces = [trace for r in rs for trace in (r.get("diagnostics") or {}).get("retrieval_trace", [])]
+    m["retrieval_latency_ms"] = {**latency_summary(t.get("latency_ms") for t in traces),
+                                 "completed_calls": len(traces)}
     return m
 
 
@@ -228,14 +250,14 @@ def make_evaluation_graph(enc, rr, max_output_tokens: int):
     from langchain_openai import ChatOpenAI
     from knoventra.agent.checkpoint import make_checkpointer
     from knoventra.agent.graph import AgentDeps, build_graph
+    from knoventra.agent.model import chat_model_kwargs
     from knoventra.config import settings
     from knoventra.db.session import SessionLocal
 
     if not settings.llm_model:
         raise ValueError("LLM model is not configured")
-    llm = ChatOpenAI(base_url=settings.llm_base_url or None, api_key=settings.llm_api_key or "none",
-                     model=settings.llm_model, timeout=settings.llm_timeout_s, max_retries=0,
-                     max_tokens=max_output_tokens, streaming=False)
+    llm = ChatOpenAI(**chat_model_kwargs(), max_retries=0,
+                     max_tokens=max_output_tokens, streaming=True)
 
     @contextmanager
     def session():
@@ -295,6 +317,8 @@ def main() -> None:
                          model=settings.llm_model if a.mode == "agent" else "", max_output_tokens=a.max_output_tokens,
                          assumed_input_tokens=a.assumed_input_tokens, input_price=a.input_price_per_million,
                          output_price=a.output_price_per_million, currency=a.currency)
+        if a.mode == "agent":
+            preflight.update(llm_thinking=settings.llm_thinking, llm_streaming=True)
     except ValueError as error:
         ap.error(str(error))
     if a.dry_run:
@@ -381,6 +405,10 @@ def run_evaluation(a, cases, preflight, journal=None):
                    "rank_metric_stage": "post_rerank_pre_gate" if rr else "post_rrf_pre_gate",
                    "llm_model": settings.llm_model or None,
                    "review_snapshot_schema": 1 if a.mode == "agent" else None,
+                   "latency_policy": AGENT_LATENCY_POLICY if a.mode == "agent" else None,
+                   "answer_timing_policy": ANSWER_TIMING_POLICY if a.mode == "agent" else None,
+                   "llm_streaming": True if a.mode == "agent" else None,
+                   "llm_thinking": settings.llm_thinking if a.mode == "agent" else None,
                    "citation_policy": citation_policy,
                    "query_vector_policy": QUERY_VECTOR_POLICY,
                    "query_encoding_policy": QUERY_ENCODING_POLICY,

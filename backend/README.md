@@ -380,6 +380,77 @@ time, avoiding random UUID ordering for messages inserted in the same transactio
 and missing historical error codes are not reconstructed. The web client restores owned checkpoint
 state, pending confirmation expiry and persisted refusal states; see [the demo guide](../docs/demo-guide.md).
 
+## Agent latency measurements
+
+### Explicit provider thinking mode
+
+`KNV_LLM_THINKING` accepts exactly `provider-default` (the default) or `disabled`.
+`provider-default` omits any vendor thinking extension; it does not mean thinking is disabled.
+`disabled` adds `extra_body={"thinking": {"type": "disabled"}}` to the shared web/evaluation
+model constructor. Only choose it for providers accepting that extension, such as DeepSeek;
+other compatible endpoints keep `provider-default`. Unsupported values fail configuration validation.
+
+DeepSeek currently enables thinking by default and requires reasoning history on subsequent tool
+requests ([official guide](https://api-docs.deepseek.com/guides/thinking_mode/)). This project's installed
+generic `ChatOpenAI` adapter does not retain provider-specific `reasoning_content`, so configure
+`KNV_LLM_THINKING=disabled` for this DeepSeek tool workflow. Enabling thinking is not offered until a
+provider-specific adapter and its history contract are implemented and tested. The switch does not
+filter or edit responses and does not automatically retry a rejected request in another mode.
+
+Changing the environment requires a backend process restart; the web graph caches its model instance.
+The evaluation process reads the same setting, includes it with streaming mode in the offline preflight
+and final report, and the progress inspector checks logged options against the report. Historical
+reports without these fields remain valid and their actual thinking mode is not inferred. Web retry
+policy remains one provider retry; evaluation still has zero retries and its explicit output cap.
+
+### Wall and retrieval time
+
+New Agent evaluation reports include `diagnostics.retrieval_trace[*].latency_ms` for each completed
+search, including searches rejected by access or evidence gates. The monotonic wall clock covers
+opening the tool's database session, retrieval (encoding, recall, optional reranking and gating),
+and closing that session. Exceptions that abort a search do not produce a completed trace.
+
+Agent `metrics.latency_ms` summarizes the existing per-case wall time, including graph invocation,
+scripted confirmation/resume and result assembly. `metrics.retrieval_latency_ms` summarizes individual
+completed searches, so a case with multiple searches contributes multiple samples. Both include
+`n`, `p50`, `p95`, and `max`; percentiles use nearest rank (`ceil(p*n)`, one-based). Retrieval also
+reports `completed_calls`, making missing timings in legacy traces visible. Missing or invalid samples
+are excluded, never converted to zero; empty distributions have null percentiles and maximum.
+
+New Agent reports identify this definition as `config.latency_policy=agent-wall-and-completed-search-v1`.
+The offline progress inspector verifies these timing aggregates for that policy, preserves the original
+metric contract for legacy reports, and rejects unknown timing policies.
+Existing report files and retrieval-mode summaries are unchanged. This is server/evaluator wall time,
+not browser latency. It does not measure a person's confirmation delay,
+and scripted/Hash-encoder regression timings are not real model performance results.
+
+### First streamed answer content
+
+Agent evaluation now configures `ChatOpenAI(streaming=True)` while preserving the output token cap and
+zero automatic provider retries. A per-case callback records `first_answer_chunk_ms`, measured from
+the beginning of that case to the first nonempty string content chunk of the **last completed model
+response without tool calls**. Reasoning-only chunks and tool parameters are excluded. Content emitted
+before a tool call is discarded when that response finishes; the answer after retrieval or scripted
+confirmation/resume uses the original case start. This includes earlier model calls and retrieval time.
+
+The field is null if the provider/model supplies no streamed content, the response is empty, truncated,
+contains invalid calls, or the final graph state reports an operational error (including missing
+citations). Ordinary answers and evidence/access refusals can contribute samples. The corresponding
+`metrics.first_answer_chunk_ms` reports `n`, `p50`, `p95`, and `max`, using the same nearest-rank convention.
+
+This is an observable approximation of time to first answer token: a provider chunk may contain more
+than one token. It is measured at the model callback, before citation/refusal processing, which can
+replace the raw response; it does not claim time to first validated answer or browser-visible text.
+The callback retains only run IDs and times, never prompt, answer or reasoning text. Each new case gets
+its own timer; real human confirmation waiting is not simulated by the evaluator.
+
+Reports declare `config.answer_timing_policy=last-model-content-chunk-v1` and `config.llm_streaming=true`.
+The offline inspector validates the added aggregate only for the declared policy, preserves both older
+report formats (without timing and with wall/search timing alone), and rejects unknown policies.
+New streaming evaluation timings should not be compared directly with old non-streaming runs as a
+performance improvement. No historical reports are modified and no real LLM measurement is implied by
+the scripted-model tests.
+
 ## Refusal diagnostics
 
 New agent reports preserve per-search status/reason, returned chunk IDs, target expectations and a

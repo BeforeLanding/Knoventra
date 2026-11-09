@@ -65,6 +65,20 @@ def test_unauthorized_user_gets_refusal_and_no_restricted_text(db, enc, saver, u
     assert "冷却液" not in blob
 
 
+@pytest.mark.parametrize("account", ["sg-ops", "hr"])
+def test_search_trace_times_completed_calls_including_refusals(db, enc, saver, users, monkeypatch, account):
+    import knoventra.agent.graph as graph_module
+
+    # Replace only this module's clock, preserving LangGraph's own timers.
+    from types import SimpleNamespace
+    readings = iter([10.0, 10.125])
+    monkeypatch.setattr(graph_module, "time", SimpleNamespace(perf_counter=lambda: next(readings)))
+    out, _ = run(make_graph(db, enc, saver, qa_script), users[account], "E17-42 排查")
+    assert len(out["retrieval_trace"]) == 1
+    assert out["retrieval_trace"][0]["latency_ms"] == 125.0
+    assert out["retrieval_trace"][0]["status"] == ("OK" if account == "sg-ops" else "INSUFFICIENT_EVIDENCE")
+
+
 def test_run_limit(db, enc, saver, users):
     n = [0]
 

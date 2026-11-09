@@ -8,6 +8,7 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import re
+import time
 from collections.abc import Callable
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
@@ -200,10 +201,13 @@ def build_graph(deps: AgentDeps):
         original_query = next((m.content for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), "")
         for c in calls:
             if c["name"] == "search_knowledge":
+                started = time.perf_counter()
                 with deps.session_factory() as db:
                     res = retrieve(db, deps.encoder, deps.reranker, db.get(User, uid), c["args"].get("query", ""),
                                    original_query=original_query)
+                elapsed_ms = round((time.perf_counter() - started) * 1000, 3)
                 trace.append({"tool_call_id": c["id"], "query": c["args"].get("query", ""),
+                              "latency_ms": elapsed_ms,
                               "status": res.status, "reason": res.reason,
                               "required_identifiers": res.required_identifiers,
                               "missing_identifiers": res.missing_identifiers,

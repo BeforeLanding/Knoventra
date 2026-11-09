@@ -10,6 +10,29 @@ import run_eval
 MANIFEST = Path(__file__).resolve().parents[2] / "data" / "demo" / "manifest.json"
 
 
+def test_agent_latency_summary_counts_searches_and_keeps_legacy_gaps():
+    rows = [
+        {"category": "legacy", "latency_ms": 100, "diagnostics": {"retrieval_trace": [
+            {"latency_ms": 10}, {"latency_ms": 30}, {}]}},
+        {"category": "legacy", "latency_ms": 200, "diagnostics": {"retrieval_trace": [{"latency_ms": 20}]}},
+        {"category": "legacy"},
+    ]
+    summary = run_eval.summarize_agent(rows)
+    assert summary["latency_ms"] == {"n": 2, "p50": 100, "p95": 200, "max": 200}
+    assert summary["retrieval_latency_ms"] == {"n": 3, "p50": 20, "p95": 30, "max": 30,
+                                               "completed_calls": 4}
+
+
+@pytest.mark.parametrize("values", [[], [None], [True, False, -1, float("nan"), float("inf"), "10"]])
+def test_latency_summary_never_fabricates_missing_or_invalid_measurements(values):
+    assert run_eval.latency_summary(values) == {"n": 0, "p50": None, "p95": None, "max": None}
+
+
+def test_latency_nearest_rank_percentiles_and_zero():
+    assert run_eval.latency_summary(range(100)) == {"n": 100, "p50": 49, "p95": 94, "max": 99}
+    assert run_eval.latency_summary([0]) == {"n": 1, "p50": 0, "p95": 0, "max": 0}
+
+
 def test_case_set_shape():
     cases = run_eval.load_cases("all")
     assert len(cases) == 60 and len({c["id"] for c in cases}) == 60
@@ -238,6 +261,7 @@ def test_agent_eval_captures_exact_turn_evidence_for_offline_review(db, enc, use
     try:
         g = build_graph(AgentDeps(session_factory_for(db), enc, None, ScriptedModel(script=script), saver))
         results = run_eval.eval_agent(g, db, users, [case])
+        assert results[0]["first_answer_chunk_ms"] is None  # A whole-message fake cannot measure streaming.
         snapshot = results[0]["review_snapshot"]
         registry = validate_snapshot(snapshot)
         assert snapshot["question"] == case["question"] and snapshot["answer"] == results[0]["answer"]
@@ -247,6 +271,12 @@ def test_agent_eval_captures_exact_turn_evidence_for_offline_review(db, enc, use
         from analyze_refusals import analyze
         assert results[0]["expect"] == case["expect"]
         assert results[0]["diagnostics"]["retrieval_trace"][0]["status"] == "OK"
+        timing = results[0]["diagnostics"]["retrieval_trace"][0]["latency_ms"]
+        assert timing >= 0
+        metrics = run_eval.summarize_agent(results)
+        assert metrics["retrieval_latency_ms"] == {"n": 1, "p50": timing, "p95": timing, "max": timing,
+                                                    "completed_calls": 1}
+        assert metrics["latency_ms"]["max"] == results[0]["latency_ms"]
         assert analyze(report)["cases"][0]["bucket"] == "answer_with_sources"
         summary = summarize_packet(prepare_packet(report), report)
         assert summary["unreviewed_units"] > 0 and summary["by_reviewer_kind"]["human"]["fully_supported_rate"] is None
