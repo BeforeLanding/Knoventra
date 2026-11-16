@@ -62,4 +62,4 @@ uv run --no-sync python dev/check_compose_demo.py
 
 正常完成或检查失败都会移除本次随机项目的容器、网络和数据卷；构建镜像及缓存保留供复用。强杀脚本或机器断电可能留下资源，启动日志会打印项目名，便于手动核对清理。验收会修改自己的临时演示资料，因此不支持向现有演示地址直接执行。
 
-CI 新增独立 `Container demo acceptance` job。2026-11-16 本地 Docker Desktop / Linux 容器验收通过，基础镜像及锁定依赖从镜像环境安装，未复用宿主虚拟环境或 node_modules；本轮远端 job 尚未运行。该结果覆盖后端 HTTP 与静态资源交付，没有执行浏览器交互、真实模型语义审核或生产部署验证。
+CI 新增独立 `Container demo acceptance` job。2026-11-16 本地 Docker Desktop / Linux 容器验收通过，基础镜像及锁定依赖从镜像环境安装，未复用宿主虚拟环境或 node_modules。提交 `01867cba` 的[远端三个 job](https://github.com/BeforeLanding/Knoventra/actions/runs/43789121462)也全部通过，含完整容器验收；重启就绪检查仅作用于现有 API，并核验前端容器 ID / 发布端口不变，避免 Compose 版本差异导致前端被重建。该结果覆盖后端 HTTP 与静态资源交付，没有执行浏览器交互、真实模型语义审核或生产部署验证。

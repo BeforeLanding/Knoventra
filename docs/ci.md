@@ -1,5 +1,7 @@
 # 自动化验收
 
+**2026-11-16 远端验收：提交 `01867cba` 的[GitHub Actions](https://github.com/BeforeLanding/Knoventra/actions/runs/43789121462)三个 job 全部通过：后端 697 项（53.73 秒）、迁移全链 / ORM / 种子重放、离线 HTTP 两次重启验收；前端 145 项、生产构建、零警告 lint；新增容器演示验收，包括经 Nginx 的静态资源 / HTTP / SSE、API 重启与重建后的确认恢复和幂等性。首次运行中 Compose 意外重建前端导致端口变化的问题已修复，并新增前端容器 ID / 端口不变断言。以下历史记录保留当时状态；本次无真实模型调用，不替代真人审核。**
+
 工作流：[`.github/workflows/ci.yml`](../.github/workflows/ci.yml)。在 `main`、`feat/**`、`fix/**` 推送、PR 和手动触发时运行。三个独立 Linux job：`Backend and migrations`、`Web tests and build`、`Container demo acceptance`。同一分支有新运行时取消旧运行；仓库 token 只有读取权限，checkout 不保留凭证。
 
 ## 后端
