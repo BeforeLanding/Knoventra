@@ -34,6 +34,16 @@
 
 ## 快速开始
 
+只想复现界面与业务流程时，可直接在仓库根目录运行以下命令，无需本机 Python / Node / Java：
+
+```bash
+docker compose -f deploy/compose.demo.yaml up --build -d --wait
+```
+
+打开 [本机离线演示](http://127.0.0.1:8088)。这套环境使用独立数据库和固定回答，不调用真实模型；首次构建需要网络。数据持久化、停止 / 重置和自动验收见[容器演示说明](docs/container-demo.md)。
+
+下列步骤用于本机开发与真实模型配置：
+
 需要 Docker、[uv](https://docs.astral.sh/uv/)、Node 20+。真实检索需要 GPU 或较强 CPU 加载 BGE-M3（约 2.2GB，首次运行从 HuggingFace 下载）。
 
 ```bash
@@ -59,6 +69,8 @@ cd web && npm install && npm run dev
 ```bash
 cd backend && uv run pytest
 ```
+
+离线 HTTP 演示与服务重启验收：在 `backend/` 执行 `uv run --no-sync python dev/check_demo.py`。脚本创建并删除独立临时库，验证权限、来源、版本发布和转交确认的持久化恢复，不调用真实模型。配置与范围见[自动化验收](docs/ci.md#http-演示与进程重启验收)。
 
 评测：
 

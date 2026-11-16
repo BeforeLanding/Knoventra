@@ -1,0 +1,11 @@
+FROM node:24-bookworm-slim@sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9 AS build
+WORKDIR /app/web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+COPY web/ ./
+RUN npm run build
+
+FROM nginx:stable-alpine@sha256:901e593c95dc85f5a729f5765516321366ef4ac401821431d408897e95287d0a
+COPY deploy/nginx.demo.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/web/dist /usr/share/nginx/html
+EXPOSE 80
