@@ -36,6 +36,7 @@ def main():
     try:
         compose("up", "--build", "--detach", "--wait", "--wait-timeout", "120", timeout=900)
         binding = compose("port", "web", "80", capture=True).stdout.strip()
+        web_id = compose("ps", "--quiet", "web", capture=True).stdout.strip()
         require(binding.startswith("127.0.0.1:"), "demo must be published on loopback only")
         origin = "http://" + binding
         with httpx.Client(base_url=origin + "/api/v1/", timeout=30, trust_env=False) as client:
@@ -53,11 +54,20 @@ def main():
             check_publication(client, auth, source)
             cid, confirmation_id = start_confirmation(client, auth["sg-ops"])
             compose("restart", "api")
-            compose("up", "--detach", "--no-build", "--wait", "--wait-timeout", "120")
+            # Some Compose versions reconcile/recreate services on a general up,
+            # reallocating web's random published port. Only wait for this API.
+            compose("up", "--detach", "--no-build", "--no-recreate", "--no-deps",
+                    "--wait", "--wait-timeout", "120", "api")
+            require(compose("ps", "--quiet", "web", capture=True).stdout.strip() == web_id
+                    and compose("port", "web", "80", capture=True).stdout.strip() == binding,
+                    "API restart unexpectedly replaced the frontend or its published port")
             eid = check_resumed_confirmation(client, auth, cid, confirmation_id)
             # Recreate rather than restart: nginx must resolve the replacement API.
             compose("up", "--detach", "--no-build", "--force-recreate", "--no-deps", "--wait",
                     "--wait-timeout", "120", "api")
+            require(compose("ps", "--quiet", "web", capture=True).stdout.strip() == web_id
+                    and compose("port", "web", "80", capture=True).stdout.strip() == binding,
+                    "API recreation unexpectedly replaced the frontend or its published port")
             # Docker DNS may cache the former address for nginx's configured 5s.
             deadline = time.monotonic() + 15
             while True:

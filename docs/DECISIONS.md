@@ -489,3 +489,4 @@
 - **代理与持久化**：Nginx 同源转发 `/api/`，保留 Authorization 和请求路径，关闭 SSE 响应缓冲 / 缓存，读取超时为 180 秒。动态解析 Docker 服务地址，覆盖 API 容器重建；会话、确认和转交保留在独立 PG 卷。重启执行迁移与种子，不重置用户已经发布的版本。
 - **验收**：`backend/dev/check_compose_demo.py` 为每次运行生成随机项目、空卷和临时本机端口，复用 HTTP 断言，经 Nginx 检查 HTML / JS / CSS、六身份、来源 / 简繁 / 区域 / 部门 / 拒答、发布、重启后确认及重建后重放。完成或失败后只清理自身项目的容器、网络和卷，保留镜像缓存；外部强杀不保证清理。CI 增加独立容器 job。
 - **验证与边界**：2026-11-16 Docker Desktop 的 Linux 容器从锁定依赖构建成功，生产前端构建与完整容器 HTTP 验收通过，临时资源已清理；actionlint 和 Compose 配置检查通过。没有改应用代码，本轮未重复 697 项业务回归；远端新 job、浏览器交互、真实模型效果和真人审核尚未新增验证。此入口为本机固定回答演示，不作为生产部署配置，不改变历史测量结果。
+- **首次远端与修复**：提交 `3e8ff094` 的[首次运行](https://github.com/BeforeLanding/Knoventra/actions/runs/43788671178)后端和前端通过，容器验收失败。日志显示 API restart 后的通用 `compose up --wait` 在 runner 上同时重建 API / web，web 的临时发布端口随之变化，客户端访问旧端口被拒绝。改为仅对 API 使用 `--no-recreate --no-deps --wait`，并在 restart 与 force-recreate 两处核验 web 容器 ID 和端口不变；不重试业务写入、不忽略错误或放宽业务断言。后续远端结果单独记入[CI 记录](ci.md)。
