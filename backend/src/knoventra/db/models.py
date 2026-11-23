@@ -7,6 +7,7 @@ from pgvector.sqlalchemy import SPARSEVEC, Vector
 from sqlalchemy import (
     JSON,
     Boolean,
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
@@ -140,6 +141,30 @@ class Escalation(Base):
     __table_args__ = (UniqueConstraint("user_id", "operation_id"),)
 
 
+class Skill(Base):
+    """Skill matrix from journal workbooks: structured lookup only, never chunked or embedded."""
+
+    __tablename__ = "knv_skill"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    machine_id: Mapped[str] = mapped_column(String(64))
+    engineer_name: Mapped[str] = mapped_column(String(128))
+    skill_key: Mapped[str] = mapped_column(String(255))
+    skill_item: Mapped[str] = mapped_column(String(255))
+    op_count: Mapped[int] = mapped_column(Integer)
+    level: Mapped[str] = mapped_column(String(16))  # none | familiar | proficient
+    note: Mapped[str] = mapped_column(Text, default="")
+    company: Mapped[str] = mapped_column(String(128), default="")
+    source_file: Mapped[str] = mapped_column(String(255))
+    source_row: Mapped[int] = mapped_column(Integer)
+    updated_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())
+    __table_args__ = (
+        UniqueConstraint("machine_id", "engineer_name", "skill_key", name="uq_knv_skill_machine_engineer_key"),
+        CheckConstraint("level IN ('none', 'familiar', 'proficient')", name="ck_knv_skill_level"),
+        CheckConstraint("op_count >= 0", name="ck_knv_skill_op_count"),
+    )
+
+
+Index("ix_knv_skill_key_level", Skill.skill_key, Skill.level)
 Index("ix_knv_chunk_dense", Chunk.dense, postgresql_using="hnsw",
       postgresql_with={"m": 16, "ef_construction": 64},
       postgresql_ops={"dense": "vector_cosine_ops"})
