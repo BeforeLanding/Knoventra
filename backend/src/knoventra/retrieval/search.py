@@ -93,7 +93,8 @@ def channel_weights(has_identifiers: bool) -> dict[str, float]:
 
 def search(db: Session, enc: Encoder, scope: AccessScope, query: str, *,
            use_sparse: bool = True, use_opencc: bool = True, top_k: int | None = None,
-           original_query: str = "", keyword=_AUTO, use_ident: bool = True) -> SearchResult:
+           original_query: str = "", keyword=_AUTO, use_ident: bool = True,
+           machine_model: str | None = None) -> SearchResult:
     """Permission-aware hybrid retrieval. The readable-KB filter is applied inside both
     recall SQLs, so unauthorised chunks never reach fusion, rerank or the model."""
     if not scope.readable_kb_ids:
@@ -206,6 +207,13 @@ def search(db: Session, enc: Encoder, scope: AccessScope, query: str, *,
         # match already present in the permission-filtered recall candidates.
         evidence = [e for e in evidence if required & evidence_identifiers(e.section_path, e.text)]
         stages["identifier_match"] = [e.chunk_id for e in evidence]
+    if machine_model:
+        # Drop chunks written for other models before Top-K; model-neutral chunks stay.
+        from knoventra.agent.model_variants import chunk_models
+
+        evidence = [e for e in evidence
+                    if not (models := chunk_models(e.section_path, e.text)) or machine_model in models]
+        stages["model_filter"] = [e.chunk_id for e in evidence]
     evidence = evidence[: top_k or settings.final_top_k]
     stages["selected"] = [e.chunk_id for e in evidence]
     covered = frozenset().union(*(evidence_identifiers(e.section_path, e.text) for e in evidence))

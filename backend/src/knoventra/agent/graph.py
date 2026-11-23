@@ -29,7 +29,10 @@ from sqlalchemy.orm import Session
 from knoventra.config import settings
 from knoventra.agent.language import format_answer
 from knoventra.agent.escalation_intent import direct_escalation_summary
+from knoventra.agent.model_variants import clarification_needed, clarification_text, stated_models
 from knoventra.agent.query_plan import RETRIEVAL_INTENTS, plan_query
+from knoventra.skills import can_view_skills, format_hits
+from knoventra.skills import lookup_skills as lookup_skills_in_db
 from knoventra.db.models import Confirmation, Escalation, User
 from knoventra.ingestion.encoder import Encoder
 from knoventra.retrieval.pipeline import OK, retrieve
@@ -44,7 +47,8 @@ SYSTEM_PROMPT = """你是示例精密设备公司的内部知识助手。
 3. 回答语言与字形跟随用户的提问（简体问简体答，繁体问繁体答）。
 4. 用户明确要求转人工/转交专家时，立即调用 escalate_to_expert，即使信息不全也不要先追问；summary 依据已有对话写成可直接交给专家的问题摘要（确认卡会让用户核对）。其他情况不要调用。
 5. 查询转交进度用 get_escalation_status。只报告工具实际返回的记录和状态；转交工具仅创建待处理记录，不代表已通知、已受理或已分派到特定团队，不承诺响应时间。没有执行相应工具时，不承诺能修改已提交的转交，也不要让用户在已完成的确认卡中补充内容。
-6. 严格保留用户问题中的时间、频率、对象和编码约束，不自行增加条件（例如“日常”不等于“每日”）。用户未明确要求全部项目或完整清单时，不擅自增加完整性要求。章节标题给出的类别与正文频率可以同时成立，例如“日常检查”章节中的“每周检查”仍属于该类检查；回答时保留原频率，不因它不是每日而判作无关。资料只支持问题的一部分时，先引用并回答可证实的范围，对其余部分拒绝推断，不因无法证明清单完整就整体拒答。"""
+6. 严格保留用户问题中的时间、频率、对象和编码约束，不自行增加条件（例如“日常”不等于“每日”）。用户未明确要求全部项目或完整清单时，不擅自增加完整性要求。章节标题给出的类别与正文频率可以同时成立，例如“日常检查”章节中的“每周检查”仍属于该类检查；回答时保留原频率，不因它不是每日而判作无关。资料只支持问题的一部分时，先引用并回答可证实的范围，对其余部分拒绝推断，不因无法证明清单完整就整体拒答。
+7. 用户问谁会做某项技能、该找谁时，调用 lookup_skills，只报告工具返回的人员、掌握程度和作业次数，不推测其他人选。"""
 
 
 class _ToolArgs(BaseModel):
@@ -85,7 +89,16 @@ def escalate_to_expert(summary: str) -> str:
     """创建待处理的专家转交记录（需用户确认，不通知或分派具体团队）。"""
 
 
-TOOLS = [search_knowledge, get_escalation_status, escalate_to_expert]
+class _SkillArgs(_ToolArgs):
+    skill: str = Field(min_length=1, max_length=200, description="要查的技能项，如 golden check")
+
+
+@tool(args_schema=_SkillArgs)
+def lookup_skills(skill: str) -> str:
+    """在技能矩阵中查询掌握或了解某项技能的工程师（结构化查询，不检索文档）。"""
+
+
+TOOLS = [search_knowledge, get_escalation_status, escalate_to_expert, lookup_skills]
 _TOOL_SCHEMAS = {tool.name: tool.args_schema for tool in TOOLS}
 
 
@@ -124,6 +137,7 @@ class State(TypedDict, total=False):
     model_declared_refusal: bool
     model_finish_reason: str | None
     query_plan: dict | None  # per-turn planner trace; never added to model messages
+    clarification: dict | None  # set when the answer depends on an unstated machine model
     route_kbs: list[str] | None  # server-chosen KB names for this turn's searches (narrowing only)
 
 
@@ -163,7 +177,7 @@ def build_graph(deps: AgentDeps):
         # Command(resume=...) resumes at the interrupt and preserves this trace.
         # A new user turn always starts fresh, even for callers reusing a thread.
         return {"retrieval_trace": [], "model_declared_refusal": False, "model_finish_reason": None,
-                "query_plan": None, "route_kbs": None}
+                "query_plan": None, "route_kbs": None, "clarification": None}
 
     def query_plan(state: State):
         if deps.planner is None:
@@ -171,6 +185,11 @@ def build_graph(deps: AgentDeps):
         if direct_escalation_summary(state["messages"]) is not None:
             return {"query_plan": {"status": "skipped", "reason": "explicit_escalation"}}
         plan, trace = plan_query(deps.planner, state["messages"])
+        if plan is not None and plan.intent == "skill_lookup" \
+                and plan.confidence >= settings.query_plan_min_confidence:
+            call = {"name": "lookup_skills", "args": {"skill": plan.skill_item or plan.rewritten},
+                    "id": "plan-skill", "type": "tool_call"}
+            return {"query_plan": trace, "messages": [AIMessage("", tool_calls=[call])]}
         if plan is None or plan.intent not in RETRIEVAL_INTENTS:
             return {"query_plan": trace}
         # Retrieval intents: search the planned queries directly; the agent answers from the results.
@@ -228,12 +247,18 @@ def build_graph(deps: AgentDeps):
         pending = None
         error = state.get("error_code")
         original_query = next((m.content for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), "")
+        stated = stated_models(state["messages"])
+        model = stated[0] if len(stated) == 1 else None  # two named models = a comparison: no filter
+        clarification = state.get("clarification")
         for c in calls:
             if c["name"] == "search_knowledge":
                 started = time.perf_counter()
                 with deps.session_factory() as db:
                     res = retrieve(db, deps.encoder, deps.reranker, db.get(User, uid), c["args"].get("query", ""),
-                                   original_query=original_query, route_kbs=state.get("route_kbs"))
+                                   original_query=original_query, route_kbs=state.get("route_kbs"),
+                                   machine_model=model)
+                    if res.status == OK and clarification is None:
+                        clarification = clarification_needed(db, res.evidence, stated)
                 elapsed_ms = round((time.perf_counter() - started) * 1000, 3)
                 trace.append({"tool_call_id": c["id"], "query": c["args"].get("query", ""),
                               "latency_ms": elapsed_ms,
@@ -241,7 +266,7 @@ def build_graph(deps: AgentDeps):
                               "required_identifiers": res.required_identifiers,
                               "missing_identifiers": res.missing_identifiers,
                               "returned_chunk_ids": [e.chunk_id for e in res.evidence],
-                              "degraded": res.degraded, "route": res.route})
+                              "degraded": res.degraded, "route": res.route, "machine_model": model})
                 if res.status != OK:
                     if not evidence:
                         error = res.status
@@ -263,6 +288,12 @@ def build_graph(deps: AgentDeps):
                                       .order_by(Escalation.created_at.desc().nulls_last(), Escalation.id.desc()).limit(5)).all()
                 out.append(ToolMessage("\n".join(f"{r.id}: {r.status} - {r.summary[:60]}" for r in rows) or "暂无转交记录",
                                        tool_call_id=c["id"]))
+            elif c["name"] == "lookup_skills":
+                with deps.session_factory() as db:
+                    user = db.get(User, uid)
+                    text = (format_hits(lookup_skills_in_db(db, c["args"]["skill"])) if can_view_skills(user)
+                            else "NO_ACCESS: 技能表仅对 Ops 部门开放。")
+                out.append(ToolMessage(text, tool_call_id=c["id"]))
             elif c["name"] == "escalate_to_expert" and pending is None:
                 turn_id = next(m.id for m in reversed(state["messages"]) if isinstance(m, HumanMessage))
                 op_id = hashlib.sha256(f"{config['configurable']['thread_id']}:{turn_id}:{c['id']}".encode()).hexdigest()[:32]
@@ -270,12 +301,20 @@ def build_graph(deps: AgentDeps):
             else:
                 out.append(ToolMessage("未知或重复的工具调用，已忽略", tool_call_id=c["id"]))
         return {"messages": out, "evidence": evidence, "pending": pending, "error_code": error,
-                "retrieval_trace": trace}
+                "retrieval_trace": trace, "clarification": clarification}
 
     def after_tools(state: State):
         if state.get("error_code") in {"RUN_LIMIT", "MODEL_TOOL_CALL_INVALID"}:
             return END
-        return "prepare_escalation" if state.get("pending") else "agent"
+        if state.get("pending"):
+            return "prepare_escalation"
+        return "clarify" if state.get("clarification") else "agent"
+
+    def clarify(state: State):
+        # Answering would mix model-specific steps; ask instead and show no sources.
+        question = next((m.content for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), "")
+        return {"messages": [AIMessage(format_answer(question, clarification_text(state["clarification"])))],
+                "sources": [], "error_code": None}
 
     def prepare_escalation(state: State, config: RunnableConfig):
         cfg = config["configurable"]
@@ -372,13 +411,15 @@ def build_graph(deps: AgentDeps):
 
     g = StateGraph(State)
     for name, fn in [("start_turn", start_turn), ("query_plan", query_plan), ("agent", agent), ("tools", tools), ("prepare_escalation", prepare_escalation),
-                     ("execute_escalation", execute_escalation), ("cite_check", cite_check)]:
+                     ("execute_escalation", execute_escalation), ("cite_check", cite_check),
+                     ("clarify", clarify)]:
         g.add_node(name, fn)
     g.add_edge(START, "start_turn")
     g.add_edge("start_turn", "query_plan")
     g.add_conditional_edges("query_plan", after_plan, ["tools", "agent"])
     g.add_conditional_edges("agent", after_agent, ["tools", "cite_check"])
-    g.add_conditional_edges("tools", after_tools, ["agent", "prepare_escalation", END])
+    g.add_conditional_edges("tools", after_tools, ["agent", "prepare_escalation", "clarify", END])
+    g.add_edge("clarify", END)
     g.add_edge("prepare_escalation", "execute_escalation")
     g.add_edge("execute_escalation", "agent")
     g.add_edge("cite_check", END)

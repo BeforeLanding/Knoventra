@@ -37,7 +37,8 @@ PLANNER_PROMPT = """你是企业知识库的检索规划器，只负责规划，
 - sub_queries：问题包含几个彼此独立的问题时，拆成最多 3 个子查询；否则留空。
 - intent：case_sop（设备操作、故障、SOP、现场案例）、policy（HR、财务制度）、it_guide（IT 指南、VPN、账号）、skill_lookup（问谁会做某项技能）、help_status（查询求助或转交进度）、chitchat（问候、闲聊）。
 - confidence：对 intent 的把握，0 到 1。
-- machine_model：用户明确提到的机型（WX-38、WX-P、ST-250），没提到就留空，不要推测。"""
+- machine_model：用户明确提到的机型（WX-38、WX-P、ST-250），没提到就留空，不要推测。
+- skill_item：intent 为 skill_lookup 时，填用户要找的技能项（如 golden check、chamber teaching），否则留空。"""
 
 
 class QueryPlan(BaseModel):
@@ -49,6 +50,7 @@ class QueryPlan(BaseModel):
     intent: Intent
     confidence: float = Field(ge=0.0, le=1.0)
     machine_model: Literal["WX-38", "WX-P", "ST-250"] | None = None
+    skill_item: str | None = Field(default=None, max_length=100, description="skill_lookup 时要查的技能项")
 
 
 @dataclass
@@ -59,12 +61,14 @@ class PlanResult:
     confidence: float
     machine_model: str | None
     route_kbs: list[str] | None  # KB names to search; None = every readable KB
+    skill_item: str | None = None
     notes: list[str] = field(default_factory=list)  # deterministic corrections applied
 
     def trace(self, latency_ms: float) -> dict:
         return {"status": "ok", "policy": QUERY_PLAN_POLICY, "latency_ms": latency_ms, "rewritten": self.rewritten,
                 "queries": self.queries, "intent": self.intent, "confidence": self.confidence,
-                "machine_model": self.machine_model, "route_kbs": self.route_kbs, "notes": self.notes}
+                "machine_model": self.machine_model, "route_kbs": self.route_kbs, "skill_item": self.skill_item,
+                "notes": self.notes}
 
 
 @lru_cache(maxsize=1)
@@ -123,7 +127,9 @@ def postprocess(plan: QueryPlan, messages: list[AnyMessage]) -> PlanResult:
         route = list(settings.intent_kbs.get(plan.intent, [])) or None
     elif plan.intent in RETRIEVAL_INTENTS:
         notes.append("low_confidence_all_readable")
-    return PlanResult(rewritten, queries, plan.intent, plan.confidence, model, route, notes)
+    skill = fix_spelling(plan.skill_item.strip()) if plan.intent == "skill_lookup" and plan.skill_item else None
+    return PlanResult(rewritten=rewritten, queries=queries, intent=plan.intent, confidence=plan.confidence,
+                      machine_model=model, route_kbs=route, skill_item=skill, notes=notes)
 
 
 _POOL = ThreadPoolExecutor(max_workers=4, thread_name_prefix="query-plan")

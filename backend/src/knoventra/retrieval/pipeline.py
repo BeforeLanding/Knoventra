@@ -55,7 +55,8 @@ def gate_passes(e: Evidence, threshold: float) -> bool:
 
 def retrieve(db: Session, enc: Encoder, rr: Reranker | None, user: User, query: str, *,
              threshold: float | None = None, use_sparse: bool = True, use_opencc: bool = True,
-             original_query: str = "", route_kbs: list[str] | None = None) -> Outcome:
+             original_query: str = "", route_kbs: list[str] | None = None,
+             machine_model: str | None = None) -> Outcome:
     try:
         scope: AccessScope = compute_scope(db, user)
     except NoAccess:
@@ -66,7 +67,7 @@ def retrieve(db: Session, enc: Encoder, rr: Reranker | None, user: User, query: 
         route = {"requested": list(route_kbs), "applied": applied}
     n = settings.rerank_candidates if rr else settings.final_top_k
     res = search(db, enc, scope, query, use_sparse=use_sparse, use_opencc=use_opencc, top_k=n,
-                 original_query=original_query)
+                 original_query=original_query, machine_model=machine_model)
     ev = res.evidence
     if rr:
         ev = rerank(rr, query, ev, settings.final_top_k)
