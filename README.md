@@ -36,7 +36,8 @@
 - **求助单**：旧转交表原地迁移为 `knv_help_request`，原有转交接口不变。状态机由服务端按动作和角色校验，事件流水由数据库触发器保证只追加。槽位跨轮收集（目前存在图状态里，Redis 在第 3 周加入），说“算了”会清空草稿；确认卡列出全部槽位，确认后幂等建单。
 - **专家推荐与工作台**：只推荐技能为“掌握”的工程师，按同区域、未结单少、作业次数多排序，推荐理由显示在确认卡上；没有合适人选就进入待派单队列。前端新增“我的求助单”和“专家工作台”两个页面。
 - **结案沉淀**：现场求助单解决时，在同一事务里为 `field-cases` 生成脱敏后的案例草稿，由管理员在资料管理页预览后发布；发布后才能被检索。端到端测试覆盖“建单 → 派单 → 解决 → 发布 → 可检索”。
-- **尚未完成**：Redis 工作记忆与上下文压缩、情景记忆和用户画像、MCP 服务（第 3 周），以及回到原会话时的“求助单已更新”提示。路由准确率、改写开关对比等 Agent 层评测属于付费调用，还没有跑，不报告效果数字。
+- **短期工作记忆**：Redis（`knv:wm:{user_id}:{thread_id}`，TTL 24 小时）保存求助单槽位草稿和滚动摘要。Redis 只是缓存：草稿的持久记录在 Checkpoint 里（`request_help` 结果的 artifact 和确认卡），Redis 副本带锚点，与 Checkpoint 不符、丢失或 Redis 不可用时都会重建。历史超过 Token 预算（默认 6000，近似计数）时，保留最近 3 轮，更早的轮次压缩成摘要；只压缩发给模型的内容，Checkpoint 保留全文，摘要不读工具输出和证据。见 [DECISIONS](docs/DECISIONS.md) 第 71–72 条。
+- **尚未完成**：情景记忆和用户画像、MCP 服务（第 3 周），以及回到原会话时的“求助单已更新”提示。路由准确率、改写开关对比等 Agent 层评测属于付费调用，还没有跑，不报告效果数字。
 
 ## 未完成与已知问题
 
@@ -80,13 +81,15 @@ cd web && npm install && npm run dev
 
 启用 ES 关键词通道：在 `backend/.env` 设置 `KNV_ES_URL=http://localhost:59200`，然后执行 `uv run python -m knoventra.search_es.sync rebuild` 建立索引；之后发布修订会自动同步，`reconcile` 用于对账补齐。不设置 `KNV_ES_URL` 时只用 PG 的三个召回通道。
 
+启用 Redis 工作记忆：`docker compose -f deploy/compose.yaml up -d redis`，在 `backend/.env` 设置 `KNV_REDIS_URL=redis://localhost:56379/0`。不设置时槽位草稿每次从 Checkpoint 重建，长对话的摘要每轮重新生成。
+
 导入现场日志并发布案例：
 
 ```bash
 uv run python -m knoventra.ingestion.journal ../data/demo/journals/*.xlsx --registry ../data/demo/journals/machines.json --publish-kb field-cases
 ```
 
-测试（使用独立的 `knoventra_test` 库和离线哈希编码器，不需要模型和 LLM；ES 相关测试在 `localhost:59200` 不可达时跳过，CI 中设置 `KNV_REQUIRE_ES=1`，不可达即失败）：
+测试（使用独立的 `knoventra_test` 库和离线哈希编码器，不需要模型和 LLM；ES 相关测试在 `localhost:59200` 不可达时跳过，CI 中设置 `KNV_REQUIRE_ES=1`，不可达即失败；Redis 测试同理，地址 `localhost:56379`，开关 `KNV_REQUIRE_REDIS=1`）：
 
 ```bash
 cd backend && uv run pytest

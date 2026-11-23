@@ -25,6 +25,7 @@ from knoventra.config import settings
 from knoventra.db.models import Chunk, Confirmation, Conversation, Document, Escalation, Message, Revision, User
 from knoventra.db.session import SessionLocal
 from knoventra.ingestion.encoder import get_encoder
+from knoventra.memory.working import get_working_memory
 from knoventra.retrieval.rerank import get_reranker
 
 router = APIRouter(prefix="/api/v1")
@@ -48,8 +49,12 @@ def get_graph():
     # so the planning timeout bounds the turn; failures fall back to the agent.
     planner = (ChatOpenAI(**{**chat_model_kwargs(), "timeout": settings.query_plan_timeout_s}, max_retries=0)
                if settings.query_plan == "llm" else None)
+    # Summarizer: not streamed (its node never reaches users), bounded by its own timeout;
+    # a failure keeps the full history for that turn.
+    summarizer = ChatOpenAI(**{**chat_model_kwargs(), "timeout": settings.summary_timeout_s}, max_retries=0)
     saver, _pool = make_checkpointer(settings.database_url)
-    return build_graph(AgentDeps(_session, get_encoder(), get_reranker(), llm, saver, planner))
+    return build_graph(AgentDeps(_session, get_encoder(), get_reranker(), llm, saver, planner,
+                                 memory=get_working_memory(), summarizer=summarizer))
 
 
 def sse(event: str, data) -> str:

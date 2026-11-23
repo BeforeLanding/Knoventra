@@ -53,6 +53,18 @@ class Settings(BaseSettings):
         "policy": ["hr", "fin"],
         "it_guide": ["it-public"],
     }
+    # Short-term working memory (Redis); empty URL disables it and every read rebuilds from
+    # the checkpoint. Redis is a cache, never the source of truth.
+    redis_url: str = ""
+    redis_timeout_s: float = Field(default=0.5, gt=0)
+    working_memory_ttl_s: int = Field(default=24 * 3600, gt=0)  # renewed on every access
+    # History sent to the answer model: over this approximate token budget, older turns are
+    # summarized and the last `context_keep_turns` turns are kept verbatim (>= 2 so an open
+    # slot draft and its follow-up question are never summarized away).
+    context_budget_tokens: int = Field(default=6000, gt=0)
+    context_keep_turns: int = Field(default=3, ge=2)
+    summary_timeout_s: float = Field(default=20.0, gt=0)
+    summary_max_chars: int = Field(default=1500, gt=0)
     confirm_ttl_minutes: int = 30
     llm_base_url: str = ""
     llm_api_key: str = ""

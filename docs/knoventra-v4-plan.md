@@ -1,6 +1,6 @@
 # Knoventra v4 扩展计划：现场经验沉淀、混合检索与分层记忆
 
-版本：v4.0 草案 · 2026-11-23 · 状态：开发中（第 2 周完成） · 工期目标：3 周（15 个工作日）
+版本：v4.0 草案 · 2026-11-23 · 状态：开发中（第 2 周完成，第 3 周 D11 完成） · 工期目标：3 周（15 个工作日）
 
 本计划在 v3 MVP（`main` c8c81956）的基础上扩展，不推翻已有实现。v3 已经做实、这里直接复用的能力：权限在召回 SQL 内生效、已发布版本过滤、编号精确门槛、来源卡片、interrupt 确认与幂等转交、Checkpoint 恢复。
 
@@ -120,7 +120,7 @@ v4 推翻了 [DECISIONS.md](DECISIONS.md) 中“无 Redis、Elasticsearch”和�
 | 长期情景记忆 | PG `knv_episode` + pgvector | 已解决的问题或结案求助单的摘要，以及引用的 chunk / 文档 ID | 按用户隔离，可删除 |
 | 用户画像 | PG `knv_profile` | 语言偏好、常用机型和机台（按使用频次统计）；部门、区域只读，取自用户表 | 长期 |
 
-- **Redis 的定位**：Redis 只是工作记忆和缓存，不是唯一事实源。Redis 丢失时，槽位从 Checkpoint 中的最后一次确认卡和消息重建，摘要重新生成。这条要有专门测试。
+- **Redis 的定位**：Redis 只是工作记忆和缓存，不是唯一事实源。Redis 丢失时，槽位从 Checkpoint 中的最后一次确认卡和消息重建，摘要重新生成。这条要有专门测试。（D11 实现：消息侧的持久记录是 `request_help` ToolMessage 的 `artifact`；Redis 副本带锚点，与 Checkpoint 不符就重建。）
 - **压缩**：历史超过 Token 预算（可配置，默认 6k）时，把较早的轮次压缩成摘要写入 Redis，保留最近 N 轮。槽位和待确认操作固定保留，不参与压缩。记录压缩前后的 Token 数。
 - **情景召回**：每轮开始时按当前问题召回该用户最相关的 3 条情景记忆。注入前逐条检查它引用的文档当前是否仍然可读、是否仍是已发布版本；不满足的整条丢弃，并记在轨迹里。
 - **画像使用**：画像只用于预填槽位和设置回复语言，不参与权限判断。
@@ -157,7 +157,7 @@ v4 推翻了 [DECISIONS.md](DECISIONS.md) 中“无 Redis、Elasticsearch”和�
 - **D10**：结案沉淀为案例草稿，接入审核发布流程；端到端测试“建单 → 受理 → 解决 → 发布 → 可检索”。✅ 2026-11-23：`help/sediment.py`。现场求助单进入 RESOLVED 时，在同一事务里给 `field-cases` 写一个 DRAFT 修订，内容包括机型、机台、现象、告警、已尝试步骤、处理过程（进展记录）、解决方法和来源求助单，写入前先脱敏；迁移 0013 增加 `case_document_id`，事件流水记 `case_draft`。审核复用现有资料管理页的“预览后发布”，发布时自动排队 ES 同步。重新打开后再解决，会在同一文档下新增草稿修订；专家转交类不生成草稿。端到端测试 `test_case_sediment.py`：经确认卡建单 → 派单 → 进展 → 解决 → 草稿检索不到 → 管理员发布 → Ops 可检索、HR 不可检索，并验证脱敏。“我的求助单”详情显示案例沉淀状态。
 
 ### 第 3 周：记忆、MCP 与交付
-- **D11**：Compose 加入 Redis，实现工作记忆、槽位迁移到 Redis 和丢失后重建、Token 预算与滚动压缩。
+- **D11**：Compose 加入 Redis，实现工作记忆、槽位迁移到 Redis 和丢失后重建、Token 预算与滚动压缩。✅ 2026-11-23：compose 服务 `redis`（7.4，固定 digest，端口 56379，不持久化，128 MB，按 TTL 淘汰）；`KNV_REDIS_URL` 为空时关闭，此时每次都从 Checkpoint 重建。`memory/working.py`：键 `knv:wm:{user_id}:{thread_id}`，hash，TTL 24 小时，读写都续期；Redis 出错按缺失处理。槽位草稿不再是图状态字段：`request_help` 的 ToolMessage `artifact` 和确认卡 `pending.slots` 是持久记录，Redis 副本带锚点，与 Checkpoint 不符就重建（`memory/drafts.py`，DECISIONS 第 71 条）。`compact` 节点（`memory/context.py`）按近似 Token 预算（默认 6000）保留最近 3 轮，更早的轮次滚动压缩成摘要存入 Redis；只压缩模型看到的内容，摘要不读工具输出和证据，失败时发送完整历史，压缩前后的 Token 数记在 `memory_trace`（DECISIONS 第 72 条）。与计划的差别：工作记忆里的“当前意图、最近机台和机型”要等 D12 的上下文组装器来读，D11 不写；压缩后的关键槽位保留率属于付费评测，尚未测量。CI 的 Redis job 留到 D14，测试在 `localhost:56379` 不可达时跳过（`KNV_REQUIRE_REDIS=1` 时失败）。
 - **D12**：情景记忆写入与召回、复用前重验权限、用户画像、上下文组装器。
 - **D13**：MCP 服务、身份 token、写操作两段式、客户端适配，以及安全测试。
 - **D14**：前端联调，CI 加入 ES、Redis 和 MCP 服务的 job，容器演示入口更新。

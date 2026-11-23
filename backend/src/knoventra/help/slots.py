@@ -1,4 +1,4 @@
-"""Slot collection for a field help request (draft lives in graph state until D11 moves it to Redis).
+"""Slot collection for a field help request (draft storage: knoventra.memory.drafts).
 
 The model proposes slot values through `request_help`; the server merges them,
 derives alarm codes and the machine model deterministically, and decides what

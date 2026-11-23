@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
+import logging
 import re
+import uuid
 import time
 from collections.abc import Callable
 from contextlib import AbstractContextManager
@@ -39,6 +41,11 @@ from knoventra.db.models import Confirmation, Escalation, User
 from knoventra.ingestion.encoder import Encoder
 from knoventra.retrieval.pipeline import OK, retrieve
 from knoventra.retrieval.rerank import Reranker
+from knoventra.memory import drafts
+from knoventra.memory.context import SUMMARY_HEADER, clean_summary, plan_window
+from knoventra.memory.working import RedisWorkingMemory, WorkingMemoryUnavailable
+
+log = logging.getLogger(__name__)
 
 CITATION_POLICY = "retrieval-batch-v1"
 
@@ -154,7 +161,10 @@ class State(TypedDict, total=False):
     model_finish_reason: str | None
     query_plan: dict | None  # per-turn planner trace; never added to model messages
     clarification: dict | None  # set when the answer depends on an unstated machine model
-    help_draft: dict | None  # field help slots across turns; server-merged, cleared on create or cancel
+    # Field-help slot drafts are not graph state: the working copy lives in Redis and the
+    # checkpoint records each change in message artifacts (see knoventra.memory.drafts).
+    context_window: dict | None  # per turn: {"summary", "from_id"} when older turns are compressed
+    memory_trace: list[dict]  # per-turn working-memory diagnostics; never added to model messages
     route_kbs: list[str] | None  # server-chosen KB names for this turn's searches (narrowing only)
 
 
@@ -166,6 +176,8 @@ class AgentDeps:
     llm: BaseChatModel
     checkpointer: Any
     planner: BaseChatModel | None = None  # query planning; None keeps v3 behaviour
+    memory: RedisWorkingMemory | None = None  # working memory; None = rebuild from the checkpoint
+    summarizer: BaseChatModel | None = None  # history compression; None sends the full history
 
 
 _MARK = re.compile(r"\[S(\d+)\]")
@@ -179,15 +191,6 @@ def _card(e, alias: str) -> dict:
             "section_path": e.section_path, "text": e.text, "lang": e.lang}
 
 
-def _previous_turn_used(messages, tool_name: str) -> bool:
-    """Did the turn before the newest user message call `tool_name`?"""
-    humans = [i for i, m in enumerate(messages) if isinstance(m, HumanMessage)]
-    if len(humans) < 2:
-        return False
-    return any(isinstance(m, AIMessage) and any(tc["name"] == tool_name for tc in m.tool_calls)
-               for m in messages[humans[-2] + 1:humans[-1]])
-
-
 def _turn_tool_count(messages) -> int:
     n = 0
     for m in reversed(messages):
@@ -199,22 +202,76 @@ def _turn_tool_count(messages) -> int:
 
 
 def build_graph(deps: AgentDeps):
+    def wm_load(config: RunnableConfig) -> tuple[dict | None, str]:
+        """Working-memory fields for this conversation, or None when Redis is off or down."""
+        if deps.memory is None:
+            return None, "disabled"
+        cfg = config["configurable"]
+        try:
+            return deps.memory.load(cfg["user_id"], cfg["thread_id"]), "ok"
+        except WorkingMemoryUnavailable as exc:
+            log.warning("working memory unavailable on read: %s", exc)
+            return None, "unavailable"
+
+    def wm_save(config: RunnableConfig, fields: dict) -> str:
+        if deps.memory is None:
+            return "disabled"
+        cfg = config["configurable"]
+        try:
+            deps.memory.save(cfg["user_id"], cfg["thread_id"], fields)
+            return "ok"
+        except WorkingMemoryUnavailable as exc:
+            # Best effort: the checkpoint already holds the change, and the next read's anchor
+            # check rejects the stale copy and rebuilds.
+            log.warning("working memory unavailable on write: %s", exc)
+            return "unavailable"
+
+    def load_draft(state: State, config: RunnableConfig) -> tuple[dict | None, list[dict]]:
+        anchor, durable = drafts.checkpoint_draft(state["messages"], state.get("pending"))
+        fields, wm = wm_load(config)
+        draft, status, write_back = drafts.resolve((fields or {}).get("draft"), anchor, durable)
+        if write_back and fields is not None:
+            wm = wm_save(config, {"draft": {"anchor": anchor, "value": draft} if anchor else None})
+        if status == "none" and not write_back and wm != "unavailable":
+            return draft, []
+        return draft, [{"event": "draft", "status": status, "wm": wm}]
+
+    def store_draft(config: RunnableConfig, anchor: str | None, draft: dict | None) -> dict:
+        return {"event": "draft_write", "wm": wm_save(config, {"draft": {"anchor": anchor, "value": draft}
+                                                               if anchor and draft else None})}
+
     def start_turn(state: State):
         # Command(resume=...) resumes at the interrupt and preserves this trace.
         # A new user turn always starts fresh, even for callers reusing a thread.
-        update = {"retrieval_trace": [], "model_declared_refusal": False, "model_finish_reason": None,
-                  "query_plan": None, "route_kbs": None, "clarification": None}
-        if state.get("help_draft") and not _previous_turn_used(state["messages"], "request_help"):
-            update["help_draft"] = None  # the user moved on: an abandoned draft must not leak into later requests
-        return update
+        # An abandoned slot draft needs no clearing here: drafts only live while consecutive
+        # turns work on them (memory.drafts), so an unrelated turn ends the draft by itself.
+        return {"retrieval_trace": [], "model_declared_refusal": False, "model_finish_reason": None,
+                "query_plan": None, "route_kbs": None, "clarification": None,
+                "context_window": None, "memory_trace": []}
 
-    def query_plan(state: State):
+    def compact(state: State, config: RunnableConfig):
+        fields, wm = wm_load(config)
+        summarize = None
+        if deps.summarizer is not None:
+            def summarize(request):
+                return clean_summary(str(deps.summarizer.invoke(request).content), settings.summary_max_chars)
+        win = plan_window(state["messages"], (fields or {}).get("summary"), budget=settings.context_budget_tokens,
+                          keep_turns=settings.context_keep_turns, summarize=summarize)
+        if win.new_record is not None and fields is not None:
+            wm = wm_save(config, {"summary": win.new_record})
+        trace = {"event": "context", "wm": wm, **win.trace}
+        window = {"summary": win.summary, "from_id": win.from_id} if win.summary else None
+        return {"context_window": window, "memory_trace": [*(state.get("memory_trace") or []), trace]}
+
+    def query_plan(state: State, config: RunnableConfig):
         if deps.planner is None:
             return {"query_plan": {"status": "skipped", "reason": "disabled"}}
         if direct_escalation_summary(state["messages"]) is not None:
             return {"query_plan": {"status": "skipped", "reason": "explicit_escalation"}}
-        if state.get("help_draft"):
-            return {"query_plan": {"status": "skipped", "reason": "help_draft"}}
+        draft, events = load_draft(state, config)
+        if draft:
+            return {"query_plan": {"status": "skipped", "reason": "help_draft"},
+                    "memory_trace": [*(state.get("memory_trace") or []), *events]}
         plan, trace = plan_query(deps.planner, state["messages"])
         if plan is not None and plan.intent == "skill_lookup" \
                 and plan.confidence >= settings.query_plan_min_confidence:
@@ -232,18 +289,28 @@ def build_graph(deps: AgentDeps):
         last = state["messages"][-1]
         return "tools" if isinstance(last, AIMessage) and last.tool_calls else "agent"
 
-    def agent(state: State):
-        last_human = next((m for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), None)
-        if state.get("help_draft") and last_human is not None and isinstance(state["messages"][-1], HumanMessage) \
-                and help_slots.CANCEL.match(str(last_human.content)):
-            return {"messages": [AIMessage("已取消求助单草稿，没有创建求助单。")], "help_draft": None,
-                    "model_finish_reason": None}
+    def agent(state: State, config: RunnableConfig):
+        last = state["messages"][-1]
+        if isinstance(last, HumanMessage) and help_slots.CANCEL.match(str(last.content)):
+            draft, events = load_draft(state, config)
+            if draft:
+                return {"messages": [AIMessage("已取消求助单草稿，没有创建求助单。",
+                                               response_metadata={drafts.CLEARED_FLAG: True})],
+                        "model_finish_reason": None,
+                        "memory_trace": [*(state.get("memory_trace") or []), *events,
+                                         store_draft(config, None, None)]}
         summary = direct_escalation_summary(state["messages"])
         if summary is not None:
             return {"messages": [AIMessage("", tool_calls=[{"name": "escalate_to_expert",
                        "args": {"summary": summary}, "id": "explicit-escalation", "type": "tool_call"}])],
                     "model_finish_reason": None}
-        msgs = [SystemMessage(SYSTEM_PROMPT), *state["messages"]]
+        history, system = state["messages"], SYSTEM_PROMPT
+        window = state.get("context_window") or {}
+        start = next((i for i, m in enumerate(history) if m.id == window.get("from_id")), None) \
+            if window.get("summary") else None
+        if start is not None:  # older turns are replaced by their summary (checkpoint keeps them)
+            history, system = history[start:], f"{SYSTEM_PROMPT}\n\n{SUMMARY_HEADER}{window['summary']}"
+        msgs = [SystemMessage(system), *history]
         response = deps.llm.bind_tools(TOOLS).invoke(msgs)
         reason = response.response_metadata.get("finish_reason")
         reason = reason if isinstance(reason, str) else None
@@ -286,7 +353,11 @@ def build_graph(deps: AgentDeps):
         stated = stated_models(state["messages"])
         model = stated[0] if len(stated) == 1 else None  # two named models = a comparison: no filter
         clarification = state.get("clarification")
-        help_update = state.get("help_draft")
+        memory_trace = list(state.get("memory_trace") or [])
+        draft = None
+        if any(c["name"] == "request_help" for c in calls):
+            draft, events = load_draft(state, config)
+            memory_trace += events
         for c in calls:
             if c["name"] == "search_knowledge":
                 started = time.perf_counter()
@@ -337,15 +408,17 @@ def build_graph(deps: AgentDeps):
                             else "NO_ACCESS: 技能表仅对 Ops 部门开放。")
                 out.append(ToolMessage(text, tool_call_id=c["id"]))
             elif c["name"] == "request_help" and pending is None:
-                draft = help_slots.merge(state.get("help_draft"), c["args"], state["messages"])
+                draft = help_slots.merge(draft, c["args"], state["messages"])
                 need = help_slots.missing(draft)
                 if need:
-                    help_update = draft
+                    # The artifact is the checkpoint's durable copy; Redis holds the working copy.
+                    anchor = f"help-{uuid.uuid4().hex}"
                     out.append(ToolMessage("求助单草稿已更新。还缺："
                                            + "、".join(help_slots.LABELS[k] for k in need)
-                                           + "。请一次只向用户追问一项，不要编造。", tool_call_id=c["id"]))
+                                           + "。请一次只向用户追问一项，不要编造。", tool_call_id=c["id"],
+                                           id=anchor, artifact={drafts.ARTIFACT_KEY: draft}))
+                    memory_trace.append(store_draft(config, anchor, draft))
                     continue
-                help_update = draft
                 with deps.session_factory() as db:
                     rec = recommend(db, db.get(User, uid), f"{draft['symptom']} {draft.get('tried_steps', '')}")
                 card = help_slots.card(draft) + (f"\n推荐专家：{rec.chosen.engineer}（{rec.reason}）" if rec.chosen
@@ -354,6 +427,7 @@ def build_graph(deps: AgentDeps):
                 op_id = hashlib.sha256(f"{config['configurable']['thread_id']}:{turn_id}:{c['id']}".encode()).hexdigest()[:32]
                 pending = {"tool_call_id": c["id"], "args": {"summary": card}, "operation_id": op_id,
                            "kind": "field_help", "slots": draft, "recommendation": rec.as_dict()}
+                memory_trace.append(store_draft(config, f"card:{op_id}", draft))
             elif c["name"] == "escalate_to_expert" and pending is None:
                 turn_id = next(m.id for m in reversed(state["messages"]) if isinstance(m, HumanMessage))
                 op_id = hashlib.sha256(f"{config['configurable']['thread_id']}:{turn_id}:{c['id']}".encode()).hexdigest()[:32]
@@ -361,7 +435,7 @@ def build_graph(deps: AgentDeps):
             else:
                 out.append(ToolMessage("未知或重复的工具调用，已忽略", tool_call_id=c["id"]))
         return {"messages": out, "evidence": evidence, "pending": pending, "error_code": error,
-                "retrieval_trace": trace, "clarification": clarification, "help_draft": help_update}
+                "retrieval_trace": trace, "clarification": clarification, "memory_trace": memory_trace}
 
     def after_tools(state: State):
         if state.get("error_code") in {"RUN_LIMIT", "MODEL_TOOL_CALL_INVALID"}:
@@ -417,10 +491,12 @@ def build_graph(deps: AgentDeps):
                 db.commit()
                 label = "求助单" if kind == "field_help" else "转交记录"
                 msg = f"已创建{label} {esc.id}，状态 {esc.status}。"
-        update = {"messages": [ToolMessage(msg, tool_call_id=p["tool_call_id"])], "pending": None}
-        if p.get("kind") == "field_help":
-            update["help_draft"] = None  # filed or declined: either way the draft is finished
-        return update
+        if p.get("kind") != "field_help":
+            return {"messages": [ToolMessage(msg, tool_call_id=p["tool_call_id"])], "pending": None}
+        # Filed or declined: either way the draft is finished, in the checkpoint and in Redis.
+        return {"messages": [ToolMessage(msg, tool_call_id=p["tool_call_id"], artifact={drafts.ARTIFACT_KEY: None})],
+                "pending": None,
+                "memory_trace": [*(state.get("memory_trace") or []), store_draft(config, None, None)]}
 
     def cite_check(state: State):
         reg = state.get("evidence") or {}
@@ -475,12 +551,13 @@ def build_graph(deps: AgentDeps):
         return upd
 
     g = StateGraph(State)
-    for name, fn in [("start_turn", start_turn), ("query_plan", query_plan), ("agent", agent), ("tools", tools), ("prepare_escalation", prepare_escalation),
+    for name, fn in [("start_turn", start_turn), ("compact", compact), ("query_plan", query_plan), ("agent", agent), ("tools", tools), ("prepare_escalation", prepare_escalation),
                      ("execute_escalation", execute_escalation), ("cite_check", cite_check),
                      ("clarify", clarify)]:
         g.add_node(name, fn)
     g.add_edge(START, "start_turn")
-    g.add_edge("start_turn", "query_plan")
+    g.add_edge("start_turn", "compact")
+    g.add_edge("compact", "query_plan")
     g.add_conditional_edges("query_plan", after_plan, ["tools", "agent"])
     g.add_conditional_edges("agent", after_agent, ["tools", "cite_check"])
     g.add_conditional_edges("tools", after_tools, ["agent", "prepare_escalation", "clarify", END])

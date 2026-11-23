@@ -28,6 +28,18 @@ services:
       test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=2s"]
       interval: 5s
       retries: 40
+  redis:
+    # Working memory only (slot drafts, rolling summaries); PostgreSQL stays the source of truth,
+    # so no persistence: a restart loses the cache and drafts/summaries are rebuilt.
+    image: redis:7.4-alpine@sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "128mb",
+              "--maxmemory-policy", "volatile-lru"]
+    ports:
+      - "56379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      retries: 20
 volumes:
   knv_pgdata:
   knv_esdata:

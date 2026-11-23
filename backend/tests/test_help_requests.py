@@ -8,8 +8,9 @@ from langgraph.types import Command
 from sqlalchemy import func, select, text
 from sqlalchemy.exc import DBAPIError
 
-from fakes import ScriptedModel, call, session_factory_for
+from fakes import DictWorkingMemory, ScriptedModel, call, session_factory_for
 from knoventra.agent.graph import AgentDeps, build_graph
+from knoventra.memory.drafts import checkpoint_draft
 from knoventra.db.models import HelpEvent, HelpRequest
 from knoventra.help.service import HelpError, create_request, events, transition
 
@@ -88,8 +89,14 @@ def test_events_are_append_only_while_the_request_exists(db, users):
 
 # ------------------------------------------------------------------ slot collection in the graph
 
-def run_turns(db, enc, user, turns, agent):
-    graph = build_graph(AgentDeps(session_factory_for(db), enc, None, ScriptedModel(script=agent), InMemorySaver()))
+def open_draft(out):
+    """The slot draft as recorded in the checkpoint (None when no draft is open)."""
+    return checkpoint_draft(out["messages"], out.get("pending"))[1]
+
+
+def run_turns(db, enc, user, turns, agent, memory=None):
+    graph = build_graph(AgentDeps(session_factory_for(db), enc, None, ScriptedModel(script=agent), InMemorySaver(),
+                                  memory=memory))
     cfg = {"configurable": {"thread_id": uuid.uuid4().hex, "user_id": user.id}}
     out = None
     for t in turns:
@@ -112,7 +119,7 @@ def slot_agent(messages):
 def test_slots_are_collected_over_turns_then_confirmed(db, enc, users):
     user = users["sg-ops"]
     asked = run_turns(db, enc, user, ["WX-38 机台 610101 切换 tank 时报 A-1301，pump 不转，帮我提个求助单"], slot_agent)
-    assert asked["help_draft"]["machine_id"] == "610101" and asked["help_draft"]["alarm_codes"] == ["A-1301"]
+    assert open_draft(asked)["machine_id"] == "610101" and open_draft(asked)["alarm_codes"] == ["A-1301"]
     assert "已尝试" in asked["messages"][-1].content and "__interrupt__" not in asked
 
     out = run_turns(db, enc, user, ["WX-38 机台 610101 切换 tank 时报 A-1301，pump 不转，帮我提个求助单",
@@ -120,7 +127,7 @@ def test_slots_are_collected_over_turns_then_confirmed(db, enc, users):
     req = db.scalar(select(HelpRequest).where(HelpRequest.user_id == user.id, HelpRequest.kind == "field_help"))
     assert (req.machine_id, req.machine_model, req.alarm_codes) == ("610101", "WX-38", ["A-1301"])
     assert req.tried_steps == "已经重新插紧 LS-2，还是不行" and "机台号：610101" in req.summary
-    assert out["help_draft"] is None and [e.action for e in events(db, req.id)] == ["created"]
+    assert open_draft(out) is None and [e.action for e in events(db, req.id)] == ["created"]
 
 
 def test_confirmation_card_shows_every_slot(db, enc, users):
@@ -138,7 +145,7 @@ def test_cancel_clears_the_draft_without_calling_the_model(db, enc, users):
         calls.append(messages[-1])
         return slot_agent(messages)
     out = run_turns(db, enc, users["sg-ops"], ["机台 610101 pump 不转", "算了"], agent)
-    assert out["help_draft"] is None and "已取消求助单草稿" in out["messages"][-1].content
+    assert open_draft(out) is None and "已取消求助单草稿" in out["messages"][-1].content
     assert not any(isinstance(m, HumanMessage) and m.content == "算了" for m in calls)
     assert db.scalar(select(func.count()).select_from(HelpRequest)
                      .where(HelpRequest.user_id == users["sg-ops"].id, HelpRequest.kind == "field_help")) == 0
@@ -146,7 +153,7 @@ def test_cancel_clears_the_draft_without_calling_the_model(db, enc, users):
 
 def test_declined_card_files_nothing_and_ends_the_draft(db, enc, users):
     out = run_turns(db, enc, users["sg-ops"], ["机台 610101 pump 不转", "已经重启过", {"approve": False}], slot_agent)
-    assert out["help_draft"] is None
+    assert open_draft(out) is None
     assert db.scalar(select(func.count()).select_from(HelpRequest)
                      .where(HelpRequest.user_id == users["sg-ops"].id, HelpRequest.kind == "field_help")) == 0
 
@@ -185,4 +192,4 @@ def test_abandoned_draft_expires_after_an_unrelated_turn(db, enc, users):
             return call("request_help", {"machine_id": "610101", "symptom": "pump 不转"}, "h1")
         return AIMessage("年假按工龄计算。")
     out = run_turns(db, enc, users["sg-ops"], ["610101 pump 不转，帮我提单", "另外问一下年假怎么算", "谢谢"], agent)
-    assert out["help_draft"] is None
+    assert open_draft(out) is None

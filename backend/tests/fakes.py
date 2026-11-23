@@ -31,3 +31,30 @@ def session_factory_for(db):
     def f():
         yield db
     return f
+
+
+class DictWorkingMemory:
+    """In-process stand-in for RedisWorkingMemory; `down=True` simulates an outage."""
+
+    def __init__(self):
+        self.data: dict[str, dict] = {}
+        self.down = False
+
+    def _check(self):
+        from knoventra.memory.working import WorkingMemoryUnavailable
+
+        if self.down:
+            raise WorkingMemoryUnavailable("simulated outage")
+
+    def load(self, user_id, thread_id):
+        self._check()
+        return dict(self.data.get(f"{user_id}:{thread_id}", {}))
+
+    def save(self, user_id, thread_id, fields):
+        self._check()
+        entry = self.data.setdefault(f"{user_id}:{thread_id}", {})
+        for key, value in fields.items():
+            if value is None:
+                entry.pop(key, None)
+            else:
+                entry[key] = value

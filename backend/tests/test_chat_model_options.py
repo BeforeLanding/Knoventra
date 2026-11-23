@@ -44,8 +44,8 @@ def test_web_and_eval_factories_share_thinking_and_keep_their_execution_limits(m
     try:
         chat.get_graph()
         _, pool = run_eval.make_evaluation_graph(None, None, 700)
-        web, planner, evaluation = [c.kwargs for c in constructor.call_args_list]
-        for options in (web, planner, evaluation):
+        web, planner, summarizer, evaluation = [c.kwargs for c in constructor.call_args_list]
+        for options in (web, planner, summarizer, evaluation):
             if mode == "disabled":
                 assert options["extra_body"] == {"thinking": {"type": "disabled"}}
             else:
@@ -54,6 +54,9 @@ def test_web_and_eval_factories_share_thinking_and_keep_their_execution_limits(m
         # The planner node is never streamed to users and must not retry past its timeout.
         assert "streaming" not in planner and planner["max_retries"] == 0
         assert planner["timeout"] == settings.query_plan_timeout_s
+        # Same for the history summarizer: a failure keeps the full history for that turn.
+        assert "streaming" not in summarizer and summarizer["max_retries"] == 0
+        assert summarizer["timeout"] == settings.summary_timeout_s
         assert web["max_retries"] == 1 and "max_tokens" not in web
         assert evaluation["max_retries"] == 0 and evaluation["max_tokens"] == 700
         pool.close()
