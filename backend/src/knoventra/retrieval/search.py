@@ -93,7 +93,7 @@ def channel_weights(has_identifiers: bool) -> dict[str, float]:
 
 def search(db: Session, enc: Encoder, scope: AccessScope, query: str, *,
            use_sparse: bool = True, use_opencc: bool = True, top_k: int | None = None,
-           original_query: str = "", keyword=_AUTO) -> SearchResult:
+           original_query: str = "", keyword=_AUTO, use_ident: bool = True) -> SearchResult:
     """Permission-aware hybrid retrieval. The readable-KB filter is applied inside both
     recall SQLs, so unauthorised chunks never reach fusion, rerank or the model."""
     if not scope.readable_kb_ids:
@@ -168,7 +168,7 @@ def search(db: Session, enc: Encoder, scope: AccessScope, query: str, *,
             if r.sdist is not None and math.isfinite(float(r.sdist)) and float(r.sdist) < 0:
                 sparse_ips.setdefault(cid, -float(r.sdist))
 
-    if required:
+    if required and use_ident:
         adopt("ident", db.execute(_BY_IDENTIFIER, {"readable": readable, "codes": sorted(required), "k": k,
                                                    **score_args}).all())
     channel = default_keyword_channel() if keyword is _AUTO else keyword

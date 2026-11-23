@@ -14,7 +14,8 @@
     {"name": "hr", "description": "HR 制度", "grants": [{"department": "HR"}]},
     {"name": "fin", "description": "FIN 制度", "grants": [{"department": "FIN"}]},
     {"name": "it-public", "description": "全员 IT 指南", "grants": [{}]},
-    {"name": "field-sop", "description": "现场作业 SOP（晶圆清洗机台）", "grants": [{"department": "Ops"}]}
+    {"name": "field-sop", "description": "现场作业 SOP（晶圆清洗机台）", "grants": [{"department": "Ops"}]},
+    {"name": "field-cases", "description": "现场案例（技术日志去重后）", "grants": [{"department": "Ops"}]}
   ],
   "documents": [
     {"kb": "ops-global", "title": "E17 系列设备故障手册", "lang": "zh-Hans", "files": ["ops-e17.v1.md", "ops-e17.v2.md"], "publish": 1},

@@ -1,0 +1,1307 @@
+{
+ "date": "2026-11-23",
+ "split": "dev",
+ "cases_sha256": "8755eb501d4c0d7f6332a9ad8e7dd43b7930afb8bd6b6cd0cb299844e6ca29fd",
+ "n_cases": 24,
+ "config": {
+  "encoder": "bge-m3",
+  "top_k": 5,
+  "rrf_k": 60,
+  "weights_identifier": {
+   "ident": 2.0,
+   "es": 1.5,
+   "sparse": 1.0,
+   "dense": 0.5
+  },
+  "weights_natural": {
+   "dense": 1.0,
+   "sparse": 1.0,
+   "es": 1.0,
+   "ident": 1.0
+  }
+ },
+ "results": {
+  "pg": {
+   "metrics": {
+    "overall": {
+     "n": 22,
+     "recall@5": 0.773,
+     "mrr": 0.617,
+     "source_recall@5": 0.727
+    },
+    "by_category": {
+     "case": {
+      "n": 3,
+      "recall@5": 0.667,
+      "mrr": 0.667,
+      "source_recall@5": 0.667
+     },
+     "identifier": {
+      "n": 4,
+      "recall@5": 0.75,
+      "mrr": 0.562,
+      "source_recall@5": 0.75
+     },
+     "model": {
+      "n": 2,
+      "recall@5": 0.5,
+      "mrr": 0.125,
+      "source_recall@5": 0.0
+     },
+     "plain": {
+      "n": 4,
+      "recall@5": 1.0,
+      "mrr": 0.875,
+      "source_recall@5": 1.0
+     },
+     "synonym": {
+      "n": 4,
+      "recall@5": 0.75,
+      "mrr": 0.396,
+      "source_recall@5": 0.75
+     },
+     "traditional": {
+      "n": 2,
+      "recall@5": 1.0,
+      "mrr": 1.0,
+      "source_recall@5": 1.0
+     },
+     "typo": {
+      "n": 3,
+      "recall@5": 0.667,
+      "mrr": 0.667,
+      "source_recall@5": 0.667
+     }
+    },
+    "access": {
+     "n": 2,
+     "leaked_chunks": 0
+    },
+    "degraded_queries": 0
+   },
+   "cases": [
+    {
+     "id": "f1-01",
+     "category": "identifier",
+     "degraded": [],
+     "hit": true,
+     "rank": 4,
+     "source_hit": true,
+     "source_rank": 4,
+     "top": [
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when",
+      "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl"
+     ]
+    },
+    {
+     "id": "f1-02",
+     "category": "identifier",
+     "degraded": [],
+     "hit": false,
+     "rank": null,
+     "source_hit": false,
+     "source_rank": null,
+     "top": [
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl",
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl",
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when"
+     ]
+    },
+    {
+     "id": "f1-05",
+     "category": "identifier",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-GEN-200420-001 Golden check",
+      "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy"
+     ]
+    },
+    {
+     "id": "f1-06",
+     "category": "identifier",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "ops-global|E17 系列设备故障手册",
+      "ops-global|E17 系列设备故障手册"
+     ]
+    },
+    {
+     "id": "f1-08",
+     "category": "typo",
+     "degraded": [],
+     "hit": false,
+     "rank": null,
+     "source_hit": false,
+     "source_rank": null,
+     "top": [
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl",
+      "field-cases|CASE-8FE5CBB8 DI flow trouble shotting",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-1A1307F8 DI flow trouble shotting",
+      "field-cases|CASE-BE820009 circulation pump 异响"
+     ]
+    },
+    {
+     "id": "f1-09",
+     "category": "typo",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 2,
+     "top": [
+      "field-cases|CASE-E8CAD357 chamical flow 调试",
+      "field-sop|SOP-FAC-100110-001 Chemical flow 调试",
+      "field-cases|CASE-0BE046B9 chamical flow 調試",
+      "field-cases|CASE-E8AE302C 通水后 DI flow 调试",
+      "field-cases|CASE-1A1307F8 DI flow trouble shotting"
+     ]
+    },
+    {
+     "id": "f1-11",
+     "category": "typo",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "field-cases|CASE-A68312A9 spindle 更换（双面机）"
+     ]
+    },
+    {
+     "id": "f1-13",
+     "category": "synonym",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "field-cases|CASE-A68312A9 spindle 更换（双面机）",
+      "field-cases|CASE-A68312A9 spindle 更换（双面机）"
+     ]
+    },
+    {
+     "id": "f1-14",
+     "category": "synonym",
+     "degraded": [],
+     "hit": false,
+     "rank": null,
+     "source_hit": false,
+     "source_rank": null,
+     "top": [
+      "field-cases|CASE-E8CAD357 chamical flow 调试",
+      "field-cases|CASE-0BE046B9 chamical flow 調試",
+      "field-cases|CASE-45A3B7CD install DI filter",
+      "field-sop|SOP-GEN-200510-001 Load port leveling",
+      "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter"
+     ]
+    },
+    {
+     "id": "f1-16",
+     "category": "synonym",
+     "degraded": [],
+     "hit": true,
+     "rank": 3,
+     "source_hit": true,
+     "source_rank": 5,
+     "top": [
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl"
+     ]
+    },
+    {
+     "id": "f1-18",
+     "category": "synonym",
+     "degraded": [],
+     "hit": true,
+     "rank": 4,
+     "source_hit": true,
+     "source_rank": 4,
+     "top": [
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when",
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl",
+      "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl"
+     ]
+    },
+    {
+     "id": "f1-19",
+     "category": "traditional",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "ops-global|電源模組排障手冊"
+     ]
+    },
+    {
+     "id": "f1-21",
+     "category": "traditional",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 3,
+     "top": [
+      "field-cases|CASE-45A3B7CD install DI filter",
+      "field-cases|CASE-D76BC036 install DI filter",
+      "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter",
+      "field-cases|CASE-618509AD install DI filter",
+      "ops-global|泵组维护手册"
+     ]
+    },
+    {
+     "id": "f1-22",
+     "category": "model",
+     "degraded": [],
+     "hit": true,
+     "rank": 4,
+     "source_hit": false,
+     "source_rank": null,
+     "top": [
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "field-cases|CASE-FD03801C chamber teaching",
+      "field-cases|CASE-CEDBD88D CDA 供应管路连接验证",
+      "field-cases|CASE-A68312A9 spindle 更换（双面机）",
+      "field-cases|CASE-0E25A30D load port leveling adjustm"
+     ]
+    },
+    {
+     "id": "f1-24",
+     "category": "model",
+     "degraded": [],
+     "hit": false,
+     "rank": null,
+     "source_hit": false,
+     "source_rank": null,
+     "top": [
+      "field-cases|CASE-6263E4AE service door override（ST-2",
+      "field-cases|CASE-91B7EE1D chuck 高速段 wafer 偏移报警 A-310",
+      "field-cases|CASE-7AC62DDA circulation pump 异响",
+      "field-cases|CASE-8FE5CBB8 DI flow trouble shotting",
+      "field-cases|CASE-550DC0C6 CDA 供应管路连接验证"
+     ]
+    },
+    {
+     "id": "f1-26",
+     "category": "case",
+     "degraded": [],
+     "hit": false,
+     "rank": null,
+     "source_hit": false,
+     "source_rank": null,
+     "top": [
+      "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+      "field-sop|SOP-GEN-200310-001 Service door override",
+      "field-cases|CASE-1F9C7CA0 EMO 测试",
+      "field-cases|CASE-9BF940A8 Chamber teaching",
+      "field-cases|CASE-1A1307F8 DI flow trouble shotting"
+     ]
+    },
+    {
+     "id": "f1-27",
+     "category": "case",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-cases|CASE-91B7EE1D chuck 高速段 wafer 偏移报警 A-310",
+      "field-sop|SOP-GEN-200420-001 Golden check",
+      "field-cases|CASE-80C5A656 golden check",
+      "field-cases|CASE-30895A9C golden check",
+      "field-cases|CASE-6BE21DCB Golden check"
+     ]
+    },
+    {
+     "id": "f1-29",
+     "category": "case",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-cases|CASE-CC656009 遠程支持連線",
+      "it-public|VPN 使用说明",
+      "field-cases|CASE-E4FD8F2B 遠程支持連線",
+      "field-cases|CASE-E4FD8F2B 遠程支持連線",
+      "field-cases|CASE-E84A1A84 软件更新及 EAP 通讯测试"
+     ]
+    },
+    {
+     "id": "f1-31",
+     "category": "plain",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-GEN-200510-001 Load port leveling",
+      "field-cases|CASE-0E25A30D load port leveling adjustm",
+      "field-cases|CASE-BF939A3D load port leveling adjustm",
+      "field-sop|SOP-GEN-200510-001 Load port leveling",
+      "field-cases|CASE-7B5C2580 load port leveling adjustm"
+     ]
+    },
+    {
+     "id": "f1-32",
+     "category": "plain",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 2,
+     "top": [
+      "field-cases|CASE-B84F3C9B EMO 測試",
+      "field-sop|SOP-SAF-900110-001 EMO 测试",
+      "field-cases|CASE-1F9C7CA0 EMO 测试",
+      "field-cases|CASE-68FB68A5 EMO 测试",
+      "field-cases|CASE-9130F0AA 軟件更新及 EAP 通訊測試"
+     ]
+    },
+    {
+     "id": "f1-34",
+     "category": "plain",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-FAC-100210-001 CDA 管路连接与保压",
+      "field-cases|CASE-550DC0C6 CDA 供应管路连接验证",
+      "field-cases|CASE-CEDBD88D CDA 供应管路连接验证",
+      "field-cases|CASE-D519D134 CDA 供應管路連接驗證",
+      "field-cases|CASE-550DC0C6 CDA 供应管路连接验证"
+     ]
+    },
+    {
+     "id": "f1-36",
+     "category": "plain",
+     "degraded": [],
+     "hit": true,
+     "rank": 2,
+     "source_hit": true,
+     "source_rank": 2,
+     "top": [
+      "field-cases|CASE-2C294A68 chamber teaching",
+      "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+      "field-cases|CASE-32A76F66 chamber tecahing",
+      "field-cases|CASE-FD03801C chamber teaching",
+      "field-cases|CASE-9BF940A8 Chamber teaching"
+     ]
+    },
+    {
+     "id": "f1-37",
+     "category": "access",
+     "degraded": [],
+     "leaked": 0
+    },
+    {
+     "id": "f1-39",
+     "category": "access",
+     "degraded": [],
+     "leaked": 0
+    }
+   ]
+  },
+  "es_equal": {
+   "metrics": {
+    "overall": {
+     "n": 22,
+     "recall@5": 0.864,
+     "mrr": 0.693,
+     "source_recall@5": 0.818
+    },
+    "by_category": {
+     "case": {
+      "n": 3,
+      "recall@5": 0.667,
+      "mrr": 0.5,
+      "source_recall@5": 0.667
+     },
+     "identifier": {
+      "n": 4,
+      "recall@5": 0.75,
+      "mrr": 0.562,
+      "source_recall@5": 0.75
+     },
+     "model": {
+      "n": 2,
+      "recall@5": 1.0,
+      "mrr": 0.5,
+      "source_recall@5": 0.5
+     },
+     "plain": {
+      "n": 4,
+      "recall@5": 1.0,
+      "mrr": 1.0,
+      "source_recall@5": 1.0
+     },
+     "synonym": {
+      "n": 4,
+      "recall@5": 1.0,
+      "mrr": 0.625,
+      "source_recall@5": 1.0
+     },
+     "traditional": {
+      "n": 2,
+      "recall@5": 1.0,
+      "mrr": 1.0,
+      "source_recall@5": 1.0
+     },
+     "typo": {
+      "n": 3,
+      "recall@5": 0.667,
+      "mrr": 0.667,
+      "source_recall@5": 0.667
+     }
+    },
+    "access": {
+     "n": 2,
+     "leaked_chunks": 0
+    },
+    "degraded_queries": 0
+   },
+   "cases": [
+    {
+     "id": "f1-01",
+     "category": "identifier",
+     "degraded": [],
+     "hit": true,
+     "rank": 4,
+     "source_hit": true,
+     "source_rank": 4,
+     "top": [
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when",
+      "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm "
+     ]
+    },
+    {
+     "id": "f1-02",
+     "category": "identifier",
+     "degraded": [],
+     "hit": false,
+     "rank": null,
+     "source_hit": false,
+     "source_rank": null,
+     "top": [
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl",
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when",
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl"
+     ]
+    },
+    {
+     "id": "f1-05",
+     "category": "identifier",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-GEN-200420-001 Golden check",
+      "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+      "field-sop|SOP-GEN-200420-001 Golden check"
+     ]
+    },
+    {
+     "id": "f1-06",
+     "category": "identifier",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "ops-global|E17 系列设备故障手册",
+      "ops-global|E17 系列设备故障手册"
+     ]
+    },
+    {
+     "id": "f1-08",
+     "category": "typo",
+     "degraded": [],
+     "hit": false,
+     "rank": null,
+     "source_hit": false,
+     "source_rank": null,
+     "top": [
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-8FE5CBB8 DI flow trouble shotting",
+      "field-cases|CASE-1A1307F8 DI flow trouble shotting",
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when"
+     ]
+    },
+    {
+     "id": "f1-09",
+     "category": "typo",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 2,
+     "top": [
+      "field-cases|CASE-E8CAD357 chamical flow 调试",
+      "field-sop|SOP-FAC-100110-001 Chemical flow 调试",
+      "field-cases|CASE-0BE046B9 chamical flow 調試",
+      "field-cases|CASE-E8AE302C 通水后 DI flow 调试",
+      "field-cases|CASE-12166648 通水後 DI flow 調試"
+     ]
+    },
+    {
+     "id": "f1-11",
+     "category": "typo",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "field-sop|SOP-WCL-380120-002 Spindle 更换"
+     ]
+    },
+    {
+     "id": "f1-13",
+     "category": "synonym",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "field-cases|CASE-A68312A9 spindle 更换（双面机）",
+      "field-cases|CASE-A68312A9 spindle 更换（双面机）"
+     ]
+    },
+    {
+     "id": "f1-14",
+     "category": "synonym",
+     "degraded": [],
+     "hit": true,
+     "rank": 2,
+     "source_hit": true,
+     "source_rank": 2,
+     "top": [
+      "field-sop|SOP-GEN-200510-001 Load port leveling",
+      "field-sop|SOP-GEN-200510-001 Load port leveling",
+      "field-cases|CASE-7B5C2580 load port leveling adjustm",
+      "field-cases|CASE-BF939A3D load port leveling adjustm",
+      "field-cases|CASE-0E25A30D load port leveling adjustm"
+     ]
+    },
+    {
+     "id": "f1-16",
+     "category": "synonym",
+     "degraded": [],
+     "hit": true,
+     "rank": 2,
+     "source_hit": true,
+     "source_rank": 5,
+     "top": [
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when",
+      "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl"
+     ]
+    },
+    {
+     "id": "f1-18",
+     "category": "synonym",
+     "degraded": [],
+     "hit": true,
+     "rank": 2,
+     "source_hit": true,
+     "source_rank": 2,
+     "top": [
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when",
+      "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl"
+     ]
+    },
+    {
+     "id": "f1-19",
+     "category": "traditional",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "field-cases|CASE-32B2296F spindle 更换（单面机）"
+     ]
+    },
+    {
+     "id": "f1-21",
+     "category": "traditional",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 4,
+     "top": [
+      "field-cases|CASE-D76BC036 install DI filter",
+      "field-cases|CASE-618509AD install DI filter",
+      "field-cases|CASE-45A3B7CD install DI filter",
+      "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter",
+      "field-cases|CASE-1A1307F8 DI flow trouble shotting"
+     ]
+    },
+    {
+     "id": "f1-22",
+     "category": "model",
+     "degraded": [],
+     "hit": true,
+     "rank": 2,
+     "source_hit": false,
+     "source_rank": null,
+     "top": [
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "field-cases|CASE-A68312A9 spindle 更换（双面机）",
+      "field-cases|CASE-A68312A9 spindle 更换（双面机）",
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "field-sop|SOP-WCL-380120-002 Spindle 更换"
+     ]
+    },
+    {
+     "id": "f1-24",
+     "category": "model",
+     "degraded": [],
+     "hit": true,
+     "rank": 2,
+     "source_hit": true,
+     "source_rank": 2,
+     "top": [
+      "field-cases|CASE-6263E4AE service door override（ST-2",
+      "field-sop|SOP-GEN-200310-001 Service door override",
+      "field-cases|CASE-6263E4AE service door override（ST-2",
+      "field-cases|CASE-45A3B7CD install DI filter",
+      "field-cases|CASE-E84A1A84 软件更新及 EAP 通讯测试"
+     ]
+    },
+    {
+     "id": "f1-26",
+     "category": "case",
+     "degraded": [],
+     "hit": false,
+     "rank": null,
+     "source_hit": false,
+     "source_rank": null,
+     "top": [
+      "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+      "field-sop|SOP-GEN-200310-001 Service door override",
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when",
+      "field-cases|CASE-1F9C7CA0 EMO 测试",
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl"
+     ]
+    },
+    {
+     "id": "f1-27",
+     "category": "case",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-cases|CASE-91B7EE1D chuck 高速段 wafer 偏移报警 A-310",
+      "field-cases|CASE-80C5A656 golden check",
+      "field-cases|CASE-30895A9C golden check",
+      "field-cases|CASE-91B7EE1D chuck 高速段 wafer 偏移报警 A-310",
+      "field-sop|SOP-GEN-200420-001 Golden check"
+     ]
+    },
+    {
+     "id": "f1-29",
+     "category": "case",
+     "degraded": [],
+     "hit": true,
+     "rank": 2,
+     "source_hit": true,
+     "source_rank": 2,
+     "top": [
+      "it-public|VPN 使用说明",
+      "field-cases|CASE-CC656009 遠程支持連線",
+      "field-cases|CASE-E4FD8F2B 遠程支持連線",
+      "field-cases|CASE-E4FD8F2B 遠程支持連線",
+      "field-cases|CASE-CC656009 遠程支持連線"
+     ]
+    },
+    {
+     "id": "f1-31",
+     "category": "plain",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-GEN-200510-001 Load port leveling",
+      "field-sop|SOP-GEN-200510-001 Load port leveling",
+      "field-cases|CASE-BF939A3D load port leveling adjustm",
+      "field-cases|CASE-0E25A30D load port leveling adjustm",
+      "field-cases|CASE-7B5C2580 load port leveling adjustm"
+     ]
+    },
+    {
+     "id": "f1-32",
+     "category": "plain",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-SAF-900110-001 EMO 测试",
+      "field-cases|CASE-B84F3C9B EMO 測試",
+      "field-cases|CASE-68FB68A5 EMO 测试",
+      "field-cases|CASE-1F9C7CA0 EMO 测试",
+      "field-cases|CASE-9130F0AA 軟件更新及 EAP 通訊測試"
+     ]
+    },
+    {
+     "id": "f1-34",
+     "category": "plain",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-FAC-100210-001 CDA 管路连接与保压",
+      "field-cases|CASE-CEDBD88D CDA 供应管路连接验证",
+      "field-cases|CASE-550DC0C6 CDA 供应管路连接验证",
+      "field-cases|CASE-D519D134 CDA 供應管路連接驗證",
+      "field-cases|CASE-CEDBD88D CDA 供应管路连接验证"
+     ]
+    },
+    {
+     "id": "f1-36",
+     "category": "plain",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+      "field-cases|CASE-2C294A68 chamber teaching",
+      "field-cases|CASE-32A76F66 chamber tecahing",
+      "field-cases|CASE-FD03801C chamber teaching",
+      "field-cases|CASE-E6FD343F Chamber teaching"
+     ]
+    },
+    {
+     "id": "f1-37",
+     "category": "access",
+     "degraded": [],
+     "leaked": 0
+    },
+    {
+     "id": "f1-39",
+     "category": "access",
+     "degraded": [],
+     "leaked": 0
+    }
+   ]
+  },
+  "es_weighted": {
+   "metrics": {
+    "overall": {
+     "n": 22,
+     "recall@5": 0.864,
+     "mrr": 0.693,
+     "source_recall@5": 0.818
+    },
+    "by_category": {
+     "case": {
+      "n": 3,
+      "recall@5": 0.667,
+      "mrr": 0.5,
+      "source_recall@5": 0.667
+     },
+     "identifier": {
+      "n": 4,
+      "recall@5": 0.75,
+      "mrr": 0.562,
+      "source_recall@5": 0.75
+     },
+     "model": {
+      "n": 2,
+      "recall@5": 1.0,
+      "mrr": 0.5,
+      "source_recall@5": 0.5
+     },
+     "plain": {
+      "n": 4,
+      "recall@5": 1.0,
+      "mrr": 1.0,
+      "source_recall@5": 1.0
+     },
+     "synonym": {
+      "n": 4,
+      "recall@5": 1.0,
+      "mrr": 0.625,
+      "source_recall@5": 1.0
+     },
+     "traditional": {
+      "n": 2,
+      "recall@5": 1.0,
+      "mrr": 1.0,
+      "source_recall@5": 1.0
+     },
+     "typo": {
+      "n": 3,
+      "recall@5": 0.667,
+      "mrr": 0.667,
+      "source_recall@5": 0.667
+     }
+    },
+    "access": {
+     "n": 2,
+     "leaked_chunks": 0
+    },
+    "degraded_queries": 0
+   },
+   "cases": [
+    {
+     "id": "f1-01",
+     "category": "identifier",
+     "degraded": [],
+     "hit": true,
+     "rank": 4,
+     "source_hit": true,
+     "source_rank": 4,
+     "top": [
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when",
+      "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm "
+     ]
+    },
+    {
+     "id": "f1-02",
+     "category": "identifier",
+     "degraded": [],
+     "hit": false,
+     "rank": null,
+     "source_hit": false,
+     "source_rank": null,
+     "top": [
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl",
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when",
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when"
+     ]
+    },
+    {
+     "id": "f1-05",
+     "category": "identifier",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-GEN-200420-001 Golden check",
+      "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+      "field-sop|SOP-GEN-200420-001 Golden check"
+     ]
+    },
+    {
+     "id": "f1-06",
+     "category": "identifier",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "ops-global|E17 系列设备故障手册",
+      "ops-global|E17 系列设备故障手册"
+     ]
+    },
+    {
+     "id": "f1-08",
+     "category": "typo",
+     "degraded": [],
+     "hit": false,
+     "rank": null,
+     "source_hit": false,
+     "source_rank": null,
+     "top": [
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-8FE5CBB8 DI flow trouble shotting",
+      "field-cases|CASE-1A1307F8 DI flow trouble shotting",
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when"
+     ]
+    },
+    {
+     "id": "f1-09",
+     "category": "typo",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 2,
+     "top": [
+      "field-cases|CASE-E8CAD357 chamical flow 调试",
+      "field-sop|SOP-FAC-100110-001 Chemical flow 调试",
+      "field-cases|CASE-0BE046B9 chamical flow 調試",
+      "field-cases|CASE-E8AE302C 通水后 DI flow 调试",
+      "field-cases|CASE-12166648 通水後 DI flow 調試"
+     ]
+    },
+    {
+     "id": "f1-11",
+     "category": "typo",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "field-sop|SOP-WCL-380120-002 Spindle 更换"
+     ]
+    },
+    {
+     "id": "f1-13",
+     "category": "synonym",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "field-cases|CASE-A68312A9 spindle 更换（双面机）",
+      "field-cases|CASE-A68312A9 spindle 更换（双面机）"
+     ]
+    },
+    {
+     "id": "f1-14",
+     "category": "synonym",
+     "degraded": [],
+     "hit": true,
+     "rank": 2,
+     "source_hit": true,
+     "source_rank": 2,
+     "top": [
+      "field-sop|SOP-GEN-200510-001 Load port leveling",
+      "field-sop|SOP-GEN-200510-001 Load port leveling",
+      "field-cases|CASE-7B5C2580 load port leveling adjustm",
+      "field-cases|CASE-BF939A3D load port leveling adjustm",
+      "field-cases|CASE-0E25A30D load port leveling adjustm"
+     ]
+    },
+    {
+     "id": "f1-16",
+     "category": "synonym",
+     "degraded": [],
+     "hit": true,
+     "rank": 2,
+     "source_hit": true,
+     "source_rank": 5,
+     "top": [
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when",
+      "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl"
+     ]
+    },
+    {
+     "id": "f1-18",
+     "category": "synonym",
+     "degraded": [],
+     "hit": true,
+     "rank": 2,
+     "source_hit": true,
+     "source_rank": 2,
+     "top": [
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when",
+      "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl",
+      "field-cases|CASE-CBD3DCD0 mix tank 切换 tank 时报 alarm ",
+      "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl"
+     ]
+    },
+    {
+     "id": "f1-19",
+     "category": "traditional",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-sop|SOP-WCL-380120-002 Spindle 更换",
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "field-cases|CASE-32B2296F spindle 更换（单面机）"
+     ]
+    },
+    {
+     "id": "f1-21",
+     "category": "traditional",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 4,
+     "top": [
+      "field-cases|CASE-D76BC036 install DI filter",
+      "field-cases|CASE-618509AD install DI filter",
+      "field-cases|CASE-45A3B7CD install DI filter",
+      "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter",
+      "field-cases|CASE-1A1307F8 DI flow trouble shotting"
+     ]
+    },
+    {
+     "id": "f1-22",
+     "category": "model",
+     "degraded": [],
+     "hit": true,
+     "rank": 2,
+     "source_hit": false,
+     "source_rank": null,
+     "top": [
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "field-cases|CASE-A68312A9 spindle 更换（双面机）",
+      "field-cases|CASE-A68312A9 spindle 更换（双面机）",
+      "field-cases|CASE-32B2296F spindle 更换（单面机）",
+      "field-sop|SOP-WCL-380120-002 Spindle 更换"
+     ]
+    },
+    {
+     "id": "f1-24",
+     "category": "model",
+     "degraded": [],
+     "hit": true,
+     "rank": 2,
+     "source_hit": true,
+     "source_rank": 2,
+     "top": [
+      "field-cases|CASE-6263E4AE service door override（ST-2",
+      "field-sop|SOP-GEN-200310-001 Service door override",
+      "field-cases|CASE-6263E4AE service door override（ST-2",
+      "field-cases|CASE-E84A1A84 软件更新及 EAP 通讯测试",
+      "field-cases|CASE-45A3B7CD install DI filter"
+     ]
+    },
+    {
+     "id": "f1-26",
+     "category": "case",
+     "degraded": [],
+     "hit": false,
+     "rank": null,
+     "source_hit": false,
+     "source_rank": null,
+     "top": [
+      "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+      "field-cases|CASE-97408923 Mix tank alarm A-1301 when",
+      "field-cases|CASE-EF42C6BD mix tank 切换报 A-1301 troubl",
+      "field-cases|CASE-BE820009 circulation pump 异响",
+      "field-sop|SOP-GEN-200310-001 Service door override"
+     ]
+    },
+    {
+     "id": "f1-27",
+     "category": "case",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-cases|CASE-91B7EE1D chuck 高速段 wafer 偏移报警 A-310",
+      "field-cases|CASE-80C5A656 golden check",
+      "field-cases|CASE-30895A9C golden check",
+      "field-cases|CASE-91B7EE1D chuck 高速段 wafer 偏移报警 A-310",
+      "field-sop|SOP-GEN-200420-001 Golden check"
+     ]
+    },
+    {
+     "id": "f1-29",
+     "category": "case",
+     "degraded": [],
+     "hit": true,
+     "rank": 2,
+     "source_hit": true,
+     "source_rank": 2,
+     "top": [
+      "it-public|VPN 使用说明",
+      "field-cases|CASE-CC656009 遠程支持連線",
+      "field-cases|CASE-E4FD8F2B 遠程支持連線",
+      "field-cases|CASE-E4FD8F2B 遠程支持連線",
+      "field-cases|CASE-CC656009 遠程支持連線"
+     ]
+    },
+    {
+     "id": "f1-31",
+     "category": "plain",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-GEN-200510-001 Load port leveling",
+      "field-sop|SOP-GEN-200510-001 Load port leveling",
+      "field-cases|CASE-BF939A3D load port leveling adjustm",
+      "field-cases|CASE-0E25A30D load port leveling adjustm",
+      "field-cases|CASE-7B5C2580 load port leveling adjustm"
+     ]
+    },
+    {
+     "id": "f1-32",
+     "category": "plain",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-SAF-900110-001 EMO 测试",
+      "field-cases|CASE-B84F3C9B EMO 測試",
+      "field-cases|CASE-68FB68A5 EMO 测试",
+      "field-cases|CASE-1F9C7CA0 EMO 测试",
+      "field-cases|CASE-9130F0AA 軟件更新及 EAP 通訊測試"
+     ]
+    },
+    {
+     "id": "f1-34",
+     "category": "plain",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-FAC-100210-001 CDA 管路连接与保压",
+      "field-cases|CASE-CEDBD88D CDA 供应管路连接验证",
+      "field-cases|CASE-550DC0C6 CDA 供应管路连接验证",
+      "field-cases|CASE-D519D134 CDA 供應管路連接驗證",
+      "field-cases|CASE-CEDBD88D CDA 供应管路连接验证"
+     ]
+    },
+    {
+     "id": "f1-36",
+     "category": "plain",
+     "degraded": [],
+     "hit": true,
+     "rank": 1,
+     "source_hit": true,
+     "source_rank": 1,
+     "top": [
+      "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+      "field-cases|CASE-2C294A68 chamber teaching",
+      "field-cases|CASE-32A76F66 chamber tecahing",
+      "field-cases|CASE-FD03801C chamber teaching",
+      "field-cases|CASE-E6FD343F Chamber teaching"
+     ]
+    },
+    {
+     "id": "f1-37",
+     "category": "access",
+     "degraded": [],
+     "leaked": 0
+    },
+    {
+     "id": "f1-39",
+     "category": "access",
+     "degraded": [],
+     "leaked": 0
+    }
+   ]
+  }
+ },
+ "corpus": {
+  "published_chunks": 670
+ },
+ "diversity": {
+  "field-rows-raw": {
+   "questions": 3,
+   "mean_duplicate_slots_in_top5": 2.33,
+   "per_question": [
+    0,
+    4,
+    3
+   ]
+  },
+  "field-cases": {
+   "questions": 3,
+   "mean_duplicate_slots_in_top5": 2.33,
+   "per_question": [
+    4,
+    1,
+    2
+   ]
+  }
+ }
+}

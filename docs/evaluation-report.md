@@ -430,3 +430,13 @@ uv run --no-sync python eval/run_eval.py --mode retrieval --split holdout --conf
 评测器改为读取实际检查点interrupt后才设置 `asked_confirmation`，只在真实interrupt上驱动脚本决策；预期取消的用例若根本没有确认卡，即使记录数为0也不能通过。反过来，未预期或未结束的待确认也失败，纯记录数量检查另存 `record_count_ok`。新指标标为 `observed-interrupt-and-records-v2`；旧报告缺字段时不重新解释旧布尔值。当前直达路径是在4例真实运行之后实现，新增测试证明确认前模型调用0 / 转交记录0、批准后1条、拒绝后0条，以及重启恢复；不把这些离线结果称为新的付费验证。
 
 最终代码 `ec158ff1` 的[远端验收](https://github.com/BeforeLanding/Knoventra/actions/runs/42584559193)通过697项后端测试、迁移全链 / ORM / 种子重放、145项前端测试、生产构建和零警告lint。其中54个用例覆盖六账号归属与全来源预览，43个覆盖明确请求、否定 / 条件 / 引文 / 超长回退、上下文保留、确认重启 / 批准 / 拒绝以及确认观测。真人审核按用户安排稍后进行，当前human仍为0。
+
+## 25. v4 现场检索离线评测（2026-11-23）
+
+- **数据**：`backend/eval/cases_field_v1.jsonl` 共 39 例（dev 24 / 留出 15，SHA-256 写在报告里）。类别包括编号、拼写错误、同义词与中英混写、繁体、机型差异、历史案例、普通问法、越权。语料为演示文档、10 份 SOP、44 个去重案例和 206 条原始日志行（原始行只用于多样性对比，没有授权）。全部为虚构数据。
+- **方法**：`eval/setup_field_eval.py` 用 BGE-M3（本机 RTX 5060）建独立库 `knoventra_eval_v4` 和 ES 别名；`eval/run_field_eval.py` 比较三种配置：`pg`（dense + sparse，等权，即 v3 基线）、`es_equal`（再加 ES 和 ident 通道，等权）、`es_weighted`（同上，加权）。指标取融合后、闸门前的 Top-5。没有调用付费模型。
+- **dev（22 个可答，`field-dev-final.json`）**：Recall@5 三者都是 1.0；MRR 为 pg 0.848，es_equal 和 es_weighted 都是 0.932；来源召回率为 0.909 / 0.909 / 0.955。越权泄露 0。
+- **留出集（14 个可答，只跑一次，`field-holdout-pg-es_equal-es_weighted.json`）**：Recall@5 三者都是 1.0；MRR 为 pg 0.964，ES 两种配置都是 1.0，差距来自一例拼写错误查询；来源召回率三者都是 1.0。越权泄露 0。
+- **去重与多样性**：对“历史案例”类问题，Top-5 中内容重复的平均槽位数为：原始行 dev 2.33、留出 4；去重后的案例 dev 0、留出 0。
+- **结论与边界**：样本小，接近满分。能看到的收益是 ES 和 ident 通道让拼写错误和编号查询排得更靠前；加权和等权在这组数据上分不出差别（见 DECISIONS 第 70 条）。第一次 dev 运行暴露了案例切块问题，修正后重建语料再测（第 69 条）；修正前的结果文件保留在 `eval/results`，没有覆盖。查询改写的开关对比要等 D6 实现改写后再测，这里不给数字。
+

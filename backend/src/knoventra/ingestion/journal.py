@@ -6,7 +6,8 @@ skill-matrix rows share those columns; a skill row has no date and carries
 column order and extra columns do not matter; a missing required header
 rejects the whole sheet.
 
-    uv run python -m knoventra.ingestion.journal ../data/demo/journals/*.xlsx --registry ../data/demo/journals/machines.json
+    uv run python -m knoventra.ingestion.journal ../data/demo/journals/*.xlsx
+        --registry ../data/demo/journals/machines.json --publish-kb field-cases
 """
 from __future__ import annotations
 
@@ -241,10 +242,26 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Import journal workbooks: skill matrix and field cases.")
     ap.add_argument("files", nargs="+", type=Path)
     ap.add_argument("--registry", type=Path, help="machines.json asset registry (serial -> model)")
+    ap.add_argument("--publish-kb", help="also publish every case as a document in this knowledge base")
     args = ap.parse_args()
     with SessionLocal() as db, db.begin():
         report = import_workbooks(db, args.files, args.registry)
+        if args.publish_kb:
+            from sqlalchemy import select
+
+            from knoventra.db.models import KnowledgeBase
+            from knoventra.ingestion.case_docs import publish_cases
+            from knoventra.ingestion.encoder import get_encoder
+
+            kb_id = db.scalar(select(KnowledgeBase.id).where(KnowledgeBase.name == args.publish_kb))
+            if kb_id is None:
+                raise SystemExit(f"unknown knowledge base: {args.publish_kb}")
+            report["published"] = publish_cases(db, get_encoder(), kb_id)
     print(json.dumps(report, ensure_ascii=False, indent=1))
+    from knoventra.search_es.sync import drain_after_commit
+
+    with SessionLocal() as db:
+        drain_after_commit(db)
 
 
 if __name__ == "__main__":

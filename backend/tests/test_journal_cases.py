@@ -171,3 +171,26 @@ def test_demo_seed_includes_sops_for_ops_only(db, users):
     assert [tuple(s) for s in statuses] == [(1, "DRAFT"), (2, "PUBLISHED")]
     assert kb.id in compute_scope(db, users["sg-ops"]).readable_kb_ids
     assert kb.id not in compute_scope(db, users["hr"]).readable_kb_ids
+
+
+def test_cases_publish_as_documents_idempotently(db, enc):
+    from knoventra.db.models import Chunk, Document, KnowledgeBase, Revision
+    from knoventra.ingestion.case_docs import case_title, publish_cases, render_case
+
+    import_workbooks(db, sorted(JOURNALS.glob("*.xlsx")), JOURNALS / "machines.json")
+    kb = db.scalar(select(KnowledgeBase).where(KnowledgeBase.name == "field-cases"))
+    cases = db.scalars(select(JournalCase)).all()
+    first = publish_cases(db, enc, kb.id)
+    assert first["created"] == len(cases) and publish_cases(db, enc, kb.id) == {
+        "created": 0, "updated": 0, "unchanged": len(cases)}
+
+    mixtank = next(c for c in cases if "A-1301" in c.alarm_codes and c.lang == "zh-Hans")
+    body = render_case(mixtank)
+    assert "告警码：A-1301" in body and "处理结果：已解决" in body and "原因：" in body
+    doc = db.scalar(select(Document).where(Document.kb_id == kb.id, Document.title == case_title(mixtank)))
+    chunks = db.scalars(select(Chunk).join(Revision, Revision.id == Chunk.revision_id)
+                        .where(Revision.document_id == doc.id, Revision.status == "PUBLISHED")).all()
+    assert len(chunks) == 1 and "A-1301" in chunks[0].identifiers  # one case, one chunk
+    assert "LS-2" in chunks[0].text and "适用机型：WX-38" in chunks[0].text
+    stored = " ".join(c.text for c in db.scalars(select(Chunk).where(Chunk.kb_id == kb.id)))
+    assert "Fake-Eng-0420" not in stored and "13800138000" not in stored

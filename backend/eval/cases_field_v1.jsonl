@@ -1,0 +1,39 @@
+{"id": "f1-01", "split": "dev", "category": "identifier", "user": "sg-ops", "question": "SOP-WCL-380110-001 第 4 节复位前要做什么", "expect": {"title_prefix": "SOP-WCL-380110-001", "support_text": "先排空 tank"}}
+{"id": "f1-02", "split": "dev", "category": "identifier", "user": "sg-ops", "question": "A-1301 报警是什么意思", "expect": {"title_prefix": "SOP-WCL-380110-001", "support_text": "LS-2 信号丢失"}}
+{"id": "f1-03", "split": "holdout", "category": "identifier", "user": "sg-ops", "question": "SOP-FAC-100210-001 保压多久", "expect": {"title_prefix": "SOP-FAC-100210-001", "support_text": "保压 30 分钟"}}
+{"id": "f1-04", "split": "holdout", "category": "identifier", "user": "sg-ops", "question": "A-2207 偶发怎么处理", "expect": {"kb": "field-cases", "support_text": "A-2207"}}
+{"id": "f1-05", "split": "dev", "category": "identifier", "user": "sg-ops", "question": "SOP-GEN-200420-001 偏心要求是多少", "expect": {"title_prefix": "SOP-GEN-200420-001", "support_text": "小于 0.3 mm"}}
+{"id": "f1-06", "split": "dev", "category": "identifier", "user": "sg-ops", "question": "E17-42 复位之后观察多久", "expect": {"title_prefix": "E17 系列设备故障手册", "support_text": "观察 10 分钟"}}
+{"id": "f1-07", "split": "holdout", "category": "identifier", "user": "sg-ops", "question": "SOP-SAF-900110-001 测试前要通知谁", "expect": {"title_prefix": "SOP-SAF-900110-001", "support_text": "通知客户厂务"}}
+{"id": "f1-08", "split": "dev", "category": "typo", "user": "sg-ops", "question": "mix tank trouble shotting", "expect": {"title_prefix": "SOP-WCL-380110-001", "support_text": "LS-2"}}
+{"id": "f1-09", "split": "dev", "category": "typo", "user": "sg-ops", "question": "chamical flow DHF 流量设定多少", "expect": {"title_prefix": "SOP-FAC-100110-001", "support_text": "1.2 L/min"}}
+{"id": "f1-10", "split": "holdout", "category": "typo", "user": "sg-ops", "question": "chamber tecahing 时 robot 速度", "expect": {"title_prefix": "SOP-GEN-200410-001", "support_text": "10%"}}
+{"id": "f1-11", "split": "dev", "category": "typo", "user": "sg-ops", "question": "spidle 更换 螺丝扭矩", "expect": {"title_prefix": "SOP-WCL-380120-002", "support_text": "扭矩"}}
+{"id": "f1-12", "split": "holdout", "category": "typo", "user": "sg-ops", "question": "DI flow trouble shotting 读值跳动", "expect": {"title_prefix": "SOP-FAC-100120-001", "support_text": "是否堵塞"}}
+{"id": "f1-13", "split": "dev", "category": "synonym", "user": "sg-ops", "question": "主轴更换后 run-out 要求", "expect": {"title_prefix": "SOP-WCL-380120-002", "support_text": "run-out"}}
+{"id": "f1-14", "split": "dev", "category": "synonym", "user": "sg-ops", "question": "装载口调平怎么做", "expect": {"title_prefix": "SOP-GEN-200510-001", "support_text": "水平仪"}}
+{"id": "f1-15", "split": "holdout", "category": "synonym", "user": "sg-ops", "question": "腔体示教完成后 dynamic test 跑多少片", "expect": {"title_prefix": "SOP-GEN-200410-001", "support_text": "25 片"}}
+{"id": "f1-16", "split": "dev", "category": "synonym", "user": "sg-ops", "question": "混液槽告警后 pump 不转", "expect": {"title_prefix": "SOP-WCL-380110-001", "support_text": "A-1301"}}
+{"id": "f1-17", "split": "holdout", "category": "synonym", "user": "sg-ops", "question": "ST-250 门超控怎么解除", "expect": {"title_prefix": "SOP-GEN-200310-001", "support_text": "钥匙开关"}}
+{"id": "f1-18", "split": "dev", "category": "synonym", "user": "sg-ops", "question": "How to reset the mix tank interlock", "expect": {"title_prefix": "SOP-WCL-380110-001", "support_text": "Reset Interlock"}}
+{"id": "f1-19", "split": "dev", "category": "traditional", "user": "sg-ops", "question": "主軸更換時螺絲扭矩多少", "expect": {"title_prefix": "SOP-WCL-380120-002", "support_text": "扭矩"}}
+{"id": "f1-20", "split": "holdout", "category": "traditional", "user": "sg-ops", "question": "化學品流量偏差超過 5% 怎麼調", "expect": {"title_prefix": "SOP-FAC-100110-001", "support_text": "needle valve"}}
+{"id": "f1-21", "split": "dev", "category": "traditional", "user": "sg-ops", "question": "濕式濾芯安裝前要注意什麼", "expect": {"title_prefix": "SOP-FAC-100120-001", "support_text": "保持湿润"}}
+{"id": "f1-22", "split": "dev", "category": "model", "user": "sg-ops", "question": "WX-P 双面机 spindle 扭矩", "expect": {"title_prefix": "SOP-WCL-380120-002", "support_text": "18 N·m"}}
+{"id": "f1-23", "split": "holdout", "category": "model", "user": "sg-ops", "question": "WX-38 单面机 spindle 扭矩", "expect": {"title_prefix": "SOP-WCL-380120-002", "support_text": "12 N·m"}}
+{"id": "f1-24", "split": "dev", "category": "model", "user": "sg-ops", "question": "ST-250 service door override 步骤", "expect": {"title_prefix": "SOP-GEN-200310-001", "support_text": "钥匙开关"}}
+{"id": "f1-25", "split": "holdout", "category": "model", "user": "sg-ops", "question": "WX-38 的 door override 在哪里打开", "expect": {"title_prefix": "SOP-GEN-200310-001", "support_text": "Maintenance 页面"}}
+{"id": "f1-26", "split": "dev", "category": "case", "user": "sg-ops", "question": "WX-38 切换 tank 时报 alarm，pump 不转，以前怎么处理的", "expect": {"kb": "field-cases", "support_text": "LS-2"}}
+{"id": "f1-27", "split": "dev", "category": "case", "user": "sg-ops", "question": "chuck 高速段 wafer 偏移报警", "expect": {"kb": "field-cases", "support_text": "A-3105"}}
+{"id": "f1-28", "split": "holdout", "category": "case", "user": "sg-ops", "question": "circulation pump 异响后来怎么处理", "expect": {"kb": "field-cases", "support_text": "bearing"}}
+{"id": "f1-29", "split": "dev", "category": "case", "user": "sg-ops", "question": "远程支持时怎么登录客户 VPN", "expect": {"kb": "field-cases", "support_text": "VPN"}}
+{"id": "f1-30", "split": "holdout", "category": "case", "user": "sg-ops", "question": "nozzle 间歇漏液有人遇到过吗", "expect": {"kb": "field-cases", "support_text": "suck-back"}}
+{"id": "f1-31", "split": "dev", "category": "plain", "user": "sg-ops", "question": "load port 调整后脚座要做什么", "expect": {"title_prefix": "SOP-GEN-200510-001", "support_text": "做标记"}}
+{"id": "f1-32", "split": "dev", "category": "plain", "user": "sg-ops", "question": "EMO 测试的步骤", "expect": {"title_prefix": "SOP-SAF-900110-001", "support_text": "逐个按下 EMO"}}
+{"id": "f1-33", "split": "holdout", "category": "plain", "user": "sg-ops", "question": "golden wafer 用完放哪里", "expect": {"title_prefix": "SOP-GEN-200420-001", "support_text": "专用 cassette"}}
+{"id": "f1-34", "split": "dev", "category": "plain", "user": "sg-ops", "question": "CDA 管路特氟龙带缠几层", "expect": {"title_prefix": "SOP-FAC-100210-001", "support_text": "2-3 层"}}
+{"id": "f1-35", "split": "holdout", "category": "plain", "user": "sg-ops", "question": "DI filter 装反会怎样", "expect": {"title_prefix": "SOP-FAC-100120-001", "support_text": "压差异常"}}
+{"id": "f1-36", "split": "dev", "category": "plain", "user": "sg-ops", "question": "dynamic test 怎样算通过", "expect": {"title_prefix": "SOP-GEN-200410-001", "support_text": "无掉片"}}
+{"id": "f1-37", "split": "dev", "category": "access", "user": "hr", "question": "mix tank A-1301 怎么处理", "expect": {"forbidden_kbs": ["field-sop", "field-cases"]}}
+{"id": "f1-38", "split": "holdout", "category": "access", "user": "fin", "question": "spindle 更换扭矩", "expect": {"forbidden_kbs": ["field-sop", "field-cases"]}}
+{"id": "f1-39", "split": "dev", "category": "access", "user": "sg-ops", "question": "C21-05 校准", "expect": {"forbidden_kbs": ["ops-cn"]}}

@@ -32,7 +32,8 @@ class Settings(BaseSettings):
     # "equal" keeps the v3 behaviour as a baseline. Tuned on the dev split only (D5).
     rrf_weighting: Literal["weighted", "equal"] = "weighted"
     rrf_weights_identifier: dict[str, float] = {"ident": 2.0, "es": 1.5, "sparse": 1.0, "dense": 0.5}
-    rrf_weights_natural: dict[str, float] = {"dense": 1.0, "sparse": 1.0, "es": 1.0, "ident": 1.0}
+    # Chosen on dev (D5): ties every grid point on MRR, +1 of 22 on source recall. Weak evidence.
+    rrf_weights_natural: dict[str, float] = {"dense": 1.0, "sparse": 0.5, "es": 1.5, "ident": 1.0}
     rerank: Literal["off", "bge"] = "off"
     rerank_model: str = "BAAI/bge-reranker-v2-m3"
     rerank_candidates: int = 10
