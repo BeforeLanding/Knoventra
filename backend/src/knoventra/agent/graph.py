@@ -29,6 +29,7 @@ from sqlalchemy.orm import Session
 from knoventra.config import settings
 from knoventra.agent.language import format_answer
 from knoventra.agent.escalation_intent import direct_escalation_summary
+from knoventra.agent.query_plan import RETRIEVAL_INTENTS, plan_query
 from knoventra.db.models import Confirmation, Escalation, User
 from knoventra.ingestion.encoder import Encoder
 from knoventra.retrieval.pipeline import OK, retrieve
@@ -122,6 +123,8 @@ class State(TypedDict, total=False):
     retrieval_trace: list[dict]  # per-turn diagnostics; never added to model messages
     model_declared_refusal: bool
     model_finish_reason: str | None
+    query_plan: dict | None  # per-turn planner trace; never added to model messages
+    route_kbs: list[str] | None  # server-chosen KB names for this turn's searches (narrowing only)
 
 
 @dataclass
@@ -131,6 +134,7 @@ class AgentDeps:
     reranker: Reranker | None
     llm: BaseChatModel
     checkpointer: Any
+    planner: BaseChatModel | None = None  # query planning; None keeps v3 behaviour
 
 
 _MARK = re.compile(r"\[S(\d+)\]")
@@ -158,7 +162,25 @@ def build_graph(deps: AgentDeps):
     def start_turn(state: State):
         # Command(resume=...) resumes at the interrupt and preserves this trace.
         # A new user turn always starts fresh, even for callers reusing a thread.
-        return {"retrieval_trace": [], "model_declared_refusal": False, "model_finish_reason": None}
+        return {"retrieval_trace": [], "model_declared_refusal": False, "model_finish_reason": None,
+                "query_plan": None, "route_kbs": None}
+
+    def query_plan(state: State):
+        if deps.planner is None:
+            return {"query_plan": {"status": "skipped", "reason": "disabled"}}
+        if direct_escalation_summary(state["messages"]) is not None:
+            return {"query_plan": {"status": "skipped", "reason": "explicit_escalation"}}
+        plan, trace = plan_query(deps.planner, state["messages"])
+        if plan is None or plan.intent not in RETRIEVAL_INTENTS:
+            return {"query_plan": trace}
+        # Retrieval intents: search the planned queries directly; the agent answers from the results.
+        calls = [{"name": "search_knowledge", "args": {"query": q}, "id": f"plan-{i}", "type": "tool_call"}
+                 for i, q in enumerate(plan.queries, start=1)]
+        return {"query_plan": trace, "route_kbs": plan.route_kbs, "messages": [AIMessage("", tool_calls=calls)]}
+
+    def after_plan(state: State):
+        last = state["messages"][-1]
+        return "tools" if isinstance(last, AIMessage) and last.tool_calls else "agent"
 
     def agent(state: State):
         summary = direct_escalation_summary(state["messages"])
@@ -211,14 +233,15 @@ def build_graph(deps: AgentDeps):
                 started = time.perf_counter()
                 with deps.session_factory() as db:
                     res = retrieve(db, deps.encoder, deps.reranker, db.get(User, uid), c["args"].get("query", ""),
-                                   original_query=original_query)
+                                   original_query=original_query, route_kbs=state.get("route_kbs"))
                 elapsed_ms = round((time.perf_counter() - started) * 1000, 3)
                 trace.append({"tool_call_id": c["id"], "query": c["args"].get("query", ""),
                               "latency_ms": elapsed_ms,
                               "status": res.status, "reason": res.reason,
                               "required_identifiers": res.required_identifiers,
                               "missing_identifiers": res.missing_identifiers,
-                              "returned_chunk_ids": [e.chunk_id for e in res.evidence]})
+                              "returned_chunk_ids": [e.chunk_id for e in res.evidence],
+                              "degraded": res.degraded, "route": res.route})
                 if res.status != OK:
                     if not evidence:
                         error = res.status
@@ -348,11 +371,12 @@ def build_graph(deps: AgentDeps):
         return upd
 
     g = StateGraph(State)
-    for name, fn in [("start_turn", start_turn), ("agent", agent), ("tools", tools), ("prepare_escalation", prepare_escalation),
+    for name, fn in [("start_turn", start_turn), ("query_plan", query_plan), ("agent", agent), ("tools", tools), ("prepare_escalation", prepare_escalation),
                      ("execute_escalation", execute_escalation), ("cite_check", cite_check)]:
         g.add_node(name, fn)
     g.add_edge(START, "start_turn")
-    g.add_edge("start_turn", "agent")
+    g.add_edge("start_turn", "query_plan")
+    g.add_conditional_edges("query_plan", after_plan, ["tools", "agent"])
     g.add_conditional_edges("agent", after_agent, ["tools", "cite_check"])
     g.add_conditional_edges("tools", after_tools, ["agent", "prepare_escalation", END])
     g.add_edge("prepare_escalation", "execute_escalation")

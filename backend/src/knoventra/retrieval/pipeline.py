@@ -3,11 +3,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from knoventra.access.scope import AccessScope, NoAccess, compute_scope
 from knoventra.config import settings
-from knoventra.db.models import User
+from knoventra.db.models import KnowledgeBase, User
 from knoventra.ingestion.encoder import Encoder
 from knoventra.retrieval.identifiers import evidence_identifiers
 from knoventra.retrieval.rerank import Reranker, rerank
@@ -25,6 +26,17 @@ class Outcome:
     missing_identifiers: list[str] = field(default_factory=list)
     ranked_evidence: list[Evidence] = field(default_factory=list)  # diagnostics only: final candidates before score gate
     degraded: list[str] = field(default_factory=list)  # e.g. ["es_unavailable"]; permissions never widen
+    route: dict | None = None  # {"requested": [kb names], "applied": bool}
+
+
+def narrow_scope(db: Session, scope: AccessScope, kb_names: list[str]) -> tuple[AccessScope, bool]:
+    """Intersect the readable set with the routed KBs. Never widens; an empty
+    intersection keeps the full readable set (returns applied=False)."""
+    ids = set(db.scalars(select(KnowledgeBase.id).where(KnowledgeBase.name.in_(kb_names))))
+    narrowed = scope.readable_kb_ids & ids
+    if not narrowed:
+        return scope, False
+    return AccessScope(scope.user_id, frozenset(narrowed)), True
 
 
 def gate_passes(e: Evidence, threshold: float) -> bool:
@@ -43,11 +55,15 @@ def gate_passes(e: Evidence, threshold: float) -> bool:
 
 def retrieve(db: Session, enc: Encoder, rr: Reranker | None, user: User, query: str, *,
              threshold: float | None = None, use_sparse: bool = True, use_opencc: bool = True,
-             original_query: str = "") -> Outcome:
+             original_query: str = "", route_kbs: list[str] | None = None) -> Outcome:
     try:
         scope: AccessScope = compute_scope(db, user)
     except NoAccess:
         return Outcome(NO_ACCESS)
+    route = None
+    if route_kbs:
+        scope, applied = narrow_scope(db, scope, route_kbs)
+        route = {"requested": list(route_kbs), "applied": applied}
     n = settings.rerank_candidates if rr else settings.final_top_k
     res = search(db, enc, scope, query, use_sparse=use_sparse, use_opencc=use_opencc, top_k=n,
                  original_query=original_query)
@@ -56,7 +72,7 @@ def retrieve(db: Session, enc: Encoder, rr: Reranker | None, user: User, query: 
         ev = rerank(rr, query, ev, settings.final_top_k)
     th = (settings.rerank_threshold if rr else settings.gate_threshold) if threshold is None else threshold
     diagnostics = {"required_identifiers": res.required_identifiers, "ranked_evidence": ev,
-                   "degraded": res.degraded}
+                   "degraded": res.degraded, "route": route}
     required = set(res.required_identifiers)
     covered = set().union(*(evidence_identifiers(e.section_path, e.text) for e in ev))
     missing = sorted(required - covered)

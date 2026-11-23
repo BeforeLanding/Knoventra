@@ -44,6 +44,15 @@ class Settings(BaseSettings):
     gate_threshold: float = 0.60
     gate_sparse_threshold: float = 0.03  # sparse inner-product arm; calibrated on dev + val2 (in-sample)
     max_tool_calls_per_turn: int = 4
+    # Query planning before the agent ("off" keeps v3 behaviour). Routing narrows scope only.
+    query_plan: Literal["off", "llm"] = "llm"
+    query_plan_timeout_s: float = Field(default=8.0, gt=0)
+    query_plan_min_confidence: float = Field(default=0.6, ge=0, le=1)
+    intent_kbs: dict[str, list[str]] = {
+        "case_sop": ["ops-global", "ops-cn", "field-sop", "field-cases"],
+        "policy": ["hr", "fin"],
+        "it_guide": ["it-public"],
+    }
     confirm_ttl_minutes: int = 30
     llm_base_url: str = ""
     llm_api_key: str = ""

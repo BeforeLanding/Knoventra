@@ -44,8 +44,12 @@ def get_graph():
     from langchain_openai import ChatOpenAI
 
     llm = ChatOpenAI(**chat_model_kwargs(), max_retries=1, streaming=True)
+    # Planner: same provider, no streaming (its node is never streamed to users), no retries
+    # so the planning timeout bounds the turn; failures fall back to the agent.
+    planner = (ChatOpenAI(**{**chat_model_kwargs(), "timeout": settings.query_plan_timeout_s}, max_retries=0)
+               if settings.query_plan == "llm" else None)
     saver, _pool = make_checkpointer(settings.database_url)
-    return build_graph(AgentDeps(_session, get_encoder(), get_reranker(), llm, saver))
+    return build_graph(AgentDeps(_session, get_encoder(), get_reranker(), llm, saver, planner))
 
 
 def sse(event: str, data) -> str:
