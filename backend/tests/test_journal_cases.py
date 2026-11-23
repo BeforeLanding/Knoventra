@@ -38,6 +38,9 @@ def _rec(content, topic="mix tank alarm", notes="", machine="610101", row=2, dat
     ("客户 IT 电话 13800138000，", "phone", "电话 [PHONE]，"),
     ("台湾手机 0912-345-678 联系", "phone", "[PHONE] 联系"),
     ("邮箱 it-desk@example.test", "email", "邮箱 [EMAIL]"),
+    ("进入工程模式，口令为Eng0420，", "password", "口令为[PASSWORD]，"),
+    ("密码是 Demo#1234", "password", "密码是 [PASSWORD]"),
+    ("設備密碼為abc123。", "password", "密碼為[PASSWORD]。"),
 ])
 def test_redaction_rules_hit(raw, kind, kept):
     text, found = redact(raw)

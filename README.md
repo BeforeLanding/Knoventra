@@ -24,6 +24,14 @@
 - **前端**：登录（演示账号切换）、聊天（流式、来源卡与预览、确认卡、拒答态、会话回放）、转交记录（本人列表、分页、刷新）、管理页（上传、修订、发布）。
 - **评测**：60 例评测集 + 四组各 28 例的验证 / 回归集、可复现的评测运行器；val5 对照直接度量精排后的候选，目标片段另有原文依据标注。结果见 [评测报告](docs/evaluation-report.md)。
 
+### v4 扩展（开发中，计划见 [v4 计划](docs/knoventra-v4-plan.md)）
+
+- **现场技术日志**：虚构的三地工程师日志与技能矩阵（`data/demo/generate_journals.py` 确定性生成）。模板按表头定位列，日志行和技能行可以混排在同一张表；入库前先脱敏（口令、电话、邮箱），再做精确去重和 SimHash + Jaccard 近似去重（只在同机型内合并），按规则抽取故障字段。去重后的案例可以发布到 `field-cases` 知识库，每个案例一个分块。
+- **Elasticsearch 关键词通道**：ES 8.15.3 + IK 分词，拼写纠错表和中英同义词；事务性 outbox 同步，并提供 `drain / reconcile / rebuild` 命令。ES 的每个命中都会回 PG 复查发布状态和读权限；ES 不可用时降级，不放宽权限。
+- **编号精确召回**：分块上的 `identifiers` 加 GIN 索引，按编号直接召回，不依赖向量 Top-K。
+- **加权 RRF**：按“是否含编号”使用两套权重，`rrf_weighting=equal` 为对照。现有评测集上加权和等权分不出差别，见 [DECISIONS](docs/DECISIONS.md) 第 66–70 条和评测报告第 25 节。
+- 之后的查询规划、机型澄清、技能查询、求助单和专家工作台等，进度以 v4 计划为准；没有经过付费 Agent 评测的部分，不报告效果数字。
+
 ## 未完成与已知问题
 
 - 评测规模很小：早期真实 LLM 报告使用 12 份虚构资料、21 个生效块；2026-11-09 已在当前 13 份资料、23 个生效块上完成一次真实 dev 20 例及留出集三组本地检索消融。评测集为 60 + 112 例，结果只说明对应语料与用例，不代表通用效果；Recall@5 在小语料下仍饱和。
@@ -47,7 +55,7 @@ docker compose -f deploy/compose.demo.yaml up --build -d --wait
 需要 Docker、[uv](https://docs.astral.sh/uv/)、Node 20+。真实检索需要 GPU 或较强 CPU 加载 BGE-M3（约 2.2GB，首次运行从 HuggingFace 下载）。
 
 ```bash
-docker compose -f deploy/compose.yaml up -d
+docker compose -f deploy/compose.yaml up -d        # PostgreSQL；另含 es 服务，首次会构建带 IK 插件的 ES 镜像（需联网）
 cd backend
 uv sync --extra ml
 uv run alembic upgrade head
@@ -64,7 +72,15 @@ cd web && npm install && npm run dev
 
 使用 DeepSeek 的工具调用时，在 `backend/.env` 显式设置 `KNV_LLM_THINKING=disabled` 并重启后端。其默认思考模式要求回传推理历史，当前通用适配器不保留该字段；其他服务保持 `provider-default`，不会额外发送供应商扩展。配置与限制见[后端说明](backend/README.md#explicit-provider-thinking-mode)。
 
-测试（使用独立的 `knoventra_test` 库和离线哈希编码器，不需要模型和 LLM）：
+启用 ES 关键词通道：在 `backend/.env` 设置 `KNV_ES_URL=http://localhost:59200`，然后执行 `uv run python -m knoventra.search_es.sync rebuild` 建立索引；之后发布修订会自动同步，`reconcile` 用于对账补齐。不设置 `KNV_ES_URL` 时只用 PG 的三个召回通道。
+
+导入现场日志并发布案例：
+
+```bash
+uv run python -m knoventra.ingestion.journal ../data/demo/journals/*.xlsx --registry ../data/demo/journals/machines.json --publish-kb field-cases
+```
+
+测试（使用独立的 `knoventra_test` 库和离线哈希编码器，不需要模型和 LLM；ES 相关测试在 `localhost:59200` 不可达时跳过，CI 中设置 `KNV_REQUIRE_ES=1`，不可达即失败）：
 
 ```bash
 cd backend && uv run pytest

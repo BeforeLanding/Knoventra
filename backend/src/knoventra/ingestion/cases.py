@@ -27,7 +27,8 @@ from knoventra.retrieval.identifiers import normalize_identifiers
 # ---------------------------------------------------------------- redaction
 
 _REDACTIONS: list[tuple[str, re.Pattern[str], str]] = [
-    ("password", re.compile(r"(口令|密码|密碼|password|passwd|pwd)(\s*[:：=]\s*|\s+)([^\s，,；;。）)]+)", re.IGNORECASE),
+    ("password", re.compile(r"(口令|密码|密碼|password|passwd|pwd)(\s*(?:[:：=]|为|為|是)\s*|\s+)([^\s，,；;。）)]+)",
+                            re.IGNORECASE),
      r"\1\2[PASSWORD]"),
     ("email", re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"), "[EMAIL]"),
     ("phone", re.compile(r"\+\d{1,3}[\s-]?\d{3,4}[\s-]?\d{3,4}(?:[\s-]?\d{1,4})?(?!\d)"), "[PHONE]"),

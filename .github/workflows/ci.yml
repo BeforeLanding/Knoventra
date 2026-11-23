@@ -17,7 +17,7 @@ jobs:
   backend:
     name: Backend and migrations
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -43,6 +43,8 @@ jobs:
       KNV_LLM_BASE_URL: ''
       KNV_LLM_MODEL: ''
       HF_HUB_OFFLINE: '1'
+      KNV_TEST_ES_URL: http://localhost:59200
+      KNV_REQUIRE_ES: '1'  # ES-backed tests must run here, not skip
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -55,6 +57,9 @@ jobs:
           cache-dependency-glob: backend/uv.lock
       - name: Install locked base and test dependencies
         run: uv sync --locked --group dev
+      - name: Start Elasticsearch with the pinned IK analyzer image
+        working-directory: .
+        run: docker compose -f deploy/compose.yaml up -d --build --wait es
       - name: Check fresh migration chain, schema and seed replay
         run: uv run --no-sync python dev/check_migrations.py
       - name: Run offline integration and regression tests

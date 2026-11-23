@@ -69,13 +69,14 @@ v4 推翻了 [DECISIONS.md](DECISIONS.md) 中“无 Redis、Elasticsearch”和�
 ### 3.2 Elasticsearch 通道（G2）
 
 - **部署**：Compose 中增加 ES 8.x，使用固定 digest 的自建镜像并安装中文分词插件（首选 IK，镜像构建失败时退回官方 smartcn）。测试用独立索引，按测试运行清理。
-- **映射**：
-  - `text`：索引时用细粒度分词，查询时用粗粒度分词，加 `synonym_graph`（领域同义词、拼写纠错表），英文术语开 `fuzziness: AUTO`。
-  - `identifiers`：`keyword` 字段，存 SOP 编号、阀门号、告警码。
-  - `kb_id`、`revision_status`、`machine_model`、`region`：放在 `filter` 子句里。
-- **同步**：PG 是唯一事实源。发布和撤销修订时，在同一个服务调用里写 ES；失败记入待同步表，由对账命令补齐。
-- **防越权**：ES 查询自带权限和版本过滤，融合前再按 chunk ID 回到 PG 校验 `PUBLISHED` 和可读 KB。这样即使 ES 里残留旧数据，也不会进入融合结果。测试中故意让 ES 留着旧修订，验证它被挡下。
-- **降级**：ES 超时或不可用时，只用 pgvector 两个通道，并在检索轨迹里写明 `es_unavailable`，不报错、不放宽权限。
+- **映射**（按实现更新）：
+  - `text`：索引时用 `ik_max_word`，查询时用 `ik_smart`。拼写纠错表在索引和查询两侧都生效；领域同义词用 `synonym_graph`，只在查询侧。英文的模糊匹配放在 `text.latin` 子字段（standard 分词，`fuzziness: AUTO`），因为 fuzziness 不能经过图同义词。索引和查询都用 OpenCC 简体化后的文本。
+  - `identifiers`：`keyword` 字段（大写归一），存 SOP 编号、阀门号、告警码，查询时用 terms 加权。
+  - `filter` 子句只有 `kb_id` 和 `revision_status`。`machine_model` 只写入索引，不参与过滤；机型过滤安排在 D7，在 PG 回表后按分块机型过滤。`region` 不建索引，区域权限已经由 KB 授权（`kb_id` 过滤）覆盖。
+- **同步**：PG 是唯一事实源。`publish()` 在改状态的同一事务里写事务性 outbox（`knv_es_outbox`）；提交后 drain 按 PG 当前状态重算该文档在 ES 中的分块。drain 只删除仍是读取时 `enqueued_at` 的 outbox 行，所以并发发布不会被吞掉。失败时保留 outbox 并记录错误，由 `reconcile`（按分块 ID 双向对账）补齐；`rebuild` 换别名后也会再对账一次。
+- **防越权**：ES 查询自带权限和版本过滤，融合前再按 chunk ID 回到 PG 校验 `PUBLISHED` 和可读 KB。这样即使 ES 里残留旧数据，也不会进入融合结果。测试中故意让 ES 留着旧修订和不可读的分块，验证它们被挡下。
+- **降级**：ES 超时或不可用时，用 dense、sparse 和编号精确通道 `ident` 三个 PG 通道继续检索，并在检索轨迹里写明 `es_unavailable`，不报错、不放宽权限。
+- **查询**：ES 用本次实际执行的查询（改写或子查询），用户原话里的编号通过 `identifiers` 一并带上。
 
 ### 3.3 加权 RRF
 
@@ -128,6 +129,7 @@ v4 推翻了 [DECISIONS.md](DECISIONS.md) 中“无 Redis、Elasticsearch”和�
 ## 4. 评测
 
 - **新评测集**（约 40 例，随数据一起版本化，划分为 dev 和冻结留出集）：拼写错误、编号、机型澄清、近似重复、一句多问、技能查询、求助状态、指代追问。
+  - 已完成的检索层集合 `cases_field_v1.jsonl`（39 例）覆盖：编号、拼写错误、同义词与中英混写、繁体、机型差异答案、历史案例（含近似重复的多样性对比）、普通问法和越权。机型澄清、一句多问、技能查询、求助状态、指代追问属于 Agent 层行为，要等付费的 Agent 评测，目前没有测量。
 - **检索层**（离线，不调用付费模型）：
   - 召回率@5 和 MRR，比较 pgvector 两通道、加入 ES、加权 RRF 三种配置
   - 去重对 Top-K 多样性的影响

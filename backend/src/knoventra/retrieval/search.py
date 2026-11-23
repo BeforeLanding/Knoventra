@@ -174,7 +174,9 @@ def search(db: Session, enc: Encoder, scope: AccessScope, query: str, *,
     channel = default_keyword_channel() if keyword is _AUTO else keyword
     if channel is not None:
         try:
-            es_ids = channel.search(original_query or query, readable, sorted(required), k)
+            # The executed query (a rewrite or sub-query), not the whole user message;
+            # codes from the user's message still arrive through `required`.
+            es_ids = channel.search(query, readable, sorted(required), k)
         except Exception as exc:  # noqa: BLE001 - any ES failure degrades to the pgvector channels
             degraded.append("es_unavailable")
             extra_stages["es_error"] = [type(exc).__name__]

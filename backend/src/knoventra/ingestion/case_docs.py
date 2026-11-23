@@ -21,7 +21,8 @@ RESOLVED = {True: "已解决", False: "未解决（待跟踪）", None: "未知"
 
 
 def case_title(case: JournalCase) -> str:
-    return f"CASE-{case.text_key[:8].upper()} {case.topic}"[:TITLE_MAX_CHARS]
+    # 16 hex chars: titles identify documents, so an 8-char prefix could merge two cases.
+    return f"CASE-{case.text_key[:16].upper()} {case.topic}"[:TITLE_MAX_CHARS]
 
 
 def render_case(case: JournalCase) -> str:

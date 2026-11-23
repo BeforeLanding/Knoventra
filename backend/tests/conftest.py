@@ -70,6 +70,8 @@ def es():
     try:
         client.info()
     except Exception as exc:  # noqa: BLE001
+        if os.environ.get("KNV_REQUIRE_ES"):  # CI: a missing ES must fail, not silently skip
+            pytest.fail(f"Elasticsearch required but not reachable at {ES_URL}: {exc}")
         pytest.skip(f"Elasticsearch not reachable at {ES_URL}: {exc}")
     return client
 

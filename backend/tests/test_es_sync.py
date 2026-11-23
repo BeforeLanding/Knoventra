@@ -136,3 +136,16 @@ def test_deleted_document_is_purged_from_es(db, es, alias):
     db.execute(delete(Document).where(Document.id == doc.id))
     assert not drain(db, es, alias).failed
     assert not _es_ids(es, alias, document_id=doc.id)
+
+
+def test_release_keeps_documents_re_enqueued_after_the_snapshot(db):
+    from knoventra.search_es.sync import _claim, _release, enqueue
+
+    docs = list(db.scalars(select(Document.id).order_by(Document.id).limit(2)))
+    db.execute(EsOutbox.__table__.delete())
+    for doc_id in docs:
+        enqueue(db, doc_id)
+    claimed = _claim(db)
+    enqueue(db, docs[0])  # a publish lands after the snapshot: enqueued_at moves forward
+    assert _release(db, claimed) == 1
+    assert list(db.scalars(select(EsOutbox.document_id))) == [docs[0]]

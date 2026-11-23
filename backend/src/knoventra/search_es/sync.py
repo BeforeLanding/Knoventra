@@ -17,9 +17,10 @@ import json
 import logging
 import time
 from dataclasses import dataclass, field
+from functools import lru_cache
 
 from elasticsearch import Elasticsearch, helpers
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import delete, func, select, tuple_, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
@@ -37,7 +38,28 @@ def get_client() -> Elasticsearch | None:
     """None when ES is not configured; callers then skip the keyword channel."""
     if not settings.es_url:
         return None
-    return Elasticsearch(settings.es_url, request_timeout=settings.es_timeout_s, max_retries=0)
+    return _client(settings.es_url, settings.es_timeout_s)
+
+
+@lru_cache(maxsize=4)
+def _client(url: str, timeout: float) -> Elasticsearch:
+    return Elasticsearch(url, request_timeout=timeout, max_retries=0)
+
+
+def _claim(db: Session, limit: int | None = None) -> list[tuple[int, str, dt.datetime]]:
+    """Snapshot outbox rows (id, document_id, enqueued_at) BEFORE reading PG state."""
+    stmt = select(EsOutbox.id, EsOutbox.document_id, EsOutbox.enqueued_at).order_by(EsOutbox.enqueued_at)
+    return [tuple(r) for r in db.execute(stmt.limit(limit) if limit else stmt)]
+
+
+def _release(db: Session, claimed: list[tuple[int, str, dt.datetime]]) -> int:
+    """Delete only rows still holding the enqueued_at we read. A publish that re-enqueued the
+    same document meanwhile has moved enqueued_at forward, so its row survives for the next
+    drain; if that publish is still uncommitted, this DELETE waits for it and then skips it."""
+    if not claimed:
+        return 0
+    return db.execute(delete(EsOutbox).where(
+        tuple_(EsOutbox.id, EsOutbox.enqueued_at).in_([(i, at) for i, _, at in claimed]))).rowcount
 
 
 def ensure_index(es: Elasticsearch, alias: str) -> str:
@@ -58,28 +80,32 @@ def enqueue(db: Session, document_id: str) -> None:
                                       set_={"enqueued_at": func.clock_timestamp()}))
 
 
-def _es_doc(c: Chunk, rev: Revision, doc: Document) -> dict:
-    text = normalize_identifiers(c.text_norm)  # text_norm is already OpenCC-simplified
-    section = to_simplified(normalize_identifiers(c.section_path))
+def _es_doc(r) -> dict:
+    text = normalize_identifiers(r.text_norm)  # text_norm is already OpenCC-simplified
+    section = to_simplified(normalize_identifiers(r.section_path))
     return {
-        "chunk_id": c.id, "document_id": doc.id, "revision_id": rev.id, "kb_id": c.kb_id,
-        "revision_status": rev.status, "lang": doc.source_lang,
+        "chunk_id": r.chunk_id, "document_id": r.document_id, "revision_id": r.revision_id, "kb_id": r.kb_id,
+        "revision_status": r.status, "lang": r.source_lang,
         "machine_model": models_from_text(f"{section}\n{text}"),
+        # Region is not indexed: KB grants already carry regional access (see plan 3.2).
         "region": [],
-        "identifiers": sorted(evidence_identifiers(c.section_path, c.text)),
-        "title": to_simplified(doc.title), "section_path": section, "text": text,
-        "published_at": rev.published_at.isoformat() if rev.published_at else None,
+        "identifiers": sorted(evidence_identifiers(r.section_path, r.text)),
+        "title": to_simplified(r.title), "section_path": section, "text": text,
+        "published_at": r.published_at.isoformat() if r.published_at else None,
     }
 
 
 def published_docs(db: Session, document_ids: list[str] | None = None) -> list[dict]:
-    stmt = (select(Chunk, Revision, Document)
+    # Text columns only: never load the dense/sparse vectors just to build keyword documents.
+    stmt = (select(Chunk.id.label("chunk_id"), Chunk.kb_id, Chunk.section_path, Chunk.text, Chunk.text_norm,
+                   Revision.id.label("revision_id"), Revision.status, Revision.published_at,
+                   Document.id.label("document_id"), Document.title, Document.source_lang)
             .join(Revision, Revision.id == Chunk.revision_id)
             .join(Document, Document.id == Revision.document_id)
             .where(Revision.status == "PUBLISHED"))
     if document_ids is not None:
         stmt = stmt.where(Document.id.in_(document_ids))
-    return [_es_doc(c, r, d) for c, r, d in db.execute(stmt.order_by(Chunk.id))]
+    return [_es_doc(r) for r in db.execute(stmt.order_by(Chunk.id))]
 
 
 def _sync_documents(es: Elasticsearch, alias: str, db: Session, document_ids: list[str]) -> int:
@@ -105,11 +131,11 @@ class DrainResult:
 def drain(db: Session, es: Elasticsearch, alias: str | None = None, *, limit: int = 500) -> DrainResult:
     """Push queued documents to ES. Commits nothing itself; removes rows only after ES accepted them."""
     alias = alias or settings.es_index
-    rows = db.scalars(select(EsOutbox).order_by(EsOutbox.enqueued_at).limit(limit)).all()
+    claimed = _claim(db, limit)
     out = DrainResult()
-    if not rows:
+    if not claimed:
         return out
-    ids = [r.document_id for r in rows]
+    ids = sorted({doc for _, doc, _ in claimed})
     try:
         ensure_index(es, alias)
         out.indexed_chunks = _sync_documents(es, alias, db, ids)
@@ -119,7 +145,7 @@ def drain(db: Session, es: Elasticsearch, alias: str | None = None, *, limit: in
                    .values(attempts=EsOutbox.attempts + 1, last_error=str(exc)[:500]))
         out.failed = ids
         return out
-    db.execute(delete(EsOutbox).where(EsOutbox.id.in_([r.id for r in rows])))
+    _release(db, claimed)
     out.synced_documents = len(ids)
     return out
 
@@ -153,6 +179,7 @@ def reconcile(db: Session, es: Elasticsearch, alias: str | None = None) -> Recon
     """Make ES equal to PG's published chunks in both directions, then clear the outbox."""
     alias = alias or settings.es_index
     ensure_index(es, alias)
+    claimed = _claim(db)  # only events seen before the snapshot below are cleared
     docs = {d["chunk_id"]: d for d in published_docs(db)}
     present = _es_ids(es, alias)
     missing = [docs[i] for i in docs.keys() - present]
@@ -163,12 +190,16 @@ def reconcile(db: Session, es: Elasticsearch, alias: str | None = None) -> Recon
     if stale:
         helpers.bulk(es, ({"_op_type": "delete", "_index": alias, "_id": i} for i in stale), raise_on_error=False)
     es.indices.refresh(index=alias)
-    cleared = db.execute(delete(EsOutbox)).rowcount
+    cleared = _release(db, claimed)
     return ReconcileResult(len(missing), len(stale), cleared)
 
 
 def rebuild(db: Session, es: Elasticsearch, alias: str | None = None) -> str:
-    """Reindex from PG into a new physical index, then swap the alias atomically."""
+    """Reindex from PG into a new physical index, swap the alias atomically, then reconcile.
+
+    Drains that ran during the bulk load wrote to the old index, which is deleted after
+    the swap; the closing reconcile compares chunk ids (new revisions mean new ids) and
+    repairs anything they changed."""
     alias = alias or settings.es_index
     name = physical_name(alias, dt.datetime.now(dt.UTC).strftime("%Y%m%d%H%M%S") + f"{time.time_ns() % 1000:03d}")
     es.indices.create(index=name, **index_body())
@@ -179,7 +210,7 @@ def rebuild(db: Session, es: Elasticsearch, alias: str | None = None) -> str:
                               + [{"add": {"index": name, "alias": alias}}])
     for o in old:
         es.indices.delete(index=o)
-    db.execute(delete(EsOutbox))
+    reconcile(db, es, alias)
     return name
 
 

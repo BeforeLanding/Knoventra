@@ -105,3 +105,15 @@ def test_pipeline_reports_degraded(db, enc, users, monkeypatch):
     monkeypatch.setattr(pipeline, "search", lambda *a, **kw: SearchResult([], {}, degraded=["es_unavailable"]))
     out = pipeline.retrieve(db, enc, None, users["sg-ops"], "anything")
     assert out.status == pipeline.INSUFFICIENT and out.degraded == ["es_unavailable"]
+
+
+def test_keyword_channel_searches_the_executed_query(db, enc, users):
+    seen = []
+
+    class Recorder:
+        def search(self, query, readable, identifiers, k):
+            seen.append((query, identifiers))
+            return []
+    scope = compute_scope(db, users["sg-ops"])
+    res = search(db, enc, scope, "CDA 保压多久", original_query="EMO 测试前通知谁，CDA 保压多久 E17-07", keyword=Recorder())
+    assert seen == [("CDA 保压多久", ["E17-07"])] and res.degraded == []

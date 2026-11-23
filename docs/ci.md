@@ -8,6 +8,7 @@
 
 - Ubuntu 24.04、Python 3.12、uv 0.12.13。
 - PostgreSQL 16 + pgvector 服务，仅使用 job 内的演示账号和测试数据库。
+- Elasticsearch：`docker compose -f deploy/compose.yaml up -d --build --wait es` 构建固定 digest、校验 IK 插件 SHA-256 的镜像（端口 59200）。job 设置 `KNV_TEST_ES_URL` 和 `KNV_REQUIRE_ES=1`，ES 不可达时 ES 相关测试直接失败，不会被跳过。
 - `uv sync --locked --group dev`，不启用可选 `ml` 依赖，不下载 BGE 模型。
 - `KNV_ENCODER=hash`、`KNV_RERANK=off`，LLM 配置显式为空、HuggingFace 离线。测试的模型使用脚本替身。
 - `uv run --no-sync python dev/check_migrations.py`，然后 `uv run --no-sync pytest -q --tb=short`。
