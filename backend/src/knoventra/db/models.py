@@ -162,6 +162,7 @@ class HelpRequest(Base):
     updated_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())
     resolved_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     closed_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    case_document_id: Mapped[str | None] = mapped_column(ForeignKey("knv_document.id"))  # draft/published case
     __table_args__ = (
         UniqueConstraint("user_id", "operation_id", name="knv_help_request_user_id_operation_id_key"),
         CheckConstraint("status IN ('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'CANCELLED')",

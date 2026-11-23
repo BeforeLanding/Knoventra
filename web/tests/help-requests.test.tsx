@@ -84,3 +84,14 @@ it('explains a conflict instead of failing silently', async () => {
   fireEvent.click(await screen.findByRole('button', { name: '撤销' }))
   expect((await screen.findByRole('alert')).textContent).toContain('状态已变化')
 })
+
+it('shows whether the resolution has become a searchable case', async () => {
+  const resolved = item({ status: 'RESOLVED', resolution: '更换传感器', case_document_id: 'd1', case_status: 'DRAFT',
+    events: [{ action: 'case_draft', from_status: 'RESOLVED', to_status: 'RESOLVED', note: '已生成案例草稿 v1，等待审核发布', actor: '系统', at: '2026-11-23T00:00:00Z' }] })
+  vi.mocked(api.helpRequests).mockResolvedValue({ items: [resolved] })
+  vi.mocked(api.helpRequest).mockResolvedValue(resolved)
+  render(<HelpRequests mode="mine" isAdmin={false} />)
+  fireEvent.click(await screen.findByText(/pump 不转/))
+  await screen.findByText('草稿，等待管理员在资料管理中审核发布')
+  expect(screen.getByText(/生成案例草稿/)).toBeTruthy()
+})

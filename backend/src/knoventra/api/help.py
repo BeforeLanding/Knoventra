@@ -14,9 +14,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from knoventra.api.deps import current_user, get_db, require_admin
-from knoventra.db.models import HelpRequest, User
+from knoventra.db.models import HelpRequest, Revision, User
 from knoventra.help.recommend import recommend
+from knoventra.help.sediment import draft_case
 from knoventra.help.service import HelpError, events, roles, transition
+from knoventra.ingestion.encoder import get_encoder
 
 router = APIRouter(prefix="/api/v1")
 HTTP = {"NOT_FOUND": 404, "FORBIDDEN": 403, "INVALID_TRANSITION": 409, "INVALID_INPUT": 422}
@@ -42,7 +44,8 @@ def _item(r: HelpRequest, names: dict[str, str], viewer: User) -> dict:
             "machine_model": r.machine_model, "alarm_codes": r.alarm_codes or [], "symptom": r.symptom,
             "tried_steps": r.tried_steps, "resolution": r.resolution, "requester": names.get(r.user_id),
             "assignee": names.get(r.assignee_id), "assignee_id": r.assignee_id, "created_at": r.created_at,
-            "updated_at": r.updated_at, "my_roles": sorted(roles(r, viewer))}
+            "updated_at": r.updated_at, "my_roles": sorted(roles(r, viewer)),
+            "case_document_id": r.case_document_id}
 
 
 def _visible(db: Session, request_id: str, user: User) -> HelpRequest:
@@ -74,7 +77,11 @@ def help_request(request_id: str, user: User = Depends(current_user), db: Sessio
     r = _visible(db, request_id, user)
     trail = events(db, r.id)
     names = _names(db, [r.user_id, r.assignee_id, *(e.actor_id for e in trail)])
-    return {**_item(r, names, user),
+    case_status = None
+    if r.case_document_id:
+        statuses = set(db.scalars(select(Revision.status).where(Revision.document_id == r.case_document_id)))
+        case_status = "PUBLISHED" if "PUBLISHED" in statuses else "DRAFT" if "DRAFT" in statuses else "RETIRED"
+    return {**_item(r, names, user), "case_status": case_status,
             "events": [{"action": e.action, "from_status": e.from_status, "to_status": e.to_status, "note": e.note,
                         "actor": names.get(e.actor_id) if e.actor_id else "系统", "at": e.at} for e in trail]}
 
@@ -82,8 +89,11 @@ def help_request(request_id: str, user: User = Depends(current_user), db: Sessio
 @router.post("/help-requests/{request_id}/actions")
 def act(request_id: str, body: ActionBody, user: User = Depends(current_user), db: Session = Depends(get_db)):
     try:
-        transition(db, request_id, user, body.action, note=body.note, assignee_id=body.assignee_id,
-                   resolution=body.resolution)
+        req = transition(db, request_id, user, body.action, note=body.note, assignee_id=body.assignee_id,
+                         resolution=body.resolution)
+        if body.action == "resolve":
+            # Same transaction: a resolution never exists without its review draft.
+            draft_case(db, get_encoder(), req)
         db.commit()
     except HelpError as e:
         db.rollback()

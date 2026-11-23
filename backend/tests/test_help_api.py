@@ -117,7 +117,8 @@ def test_requester_expert_and_dispatcher_flow(client, db, users):
     mine = client.get("/api/v1/help-requests", headers=h(requester)).json()["items"]
     assert mine[0]["id"] == req.id and mine[0]["assignee"] == "Tan Wei Ming"
     detail = act(client, requester, req.id, "close").json()
-    assert [e["action"] for e in detail["events"]] == ["created", "assign", "start", "progress", "resolve", "close"]
+    assert [e["action"] for e in detail["events"]] == ["created", "assign", "start", "progress", "resolve",
+                                                       "case_draft", "close"]
     assert detail["events"][-1]["actor"] == requester.email
 
 

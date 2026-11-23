@@ -16,7 +16,8 @@ export type HelpEvent = { action: string; from_status: string | null; to_status:
 export type HelpItem = { id: string; kind: string; status: string; summary: string; machine_id: string | null;
   machine_model: string | null; alarm_codes: string[]; symptom: string; tried_steps: string; resolution: string;
   requester: string | null; assignee: string | null; assignee_id: string | null; created_at: string | null;
-  updated_at: string; my_roles: string[]; events?: HelpEvent[] }
+  updated_at: string; my_roles: string[]; events?: HelpEvent[]; case_document_id?: string | null;
+  case_status?: 'DRAFT' | 'PUBLISHED' | 'RETIRED' | null }
 export type HelpAction = { action: string; note?: string; assignee_id?: string; resolution?: string }
 export type HelpCandidate = { user_id: string; engineer: string; reason: string }
 export type ConversationSummary = { id: string; title: string; created_at?: string }

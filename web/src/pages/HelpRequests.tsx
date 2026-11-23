@@ -4,7 +4,10 @@ import { allowedActions, HELP_STATUS } from '../help'
 
 const ACTION_LABEL: Record<string, string> = {
   created: '创建', assign: '派单', unassign: '取消派单', start: '开始处理', progress: '进展', resolve: '提交解决方案',
-  reopen: '重新打开', close: '确认关闭', cancel: '撤销',
+  reopen: '重新打开', close: '确认关闭', cancel: '撤销', case_draft: '生成案例草稿',
+}
+const CASE_STATUS: Record<string, string> = {
+  DRAFT: '草稿，等待管理员在资料管理中审核发布', PUBLISHED: '已发布到现场案例库，可被检索', RETIRED: '已撤下',
 }
 type Scope = 'mine' | 'assigned' | 'queue'
 
@@ -107,6 +110,7 @@ export default function HelpRequests({ mode, isAdmin }: { mode: 'mine' | 'workbe
             <dt>提问人</dt><dd>{selected.requester ?? '—'}</dd>
             <dt>负责人</dt><dd>{selected.assignee ?? '待派单'}</dd>
             {selected.resolution && <><dt>解决方案</dt><dd>{selected.resolution}</dd></>}
+            {selected.case_status && <><dt>案例沉淀</dt><dd>{CASE_STATUS[selected.case_status]}</dd></>}
           </dl>
           {actions.length > 0 && <div className="help-actions">
             {needsText && <textarea aria-label="说明" value={text} onChange={e => setText(e.target.value)}
