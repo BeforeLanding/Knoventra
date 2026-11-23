@@ -33,7 +33,8 @@ def test_identical_channel_texts_are_encoded_once(query, opencc, expected):
     enc.encode.return_value = [pair()]
     module.search(db, enc, SCOPE, query, use_opencc=opencc)
     enc.encode.assert_called_once_with([expected])
-    assert db.execute.call_count == 3  # session setting and both recall channels
+    # Session setting and both vector channels, plus the exact-code channel when the query has a code.
+    assert db.execute.call_count == 3 + ("-" in expected)
 
 
 def test_distinct_scripts_share_one_validated_batch_and_keep_channel_identity():

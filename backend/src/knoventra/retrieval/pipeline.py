@@ -24,6 +24,7 @@ class Outcome:
     required_identifiers: list[str] = field(default_factory=list)
     missing_identifiers: list[str] = field(default_factory=list)
     ranked_evidence: list[Evidence] = field(default_factory=list)  # diagnostics only: final candidates before score gate
+    degraded: list[str] = field(default_factory=list)  # e.g. ["es_unavailable"]; permissions never widen
 
 
 def gate_passes(e: Evidence, threshold: float) -> bool:
@@ -54,7 +55,8 @@ def retrieve(db: Session, enc: Encoder, rr: Reranker | None, user: User, query: 
     if rr:
         ev = rerank(rr, query, ev, settings.final_top_k)
     th = (settings.rerank_threshold if rr else settings.gate_threshold) if threshold is None else threshold
-    diagnostics = {"required_identifiers": res.required_identifiers, "ranked_evidence": ev}
+    diagnostics = {"required_identifiers": res.required_identifiers, "ranked_evidence": ev,
+                   "degraded": res.degraded}
     required = set(res.required_identifiers)
     covered = set().union(*(evidence_identifiers(e.section_path, e.text) for e in ev))
     missing = sorted(required - covered)

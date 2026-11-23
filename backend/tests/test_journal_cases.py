@@ -159,15 +159,12 @@ def test_new_near_duplicate_merges_into_stored_case(db):
     assert case.occurrences == 2 and case.regions == ["CN"] and case.resolved is True
 
 
-def test_sop_addon_manifest_seeds_on_top_of_the_demo(db, enc, users):
+def test_demo_seed_includes_sops_for_ops_only(db, users):
     from knoventra.access.scope import compute_scope
     from knoventra.db.models import Document, KnowledgeBase, Revision
-    from knoventra.db.seed import seed
 
-    manifest = JOURNALS.parent / "manifest.sop.json"
-    created = seed(db, enc, manifest)
-    assert len(created) == 10 and seed(db, enc, manifest) == {}
     kb = db.scalar(select(KnowledgeBase).where(KnowledgeBase.name == "field-sop"))
+    assert db.scalar(select(func.count()).select_from(Document).where(Document.kb_id == kb.id)) == 10
     mixtank = db.scalar(select(Document).where(Document.kb_id == kb.id, Document.title.like("SOP-WCL-380110-001%")))
     statuses = db.execute(select(Revision.version, Revision.status).where(Revision.document_id == mixtank.id)
                           .order_by(Revision.version)).all()

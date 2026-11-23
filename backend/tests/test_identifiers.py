@@ -73,7 +73,8 @@ def test_query_joining_does_not_modify_source_matching_or_unrelated_prose():
 def test_match_happens_before_top_k_and_ignores_document_title(enc):
     # A correct inherited section is ranked sixth. An unrelated chunk uses the
     # exact code in its document title only; it must not become valid evidence.
-    rows = [SimpleNamespace(id=str(i), dist=0.01 * i, doc_id="manual", title="ZX7-21 manual",
+    # The mock serves the dense query and the exact-code (ident) query alike.
+    rows = [SimpleNamespace(id=str(i), dist=0.01 * i, ddist=0.01 * i, sdist=None, doc_id="manual", title="ZX7-21 manual",
                             version=1, page=i, section_path="Overview", text="General instructions", source_lang="en")
             for i in range(6)]
     rows[-1].section_path = "Fault ZX7-21 > Recovery"

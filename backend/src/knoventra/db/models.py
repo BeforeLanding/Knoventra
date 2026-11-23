@@ -4,6 +4,7 @@ import datetime as dt
 import uuid
 
 from pgvector.sqlalchemy import SPARSEVEC, Vector
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy import (
     JSON,
     BigInteger,
@@ -93,6 +94,8 @@ class Chunk(Base):
     text_norm: Mapped[str] = mapped_column(Text)
     dense = mapped_column(Vector(settings.dense_dim))
     sparse = mapped_column(SPARSEVEC(settings.sparse_dim))
+    # Canonical codes in section path + text (retrieval.identifiers); exact-code recall channel.
+    identifiers: Mapped[list[str]] = mapped_column(ARRAY(String(64)), default=list, server_default="{}")
 
 
 class Conversation(Base):
@@ -223,6 +226,7 @@ class EsOutbox(Base):
 
 
 Index("ix_knv_skill_key_level", Skill.skill_key, Skill.level)
+Index("ix_knv_chunk_identifiers", Chunk.identifiers, postgresql_using="gin")
 Index("ix_knv_chunk_dense", Chunk.dense, postgresql_using="hnsw",
       postgresql_with={"m": 16, "ef_construction": 64},
       postgresql_ops={"dense": "vector_cosine_ops"})

@@ -26,9 +26,9 @@ def kb_names(db, ev):
 
 
 EXPECTED_KBS = {
-    "sg-ops": {"ops-global", "it-public"},
-    "tw-ops": {"ops-global", "it-public"},
-    "cn-ops": {"ops-global", "ops-cn", "it-public"},
+    "sg-ops": {"ops-global", "field-sop", "it-public"},
+    "tw-ops": {"ops-global", "field-sop", "it-public"},
+    "cn-ops": {"ops-global", "ops-cn", "field-sop", "it-public"},
     "hr": {"hr", "it-public"},
     "fin": {"fin", "it-public"},
     "admin": {"it-public"},

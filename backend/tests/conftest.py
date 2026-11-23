@@ -1,4 +1,5 @@
 import os
+import uuid
 from pathlib import Path
 
 import pytest
@@ -55,3 +56,28 @@ def enc():
 @pytest.fixture
 def users(db):
     return {u.email.split("@")[0]: u for u in db.scalars(select(User))}
+
+
+# Elasticsearch (compose service `es`); tests using these skip when it is unreachable.
+ES_URL = os.environ.get("KNV_TEST_ES_URL", "http://localhost:59200")
+
+
+@pytest.fixture(scope="session")
+def es():
+    from elasticsearch import Elasticsearch
+
+    client = Elasticsearch(ES_URL, request_timeout=10, max_retries=0)
+    try:
+        client.info()
+    except Exception as exc:  # noqa: BLE001
+        pytest.skip(f"Elasticsearch not reachable at {ES_URL}: {exc}")
+    return client
+
+
+@pytest.fixture
+def alias(es):
+    name = f"knv_test_{uuid.uuid4().hex[:10]}"
+    yield name
+    # ES 8 refuses wildcard deletes (action.destructive_requires_name); resolve names first.
+    for index in es.indices.get(index=f"{name}-*", allow_no_indices=True, ignore_unavailable=True):
+        es.indices.delete(index=index)

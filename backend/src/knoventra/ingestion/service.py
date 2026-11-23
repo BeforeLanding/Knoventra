@@ -12,6 +12,7 @@ from knoventra.db.models import Chunk, Document, Revision
 from knoventra.ingestion.chunking import chunk_file
 from knoventra.ingestion.encoder import Encoder, encode_checked
 from knoventra.ingestion.normalize import to_simplified
+from knoventra.retrieval.identifiers import evidence_identifiers
 
 TITLE_MAX_CHARS = 255
 SUPPORTED_LANGUAGES = ("zh-Hans", "zh-Hant", "en")
@@ -63,7 +64,8 @@ def add_revision(db: Session, enc: Encoder, *, kb_id: str, title: str, lang: str
     db.flush()
     for c, n, (d, _), (_, s) in zip(chunks, norms, dense, sparse, strict=True):
         db.add(Chunk(revision_id=rev.id, kb_id=kb_id, page=c.page, section_path=c.section_path,
-                     text=c.text, text_norm=n, dense=d, sparse=_sparse(s)))
+                     text=c.text, text_norm=n, dense=d, sparse=_sparse(s),
+                     identifiers=sorted(evidence_identifiers(c.section_path, c.text))))
     db.flush()
     return rev
 

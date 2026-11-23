@@ -3,37 +3,10 @@
 Needs the compose `es` service (KNV_TEST_ES_URL, default http://localhost:59200).
 Every test uses its own alias and deletes its indices afterwards.
 """
-import os
-import uuid
-from pathlib import Path
-
 import pytest
 from sqlalchemy import func, select
 
 from knoventra.db.models import Chunk, Document, EsOutbox, Revision
-
-ES_URL = os.environ.get("KNV_TEST_ES_URL", "http://localhost:59200")
-
-
-@pytest.fixture(scope="module")
-def es():
-    from elasticsearch import Elasticsearch
-
-    client = Elasticsearch(ES_URL, request_timeout=10, max_retries=0)
-    try:
-        client.info()
-    except Exception as exc:  # noqa: BLE001
-        pytest.skip(f"Elasticsearch not reachable at {ES_URL}: {exc}")
-    return client
-
-
-@pytest.fixture
-def alias(es):
-    name = f"knv_test_{uuid.uuid4().hex[:10]}"
-    yield name
-    # ES 8 refuses wildcard deletes (action.destructive_requires_name); resolve names first.
-    for index in es.indices.get(index=f"{name}-*", allow_no_indices=True, ignore_unavailable=True):
-        es.indices.delete(index=index)
 
 
 def _tokens(es, index, analyzer, text):
@@ -79,11 +52,11 @@ def test_publish_enqueues_in_the_same_transaction(db, enc, tmp_path):
 
 
 def test_drain_indexes_only_the_published_revision(db, enc, es, alias):
-    from knoventra.db.seed import seed
     from knoventra.ingestion.service import publish
-    from knoventra.search_es.sync import drain
+    from knoventra.search_es.sync import drain, enqueue
 
-    seed(db, enc, Path(__file__).resolve().parents[2] / "data" / "demo" / "manifest.sop.json")
+    for doc_id in db.scalars(select(Document.id)):
+        enqueue(db, doc_id)
     result = drain(db, es, alias)
     assert not result.failed and result.synced_documents >= 10
     mixtank = db.scalar(select(Document).where(Document.title.like("SOP-WCL-380110-001%")))

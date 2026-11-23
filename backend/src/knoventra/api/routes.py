@@ -57,7 +57,7 @@ def debug_search(q: str, sparse: bool = True, opencc: bool = True,
     except NoAccess:
         return {"error": "NO_ACCESS", "evidence": [], "stages": {}}
     res = search(db, get_encoder(), scope, q, use_sparse=sparse, use_opencc=opencc)
-    return {"evidence": [e.__dict__ for e in res.evidence], "stages": res.stages,
+    return {"evidence": [e.__dict__ for e in res.evidence], "stages": res.stages, "degraded": res.degraded,
             "identifiers": {"required": res.required_identifiers, "missing": res.missing_identifiers}}
 
 

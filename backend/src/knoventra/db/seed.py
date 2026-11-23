@@ -23,7 +23,7 @@ def seed(db: Session, enc: Encoder, manifest_path: Path = DEFAULT_MANIFEST) -> d
     """Idempotent. Returns {doc title: [revision ids by version]} for tests/CLI."""
     m = json.loads(manifest_path.read_text(encoding="utf-8"))
     base = manifest_path.parent / "docs"
-    # Add-on manifests (e.g. manifest.sop.json) may define KBs and documents only.
+    # Add-on manifests may define KBs and documents only (no users).
     pw = hash_password(m["password"]) if m.get("users") else None
     for u in m.get("users", []):
         if not db.scalar(select(User).where(User.email == u["email"])):
