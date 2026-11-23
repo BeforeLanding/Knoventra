@@ -23,7 +23,8 @@ CASE_KB = "field-cases"
 
 
 def case_title(req: HelpRequest) -> str:
-    return f"HELP-{req.id[:8].upper()} {req.symptom or req.summary.splitlines()[0]}"[:TITLE_MAX_CHARS]
+    # Titles are stored, indexed and shown on source cards: redact them like the body.
+    return redact(f"HELP-{req.id[:16].upper()} {req.symptom or req.summary.splitlines()[0]}")[0][:TITLE_MAX_CHARS]
 
 
 def render(db: Session, req: HelpRequest) -> str:

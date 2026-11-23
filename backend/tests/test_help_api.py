@@ -60,9 +60,9 @@ def test_no_proficient_engineer_means_dispatch_queue(db, users, skills):
 
 def test_system_assignment_only_touches_open_unassigned_requests(db, users):
     req = new_request(db, users["sg-ops"])
-    transition(db, req.id, users["admin"], "assign", assignee_id=users["cn-ops"].id)
+    transition(db, req.id, users["admin"], "assign", assignee_id=users["lin.boyu"].id)
     assign_by_system(db, req.id, engineer(db, "Zhou Lan").id, "late replay")
-    assert req.assignee_id == users["cn-ops"].id and [e.action for e in events(db, req.id)] == ["created", "assign"]
+    assert req.assignee_id == users["lin.boyu"].id and [e.action for e in events(db, req.id)] == ["created", "assign"]
 
 
 def test_confirmed_card_shows_reason_and_auto_assigns(db, enc, users, skills):

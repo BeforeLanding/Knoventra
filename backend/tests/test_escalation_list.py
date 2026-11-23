@@ -102,3 +102,14 @@ def test_created_date_is_generated_and_migration_keeps_unknown_history(db, users
     db.add(newer)
     db.flush()
     assert newer.created_at is not None
+
+
+def test_escalation_list_excludes_field_help(client, db, users):
+    from knoventra.help.service import create_request
+
+    user = users["sg-ops"]
+    create_request(db, request_id=uuid.uuid4().hex, requester_id=user.id, operation_id=uuid.uuid4().hex,
+                   kind="field_help", summary="现场求助", evidence_refs=[], slots={"machine_id": "630301"})
+    esc = record(db, user, 7, None)
+    items = client.get("/api/v1/escalations", headers=headers(user)).json()["items"]
+    assert [i["id"] for i in items] == [esc.id]

@@ -397,7 +397,8 @@ def _escalation_record(e: Escalation) -> dict:
 @router.get("/escalations")
 def escalations(before: str | None = None, limit: int = Query(20, ge=1, le=100),
                 user: User = Depends(current_user), db: Session = Depends(get_db)):
-    query = select(Escalation).where(Escalation.user_id == user.id)
+    # Field help requests have their own page; this v3 list stays expert escalations only.
+    query = select(Escalation).where(Escalation.user_id == user.id, Escalation.kind == "expert_escalation")
     if before is not None:
         anchor = db.scalar(select(Escalation).where(Escalation.id == before, Escalation.user_id == user.id))
         if anchor is None:

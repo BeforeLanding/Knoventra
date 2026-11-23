@@ -30,7 +30,7 @@ def test_creation_is_idempotent_and_writes_one_event(db, users):
 
 def test_full_lifecycle_is_audited(db, users):
     req = _new(db, users)
-    admin, expert, requester = users["admin"], users["cn-ops"], users["sg-ops"]
+    admin, expert, requester = users["admin"], users["lin.boyu"], users["sg-ops"]
     transition(db, req.id, admin, "assign", assignee_id=expert.id)
     transition(db, req.id, expert, "start")
     transition(db, req.id, expert, "progress", note="已远程查看 alarm log")
@@ -49,18 +49,18 @@ def test_full_lifecycle_is_audited(db, users):
     ([], "sg-ops", "start", {}, "FORBIDDEN"),             # requester cannot act as the expert
     ([], "admin", "start", {}, "FORBIDDEN"),
     ([], "admin", "resolve", {}, "FORBIDDEN"),
-    ([("assign",)], "cn-ops", "resolve", {"resolution": "x"}, "INVALID_TRANSITION"),  # must start first
-    ([("assign",), ("start",)], "cn-ops", "resolve", {"resolution": "  "}, "INVALID_INPUT"),
-    ([("assign",), ("start",)], "cn-ops", "progress", {}, "INVALID_INPUT"),
+    ([("assign",)], "lin.boyu", "resolve", {"resolution": "x"}, "INVALID_TRANSITION"),  # must start first
+    ([("assign",), ("start",)], "lin.boyu", "resolve", {"resolution": "  "}, "INVALID_INPUT"),
+    ([("assign",), ("start",)], "lin.boyu", "progress", {}, "INVALID_INPUT"),
     ([], "admin", "assign", {"assignee_id": "nobody"}, "INVALID_INPUT"),
     ([], "sg-ops", "teleport", {}, "INVALID_INPUT"),
     ([("cancel",)], "sg-ops", "cancel", {}, "INVALID_TRANSITION"),                   # terminal state
 ])
 def test_invalid_moves_are_refused(db, users, steps, actor, action, kwargs, code):
     req = _new(db, users)
-    actors = {"assign": users["admin"], "start": users["cn-ops"], "cancel": users["sg-ops"]}
+    actors = {"assign": users["admin"], "start": users["lin.boyu"], "cancel": users["sg-ops"]}
     for (step,) in steps:
-        transition(db, req.id, actors[step], step, assignee_id=users["cn-ops"].id if step == "assign" else None)
+        transition(db, req.id, actors[step], step, assignee_id=users["lin.boyu"].id if step == "assign" else None)
     before = len(events(db, req.id))
     with pytest.raises(HelpError) as exc:
         transition(db, req.id, users[actor], action, **kwargs)
@@ -69,9 +69,9 @@ def test_invalid_moves_are_refused(db, users, steps, actor, action, kwargs, code
 
 def test_reopen_clears_resolution_time(db, users):
     req = _new(db, users)
-    transition(db, req.id, users["admin"], "assign", assignee_id=users["cn-ops"].id)
-    transition(db, req.id, users["cn-ops"], "start")
-    transition(db, req.id, users["cn-ops"], "resolve", resolution="重启")
+    transition(db, req.id, users["admin"], "assign", assignee_id=users["lin.boyu"].id)
+    transition(db, req.id, users["lin.boyu"], "start")
+    transition(db, req.id, users["lin.boyu"], "resolve", resolution="重启")
     transition(db, req.id, users["sg-ops"], "reopen", note="又出现了")
     assert req.status == "IN_PROGRESS" and req.resolved_at is None
 
@@ -149,3 +149,40 @@ def test_declined_card_files_nothing_and_ends_the_draft(db, enc, users):
     assert out["help_draft"] is None
     assert db.scalar(select(func.count()).select_from(HelpRequest)
                      .where(HelpRequest.user_id == users["sg-ops"].id, HelpRequest.kind == "field_help")) == 0
+
+
+@pytest.mark.parametrize("text, cancels", [
+    ("算了", True), ("算了吧", True), ("取消吧", True), ("取消求助", True), ("不用了，谢谢", True), ("cancel", True),
+    ("取消了 interlock 后重启还是不行", False), ("算了一下大概 30 分钟", False),
+])
+def test_cancel_phrases(text, cancels):
+    from knoventra.help.slots import CANCEL
+
+    assert bool(CANCEL.match(text)) is cancels
+
+
+def test_symptom_contributes_only_real_alarm_codes():
+    from knoventra.help.slots import merge
+
+    draft = merge(None, {"symptom": "WX-38 pump 不转，按 SOP-WCL-380110-001 复位无效，报 alarm A-1301", "alarm": "E17-42"},
+                  [HumanMessage("x")])
+    assert draft["alarm_codes"] == ["A-1301", "E17-42"]
+
+
+def test_assignee_must_be_an_engineer(db, users):
+    req = _new(db, users)
+    with pytest.raises(HelpError) as exc:
+        transition(db, req.id, users["admin"], "assign", assignee_id=users["cn-ops"].id)
+    assert exc.value.code == "INVALID_INPUT"
+
+
+def test_abandoned_draft_expires_after_an_unrelated_turn(db, enc, users):
+    def agent(messages):
+        last = messages[-1]
+        if isinstance(last, ToolMessage):
+            return AIMessage("还缺已尝试的步骤。")
+        if "610101" in last.content:
+            return call("request_help", {"machine_id": "610101", "symptom": "pump 不转"}, "h1")
+        return AIMessage("年假按工龄计算。")
+    out = run_turns(db, enc, users["sg-ops"], ["610101 pump 不转，帮我提单", "另外问一下年假怎么算", "谢谢"], agent)
+    assert out["help_draft"] is None

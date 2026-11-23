@@ -12,7 +12,7 @@ from knoventra.access.scope import compute_scope
 from knoventra.agent.graph import AgentDeps, build_graph
 from knoventra.agent.model_variants import chunk_models, sectioned_documents, stated_models
 from knoventra.config import settings
-from knoventra.db.models import Chunk, Document
+from knoventra.db.models import Chunk, Document, Revision
 from knoventra.ingestion.journal import import_workbooks
 from knoventra.retrieval.search import search
 from knoventra.skills import lookup_skills
@@ -145,3 +145,36 @@ def test_skill_intent_calls_the_tool_and_checks_department(db, enc, users, skill
     tool = seen[0]
     assert isinstance(tool, ToolMessage) and tool.tool_call_id == "plan-skill" and expect in tool.content
     assert out["query_plan"]["skill_item"] == "golden check" and out["error_code"] is None
+
+
+def test_low_ranked_sectioned_chunk_does_not_trigger_a_question(db, enc, users, monkeypatch):
+    import knoventra.agent.graph as graph_module
+    from knoventra.retrieval.pipeline import OK, Outcome
+    from knoventra.retrieval.search import Evidence
+
+    def ev(prefix, section_like):
+        doc = _doc(db, prefix)
+        c = db.scalar(select(Chunk).join(Revision, Revision.id == Chunk.revision_id)
+                      .where(Revision.document_id == doc.id, Revision.status == "PUBLISHED",
+                             Chunk.section_path.like(f"%{section_like}%")))
+        return Evidence(c.id, doc.id, doc.title, 1, None, c.section_path, c.text, "zh-Hans", 0.1, dense_sim=0.9)
+    top = ev("SOP-GEN-200410-001", "示教")
+    filler = ev("SOP-WCL-380120-002", "WX-38")
+    monkeypatch.setattr(graph_module, "retrieve", lambda *a, **kw: Outcome(OK, [top, filler]))
+    out = ask(graph(db, enc, [plan(rewritten="chamber teaching 速度")]), users["sg-ops"], "chamber teaching 速度", "t9")
+    assert out["clarification"] is None and out["sources"]
+
+
+def test_planner_route_does_not_narrow_the_model_follow_up(db, enc, users):
+    calls = []
+
+    def agent(messages):
+        last = messages[-1]
+        calls.append(last)
+        if isinstance(last, ToolMessage) and last.tool_call_id == "plan-1":
+            return AIMessage("", tool_calls=[{"name": "search_knowledge", "args": {"query": "VPN 报修"},
+                                              "id": "c1", "type": "tool_call"}])
+        return AIMessage("见资料 [S1]。")
+    out = ask(graph(db, enc, [plan("policy", rewritten="VPN 报修")], agent), users["sg-ops"], "VPN 连不上去哪报修", "t10")
+    routes = {t["tool_call_id"]: t["route"] for t in out["retrieval_trace"]}
+    assert routes["plan-1"]["requested"] == settings.intent_kbs["policy"] and routes["c1"] is None

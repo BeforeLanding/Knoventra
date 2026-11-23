@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { api, type EscalationRecord } from '../api'
 
-const STATUS: Record<string, string> = { OPEN: '待处理', IN_PROGRESS: '处理中', CLOSED: '已关闭' }
+const STATUS: Record<string, string> = {
+  OPEN: '待处理', ASSIGNED: '已派单', IN_PROGRESS: '处理中', RESOLVED: '已解决', CLOSED: '已关闭', CANCELLED: '已撤销',
+}
 
 export default function Escalations() {
   const [items, setItems] = useState<EscalationRecord[]>([])

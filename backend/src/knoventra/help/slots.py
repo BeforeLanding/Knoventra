@@ -11,12 +11,16 @@ import re
 from langchain_core.messages import AnyMessage
 
 from knoventra.agent.model_variants import stated_models
+from knoventra.ingestion.cases import MODEL_ALIASES, alarm_codes
 from knoventra.retrieval.identifiers import extract_identifiers
 
 REQUIRED = ("machine_id", "symptom", "tried_steps")
 LABELS = {"machine_id": "机台号", "machine_model": "机型", "alarm_codes": "告警码", "symptom": "故障现象",
           "tried_steps": "已尝试的步骤"}
-CANCEL = re.compile(r"^\s*(算了|不用了|不要了|取消|先不用|cancel)\b", re.IGNORECASE)
+# The whole message must be a cancel phrase (optionally with a particle or thanks), so a slot
+# answer that merely starts with 取消 (e.g. "取消了 interlock 后重启") never cancels the draft.
+CANCEL = re.compile(r"^\s*(算了|不用了|不要了|取消|先不用|不提了|cancel)(吧|啊|了|呀)?(求助单?|这个单子?)?"
+                    r"\s*[，,]?\s*(谢谢|thanks)?\s*[。！!,.，~～]*\s*$", re.IGNORECASE)
 MAX_SLOT_CHARS = 500
 
 
@@ -27,7 +31,11 @@ def merge(draft: dict | None, args: dict, messages: list[AnyMessage]) -> dict:
         if value:
             out[key] = value[:MAX_SLOT_CHARS]
     codes = set(out.get("alarm_codes") or [])
-    codes |= extract_identifiers(args.get("alarm") or "") | extract_identifiers(out.get("symptom") or "")
+    # The alarm field may name any code; free-text symptoms only contribute real alarm codes,
+    # never model names, SOP numbers or part numbers.
+    codes |= {c for c in extract_identifiers(args.get("alarm") or "")
+              if c not in MODEL_ALIASES and not c.startswith("SOP-")}
+    codes |= set(alarm_codes(out.get("symptom") or ""))
     out["alarm_codes"] = sorted(codes)
     models = stated_models(messages)
     if len(models) == 1:

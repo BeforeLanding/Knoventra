@@ -87,8 +87,8 @@ def transition(db: Session, request_id: str, actor: User, action: str, *, note: 
     note = (note or "").strip()
     if action == "assign":
         assignee = db.get(User, assignee_id) if assignee_id else None
-        if assignee is None or not assignee.enabled:
-            raise HelpError("INVALID_INPUT", "assignee must be an enabled user")
+        if assignee is None or not assignee.enabled or not assignee.engineer_name:
+            raise HelpError("INVALID_INPUT", "assignee must be an enabled engineer account")
         req.assignee_id = assignee.id
         note = note or f"assigned to {assignee.email}"
     elif action == "unassign":

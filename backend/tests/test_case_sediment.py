@@ -88,7 +88,7 @@ def test_resolved_help_becomes_a_reviewed_searchable_case(client, db, enc, users
 
 
 def test_reopen_and_resolve_again_drafts_a_new_revision(client, db, enc, users):
-    requester, expert = users["sg-ops"], users["cn-ops"]
+    requester, expert = users["sg-ops"], users["lin.boyu"]
     req = create_request(db, request_id=uuid.uuid4().hex, requester_id=requester.id, operation_id=uuid.uuid4().hex,
                          kind="field_help", summary="s", evidence_refs=[],
                          slots={"machine_id": "630301", "symptom": f"{TOKEN} 偶发报警", "tried_steps": "重启"})
@@ -108,8 +108,17 @@ def test_expert_escalations_do_not_draft_cases(client, db, users):
     req = create_request(db, request_id=uuid.uuid4().hex, requester_id=users["sg-ops"].id,
                          operation_id=uuid.uuid4().hex, kind="expert_escalation", summary="请专家看看",
                          evidence_refs=[])
-    transition(db, req.id, users["admin"], "assign", assignee_id=users["cn-ops"].id)
-    transition(db, req.id, users["cn-ops"], "start")
+    transition(db, req.id, users["admin"], "assign", assignee_id=users["lin.boyu"].id)
+    transition(db, req.id, users["lin.boyu"], "start")
     db.commit()
-    detail = act(client, users["cn-ops"], req.id, "resolve", resolution="已电话说明")
+    detail = act(client, users["lin.boyu"], req.id, "resolve", resolution="已电话说明")
     assert detail["case_document_id"] is None and detail["case_status"] is None
+
+
+def test_case_title_is_redacted(db, users):
+    from knoventra.help.sediment import case_title
+
+    req = create_request(db, request_id=uuid.uuid4().hex, requester_id=users["sg-ops"].id,
+                         operation_id=uuid.uuid4().hex, kind="field_help", summary="s", evidence_refs=[],
+                         slots={"machine_id": "630301", "symptom": "漏液，联系客户 13800138000", "tried_steps": "x"})
+    assert "13800138000" not in case_title(req) and "[PHONE]" in case_title(req)

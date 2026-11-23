@@ -179,6 +179,15 @@ def _card(e, alias: str) -> dict:
             "section_path": e.section_path, "text": e.text, "lang": e.lang}
 
 
+def _previous_turn_used(messages, tool_name: str) -> bool:
+    """Did the turn before the newest user message call `tool_name`?"""
+    humans = [i for i, m in enumerate(messages) if isinstance(m, HumanMessage)]
+    if len(humans) < 2:
+        return False
+    return any(isinstance(m, AIMessage) and any(tc["name"] == tool_name for tc in m.tool_calls)
+               for m in messages[humans[-2] + 1:humans[-1]])
+
+
 def _turn_tool_count(messages) -> int:
     n = 0
     for m in reversed(messages):
@@ -193,8 +202,11 @@ def build_graph(deps: AgentDeps):
     def start_turn(state: State):
         # Command(resume=...) resumes at the interrupt and preserves this trace.
         # A new user turn always starts fresh, even for callers reusing a thread.
-        return {"retrieval_trace": [], "model_declared_refusal": False, "model_finish_reason": None,
-                "query_plan": None, "route_kbs": None, "clarification": None}
+        update = {"retrieval_trace": [], "model_declared_refusal": False, "model_finish_reason": None,
+                  "query_plan": None, "route_kbs": None, "clarification": None}
+        if state.get("help_draft") and not _previous_turn_used(state["messages"], "request_help"):
+            update["help_draft"] = None  # the user moved on: an abandoned draft must not leak into later requests
+        return update
 
     def query_plan(state: State):
         if deps.planner is None:
@@ -279,11 +291,14 @@ def build_graph(deps: AgentDeps):
             if c["name"] == "search_knowledge":
                 started = time.perf_counter()
                 with deps.session_factory() as db:
+                    # The planner's route applies to its own searches only; the answer model's
+                    # follow-up searches keep the user's full readable scope.
+                    route = state.get("route_kbs") if c["id"].startswith("plan-") else None
                     res = retrieve(db, deps.encoder, deps.reranker, db.get(User, uid), c["args"].get("query", ""),
-                                   original_query=original_query, route_kbs=state.get("route_kbs"),
-                                   machine_model=model)
+                                   original_query=original_query, route_kbs=route, machine_model=model)
                     if res.status == OK and clarification is None:
-                        clarification = clarification_needed(db, res.evidence, stated)
+                        # Only the best evidence decides: a low-ranked filler chunk must not trigger a question.
+                        clarification = clarification_needed(db, res.evidence[:1], stated)
                 elapsed_ms = round((time.perf_counter() - started) * 1000, 3)
                 trace.append({"tool_call_id": c["id"], "query": c["args"].get("query", ""),
                               "latency_ms": elapsed_ms,
@@ -387,7 +402,8 @@ def build_graph(deps: AgentDeps):
         p = state["pending"]
         uid = config["configurable"]["user_id"]
         if not p["approve"]:
-            msg = "用户已取消转交，未创建转交记录。"
+            msg = ("用户已取消，未创建求助单。" if p.get("kind") == "field_help"
+                   else "用户已取消转交，未创建转交记录。")
         else:
             refs = [v["chunk_id"] for v in (state.get("evidence") or {}).values()]
             eid = hashlib.sha256(f"{uid}:{p['operation_id']}".encode()).hexdigest()[:32]

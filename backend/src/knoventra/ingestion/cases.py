@@ -165,6 +165,12 @@ _FIX = re.compile(r"更换|重新|调整|reset|复位|按\s*sop|清洁|插紧|re
 _ALARM = re.compile(r"(?<![A-Za-z0-9-])([A-Z]-\d{4})(?![\d-])|(?:alarm|报警|告警)[ \t]*([A-Z]{1,3}-?\d{3,5})(?![\d-])")
 
 
+def alarm_codes(text: str) -> list[str]:
+    """Alarm codes only: single-letter four-digit codes or codes right after alarm/报警/告警."""
+    simplified = normalize_identifiers(to_simplified(text))
+    return sorted({a or b for a, b in _ALARM.findall(simplified)} - set(MODEL_ALIASES))
+
+
 @dataclass(frozen=True)
 class CaseFields:
     category: str  # troubleshooting | procedure
@@ -182,7 +188,7 @@ def steps(content: str) -> list[str]:
 
 def extract_case_fields(topic: str, content: str, notes: str) -> CaseFields:
     simp_all = to_simplified(f"{topic}\n{content}\n{notes}")
-    codes = sorted({a or b for a, b in _ALARM.findall(normalize_identifiers(simp_all))} - set(MODEL_ALIASES))
+    codes = alarm_codes(simp_all)
     # Procedures often mention "alarm 记录" or "无异响" in passing; only the topic or a
     # concrete alarm code marks a row as troubleshooting.
     trouble = bool(_TROUBLE.search(to_simplified(topic)) or codes)
