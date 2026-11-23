@@ -23,7 +23,6 @@ from langgraph.graph.message import add_messages
 from langgraph.types import interrupt
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
 from knoventra.config import settings
@@ -31,6 +30,8 @@ from knoventra.agent.language import format_answer
 from knoventra.agent.escalation_intent import direct_escalation_summary
 from knoventra.agent.model_variants import clarification_needed, clarification_text, stated_models
 from knoventra.agent.query_plan import RETRIEVAL_INTENTS, plan_query
+from knoventra.help import slots as help_slots
+from knoventra.help.service import create_request
 from knoventra.skills import can_view_skills, format_hits
 from knoventra.skills import lookup_skills as lookup_skills_in_db
 from knoventra.db.models import Confirmation, Escalation, User
@@ -48,6 +49,7 @@ SYSTEM_PROMPT = """你是示例精密设备公司的内部知识助手。
 4. 用户明确要求转人工/转交专家时，立即调用 escalate_to_expert，即使信息不全也不要先追问；summary 依据已有对话写成可直接交给专家的问题摘要（确认卡会让用户核对）。其他情况不要调用。
 5. 查询转交进度用 get_escalation_status。只报告工具实际返回的记录和状态；转交工具仅创建待处理记录，不代表已通知、已受理或已分派到特定团队，不承诺响应时间。没有执行相应工具时，不承诺能修改已提交的转交，也不要让用户在已完成的确认卡中补充内容。
 6. 严格保留用户问题中的时间、频率、对象和编码约束，不自行增加条件（例如“日常”不等于“每日”）。用户未明确要求全部项目或完整清单时，不擅自增加完整性要求。章节标题给出的类别与正文频率可以同时成立，例如“日常检查”章节中的“每周检查”仍属于该类检查；回答时保留原频率，不因它不是每日而判作无关。资料只支持问题的一部分时，先引用并回答可证实的范围，对其余部分拒绝推断，不因无法证明清单完整就整体拒答。
+8. 现场故障查不到可行方案、或用户要发起求助单时，调用 request_help，把对话中已知的机台号、告警、现象、已尝试步骤填进去；工具会告诉你还缺什么，一次只向用户追问一项，不要编造。
 7. 用户问谁会做某项技能、该找谁时，调用 lookup_skills，只报告工具返回的人员、掌握程度和作业次数，不推测其他人选。"""
 
 
@@ -98,7 +100,20 @@ def lookup_skills(skill: str) -> str:
     """在技能矩阵中查询掌握或了解某项技能的工程师（结构化查询，不检索文档）。"""
 
 
-TOOLS = [search_knowledge, get_escalation_status, escalate_to_expert, lookup_skills]
+class _HelpArgs(_ToolArgs):
+    machine_id: str | None = Field(default=None, max_length=64, description="机台号")
+    symptom: str | None = Field(default=None, max_length=500, description="故障现象")
+    alarm: str | None = Field(default=None, max_length=200, description="告警码或告警信息")
+    tried_steps: str | None = Field(default=None, max_length=500, description="已尝试的步骤")
+
+
+@tool(args_schema=_HelpArgs)
+def request_help(machine_id: str | None = None, symptom: str | None = None, alarm: str | None = None,
+                 tried_steps: str | None = None) -> str:
+    """填写现场求助单草稿；信息齐全后弹出确认卡，用户确认后才建单。"""
+
+
+TOOLS = [search_knowledge, get_escalation_status, escalate_to_expert, lookup_skills, request_help]
 _TOOL_SCHEMAS = {tool.name: tool.args_schema for tool in TOOLS}
 
 
@@ -138,6 +153,7 @@ class State(TypedDict, total=False):
     model_finish_reason: str | None
     query_plan: dict | None  # per-turn planner trace; never added to model messages
     clarification: dict | None  # set when the answer depends on an unstated machine model
+    help_draft: dict | None  # field help slots across turns; server-merged, cleared on create or cancel
     route_kbs: list[str] | None  # server-chosen KB names for this turn's searches (narrowing only)
 
 
@@ -184,6 +200,8 @@ def build_graph(deps: AgentDeps):
             return {"query_plan": {"status": "skipped", "reason": "disabled"}}
         if direct_escalation_summary(state["messages"]) is not None:
             return {"query_plan": {"status": "skipped", "reason": "explicit_escalation"}}
+        if state.get("help_draft"):
+            return {"query_plan": {"status": "skipped", "reason": "help_draft"}}
         plan, trace = plan_query(deps.planner, state["messages"])
         if plan is not None and plan.intent == "skill_lookup" \
                 and plan.confidence >= settings.query_plan_min_confidence:
@@ -202,6 +220,11 @@ def build_graph(deps: AgentDeps):
         return "tools" if isinstance(last, AIMessage) and last.tool_calls else "agent"
 
     def agent(state: State):
+        last_human = next((m for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), None)
+        if state.get("help_draft") and last_human is not None and isinstance(state["messages"][-1], HumanMessage) \
+                and help_slots.CANCEL.match(str(last_human.content)):
+            return {"messages": [AIMessage("已取消求助单草稿，没有创建求助单。")], "help_draft": None,
+                    "model_finish_reason": None}
         summary = direct_escalation_summary(state["messages"])
         if summary is not None:
             return {"messages": [AIMessage("", tool_calls=[{"name": "escalate_to_expert",
@@ -250,6 +273,7 @@ def build_graph(deps: AgentDeps):
         stated = stated_models(state["messages"])
         model = stated[0] if len(stated) == 1 else None  # two named models = a comparison: no filter
         clarification = state.get("clarification")
+        help_update = state.get("help_draft")
         for c in calls:
             if c["name"] == "search_knowledge":
                 started = time.perf_counter()
@@ -286,7 +310,9 @@ def build_graph(deps: AgentDeps):
                 with deps.session_factory() as db:
                     rows = db.scalars(select(Escalation).where(Escalation.user_id == uid)
                                       .order_by(Escalation.created_at.desc().nulls_last(), Escalation.id.desc()).limit(5)).all()
-                out.append(ToolMessage("\n".join(f"{r.id}: {r.status} - {r.summary[:60]}" for r in rows) or "暂无转交记录",
+                out.append(ToolMessage("\n".join(f"{r.id}: {r.status} - {r.summary[:60]}"
+                                                 + ("（现场求助）" if r.kind == "field_help" else "")
+                                                 for r in rows) or "暂无转交记录",
                                        tool_call_id=c["id"]))
             elif c["name"] == "lookup_skills":
                 with deps.session_factory() as db:
@@ -294,6 +320,20 @@ def build_graph(deps: AgentDeps):
                     text = (format_hits(lookup_skills_in_db(db, c["args"]["skill"])) if can_view_skills(user)
                             else "NO_ACCESS: 技能表仅对 Ops 部门开放。")
                 out.append(ToolMessage(text, tool_call_id=c["id"]))
+            elif c["name"] == "request_help" and pending is None:
+                draft = help_slots.merge(state.get("help_draft"), c["args"], state["messages"])
+                need = help_slots.missing(draft)
+                if need:
+                    help_update = draft
+                    out.append(ToolMessage("求助单草稿已更新。还缺："
+                                           + "、".join(help_slots.LABELS[k] for k in need)
+                                           + "。请一次只向用户追问一项，不要编造。", tool_call_id=c["id"]))
+                    continue
+                help_update = draft
+                turn_id = next(m.id for m in reversed(state["messages"]) if isinstance(m, HumanMessage))
+                op_id = hashlib.sha256(f"{config['configurable']['thread_id']}:{turn_id}:{c['id']}".encode()).hexdigest()[:32]
+                pending = {"tool_call_id": c["id"], "args": {"summary": help_slots.card(draft)},
+                           "operation_id": op_id, "kind": "field_help", "slots": draft}
             elif c["name"] == "escalate_to_expert" and pending is None:
                 turn_id = next(m.id for m in reversed(state["messages"]) if isinstance(m, HumanMessage))
                 op_id = hashlib.sha256(f"{config['configurable']['thread_id']}:{turn_id}:{c['id']}".encode()).hexdigest()[:32]
@@ -301,7 +341,7 @@ def build_graph(deps: AgentDeps):
             else:
                 out.append(ToolMessage("未知或重复的工具调用，已忽略", tool_call_id=c["id"]))
         return {"messages": out, "evidence": evidence, "pending": pending, "error_code": error,
-                "retrieval_trace": trace, "clarification": clarification}
+                "retrieval_trace": trace, "clarification": clarification, "help_draft": help_update}
 
     def after_tools(state: State):
         if state.get("error_code") in {"RUN_LIMIT", "MODEL_TOOL_CALL_INVALID"}:
@@ -346,16 +386,17 @@ def build_graph(deps: AgentDeps):
         else:
             refs = [v["chunk_id"] for v in (state.get("evidence") or {}).values()]
             eid = hashlib.sha256(f"{uid}:{p['operation_id']}".encode()).hexdigest()[:32]
+            kind = p.get("kind", "expert_escalation")
             with deps.session_factory() as db:
-                db.execute(pg_insert(Escalation)
-                           .values(id=eid, user_id=uid, operation_id=p["operation_id"], summary=p["summary"],
-                                   evidence_refs=refs, status="OPEN")
-                           .on_conflict_do_nothing(index_elements=["user_id", "operation_id"]))
-                esc = db.scalar(select(Escalation).where(Escalation.user_id == uid,
-                                                         Escalation.operation_id == p["operation_id"]))
+                esc = create_request(db, request_id=eid, requester_id=uid, operation_id=p["operation_id"],
+                                     kind=kind, summary=p["summary"], evidence_refs=refs, slots=p.get("slots"))
                 db.commit()
-                msg = f"已创建转交记录 {esc.id}，状态 {esc.status}。"
-        return {"messages": [ToolMessage(msg, tool_call_id=p["tool_call_id"])], "pending": None}
+                label = "求助单" if kind == "field_help" else "转交记录"
+                msg = f"已创建{label} {esc.id}，状态 {esc.status}。"
+        update = {"messages": [ToolMessage(msg, tool_call_id=p["tool_call_id"])], "pending": None}
+        if p.get("kind") == "field_help":
+            update["help_draft"] = None  # filed or declined: either way the draft is finished
+        return update
 
     def cite_check(state: State):
         reg = state.get("evidence") or {}

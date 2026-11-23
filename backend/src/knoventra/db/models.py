@@ -134,16 +134,54 @@ class Confirmation(Base):
     expires_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True))
 
 
-class Escalation(Base):
-    __tablename__ = "knv_escalation"
+HELP_STATUSES = ("OPEN", "ASSIGNED", "IN_PROGRESS", "RESOLVED", "CLOSED", "CANCELLED")
+
+
+class HelpRequest(Base):
+    """A help request. v3 expert escalations are rows of kind `expert_escalation` (table renamed in 0011)."""
+
+    __tablename__ = "knv_help_request"
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_id)
     user_id: Mapped[str] = mapped_column(ForeignKey("knv_user.id"), index=True)
-    operation_id: Mapped[str] = mapped_column(String(64))
+    operation_id: Mapped[str] = mapped_column(String(64))  # idempotency key per requester
+    kind: Mapped[str] = mapped_column(String(24), default="expert_escalation", server_default="expert_escalation")
     summary: Mapped[str] = mapped_column(Text)
     evidence_refs: Mapped[list | None] = mapped_column(JSON)
     status: Mapped[str] = mapped_column(String(16), default="OPEN")
+    machine_id: Mapped[str | None] = mapped_column(String(64))
+    machine_model: Mapped[str | None] = mapped_column(String(16))
+    alarm_codes: Mapped[list] = mapped_column(JSON, default=list, server_default="[]")
+    symptom: Mapped[str] = mapped_column(Text, default="", server_default="")
+    tried_steps: Mapped[str] = mapped_column(Text, default="", server_default="")
+    assignee_id: Mapped[str | None] = mapped_column(ForeignKey("knv_user.id"), index=True)
+    resolution: Mapped[str] = mapped_column(Text, default="", server_default="")
     created_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())
-    __table_args__ = (UniqueConstraint("user_id", "operation_id"),)
+    updated_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())
+    resolved_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    closed_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    __table_args__ = (
+        UniqueConstraint("user_id", "operation_id", name="knv_help_request_user_id_operation_id_key"),
+        CheckConstraint("status IN ('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'CANCELLED')",
+                        name="ck_knv_help_request_status"),
+        CheckConstraint("kind IN ('expert_escalation', 'field_help')", name="ck_knv_help_request_kind"),
+    )
+
+
+Escalation = HelpRequest  # v3 name; API and callers stay compatible
+
+
+class HelpEvent(Base):
+    """Append-only audit trail of a help request (a trigger rejects UPDATE and DELETE)."""
+
+    __tablename__ = "knv_help_event"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    request_id: Mapped[str] = mapped_column(ForeignKey("knv_help_request.id", ondelete="CASCADE"), index=True)
+    actor_id: Mapped[str | None] = mapped_column(ForeignKey("knv_user.id"))  # NULL = system
+    action: Mapped[str] = mapped_column(String(24))
+    from_status: Mapped[str | None] = mapped_column(String(16))
+    to_status: Mapped[str] = mapped_column(String(16))
+    note: Mapped[str] = mapped_column(Text, default="", server_default="")
+    at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())
 
 
 class Skill(Base):
@@ -235,5 +273,5 @@ Index("ix_knv_chunk_sparse", Chunk.sparse, postgresql_using="hnsw",
       postgresql_ops={"sparse": "sparsevec_ip_ops"})
 Index("uq_knv_revision_published", Revision.document_id, unique=True,
       postgresql_where=Revision.status == "PUBLISHED")
-Index("ix_knv_escalation_user_created", Escalation.user_id,
-      Escalation.created_at.desc().nulls_last(), Escalation.id.desc())
+Index("ix_knv_help_request_user_created", HelpRequest.user_id,
+      HelpRequest.created_at.desc().nulls_last(), HelpRequest.id.desc())

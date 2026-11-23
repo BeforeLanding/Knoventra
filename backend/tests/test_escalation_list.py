@@ -87,10 +87,14 @@ def test_created_date_is_generated_and_migration_keeps_unknown_history(db, users
     db.flush()
     assert row.created_at is not None
     original_id = row.id
-    steps = runpy.run_path(str(Path(__file__).resolve().parents[1] / "alembic/versions/0006_escalation_created_at.py"))
+    versions = Path(__file__).resolve().parents[1] / "alembic/versions"
+    steps = runpy.run_path(str(versions / "0006_escalation_created_at.py"))
+    help_steps = runpy.run_path(str(versions / "0011_help_requests.py"))  # 0006 targets the pre-rename table
     with Operations.context(MigrationContext.configure(db.connection())):
+        help_steps["downgrade"]()
         steps["downgrade"]()
         steps["upgrade"]()
+        help_steps["upgrade"]()
     db.expire_all()
     old = db.get(Escalation, original_id)
     assert old.summary == "新记录" and old.created_at is None
