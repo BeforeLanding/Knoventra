@@ -172,7 +172,7 @@ def test_openai_adapter_observes_mock_http_stream_without_network(monkeypatch, f
     with httpx.Client(transport=httpx.MockTransport(respond)) as client:
         llm = ChatOpenAI(base_url="https://model.invalid/v1", api_key="offline-token", model="offline-model",
                          streaming=True, max_tokens=100, max_retries=0, http_client=client)
-        graph = build_graph(AgentDeps(forbidden_session, None, None, llm, InMemorySaver()))
+        graph = build_graph(AgentDeps(forbidden_session, None, None, llm, InMemorySaver(), long_term_memory=False))
         case = {"id": "offline-stream", "category": "no_basis", "user": "tester", "question": "你好", "expect": {}}
         row = run_eval.eval_agent(graph, None, {"tester": SimpleNamespace(id="user")}, [case])[0]
     assert len(requests) == 1 and requests[0]["stream"] is True

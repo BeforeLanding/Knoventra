@@ -65,6 +65,13 @@ class Settings(BaseSettings):
     context_keep_turns: int = Field(default=3, ge=2)
     summary_timeout_s: float = Field(default=20.0, gt=0)
     summary_max_chars: int = Field(default=1500, gt=0)
+    # Long-term episodic memory (D12): per-user recall of earlier answers and resolved help
+    # requests; every recalled episode is re-checked against current permissions before use.
+    episodic_memory: bool = True
+    episode_recall_k: int = Field(default=3, ge=1, le=10)
+    # Dense cosine floor. Not calibrated: no paid memory evaluation has been run yet.
+    episode_min_score: float = Field(default=0.5, ge=0, le=1)
+    episode_chars: int = Field(default=600, gt=0)
     confirm_ttl_minutes: int = 30
     llm_base_url: str = ""
     llm_api_key: str = ""

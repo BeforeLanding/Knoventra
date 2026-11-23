@@ -25,8 +25,10 @@ def answer_script(question: str) -> str | None:
     return None  # Shared characters, non-Chinese or mixed/ambiguous script: do not guess.
 
 
-def format_answer(question: str, answer: str) -> str:
-    script = answer_script(question)
+def format_answer(question: str, answer: str, default_script: str | None = None) -> str:
+    """Match the question's script; `default_script` (the user's usual one) applies only when
+    the question itself gives no signal, e.g. an English or code-only question."""
+    script = answer_script(question) or default_script
     if script is None:
         return answer
     convert = to_simplified if script == "zh-Hans" else _s2t().convert

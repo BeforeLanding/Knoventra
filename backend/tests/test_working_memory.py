@@ -337,5 +337,8 @@ def test_window_survives_the_confirmation_interrupt(db, enc, users, monkeypatch)
     window = t.say("已经重新插紧 LS-2")["context_window"]
     out = t.say({"approve": True})  # resumes mid-turn: compact does not re-run
     assert out["context_window"] == window and window["summary"] == "早先闲聊。"
-    assert SUMMARY_HEADER in seen[-1][0].content and seen[-1][1].id == window["from_id"]
+    ids = [m.id for m in out["messages"]]
+    assert SUMMARY_HEADER in seen[-1][0].content
+    # The view starts at the window, or later if the assembler trimmed earlier turns to fit.
+    assert ids.index(seen[-1][1].id) >= ids.index(window["from_id"])
     assert field_requests(db, users["sg-ops"])[0].machine_id == "610101"

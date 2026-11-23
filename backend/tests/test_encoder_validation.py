@@ -143,6 +143,8 @@ def test_chat_query_encoder_fault_is_operational_error_without_evidence(db, user
                                    json={'message': 'E17-42 排查'})
         assert 'RETRIEVAL_UNAVAILABLE' in response.text and 'INSUFFICIENT_EVIDENCE' not in response.text
         assert 'event: sources' not in response.text
-        encoder.encode.assert_called_once()
+        # Episodic recall encodes the question first; its failure is absorbed (no memories),
+        # retrieval's is not.
+        assert encoder.encode.call_count == 2
     finally:
         app.dependency_overrides.clear()

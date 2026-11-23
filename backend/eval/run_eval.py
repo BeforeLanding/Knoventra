@@ -272,7 +272,8 @@ def make_evaluation_graph(enc, rr, max_output_tokens: int):
 
     saver, pool = make_checkpointer(settings.database_url)
     try:
-        return build_graph(AgentDeps(session, enc, rr, llm, saver)), pool
+        # No long-term memory: cases share demo users and must stay independent.
+        return build_graph(AgentDeps(session, enc, rr, llm, saver, long_term_memory=False)), pool
     except BaseException:
         pool.close()
         raise

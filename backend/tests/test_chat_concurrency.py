@@ -17,7 +17,7 @@ from knoventra.api.chat import get_graph
 from knoventra.api.deps import get_db
 from knoventra.auth.security import issue_token
 from knoventra.config import settings
-from knoventra.db.models import Confirmation, Conversation, Escalation, Message, User
+from knoventra.db.models import Confirmation, Conversation, Episode, Escalation, Message, Profile, User
 from knoventra.main import app
 
 
@@ -48,6 +48,7 @@ def test_independent_http_requests_cannot_advance_same_checkpoint(engine, enc, m
     with sessions() as db, db.begin():
         user = db.scalar(select(User).where(User.email == "sg-ops@example.test"))
         headers = {"Authorization": "Bearer " + issue_token(user.id)}
+        user_id = user.id
         conv = Conversation(user_id=user.id, thread_id=thread_id, title="并发 HTTP 测试")
         db.add(conv)
         db.flush()
@@ -112,3 +113,6 @@ def test_independent_http_requests_cannot_advance_same_checkpoint(engine, enc, m
             db.execute(delete(Confirmation).where(Confirmation.thread_id == thread_id))
             db.execute(delete(Message).where(Message.conversation_id.in_(conversation_ids)))
             db.execute(delete(Conversation).where(Conversation.id.in_(conversation_ids)))
+            # Committed turns also wrote long-term memory (D12); leave nothing for later tests.
+            db.execute(delete(Episode).where(Episode.user_id == user_id))
+            db.execute(delete(Profile).where(Profile.user_id == user_id))

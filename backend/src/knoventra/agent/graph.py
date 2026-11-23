@@ -28,7 +28,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from knoventra.config import settings
-from knoventra.agent.language import format_answer
+from knoventra.agent.language import answer_script, format_answer
 from knoventra.agent.escalation_intent import direct_escalation_summary
 from knoventra.agent.model_variants import clarification_needed, clarification_text, stated_models
 from knoventra.agent.query_plan import RETRIEVAL_INTENTS, plan_query
@@ -42,7 +42,10 @@ from knoventra.ingestion.encoder import Encoder
 from knoventra.retrieval.pipeline import OK, retrieve
 from knoventra.retrieval.rerank import Reranker
 from knoventra.memory import drafts
-from knoventra.memory.context import SUMMARY_HEADER, clean_summary, plan_window
+from knoventra.memory import episodes as episodic
+from knoventra.memory import profile as user_profile
+from knoventra.memory.assembler import assemble, memory_tokens
+from knoventra.memory.context import clean_summary, plan_window
 from knoventra.memory.working import RedisWorkingMemory, WorkingMemoryUnavailable
 
 log = logging.getLogger(__name__)
@@ -58,7 +61,8 @@ SYSTEM_PROMPT = """你是示例精密设备公司的内部知识助手。
 5. 查询转交进度用 get_escalation_status。只报告工具实际返回的记录和状态；转交工具仅创建待处理记录，不代表已通知、已受理或已分派到特定团队，不承诺响应时间。没有执行相应工具时，不承诺能修改已提交的转交，也不要让用户在已完成的确认卡中补充内容。
 6. 严格保留用户问题中的时间、频率、对象和编码约束，不自行增加条件（例如“日常”不等于“每日”）。用户未明确要求全部项目或完整清单时，不擅自增加完整性要求。章节标题给出的类别与正文频率可以同时成立，例如“日常检查”章节中的“每周检查”仍属于该类检查；回答时保留原频率，不因它不是每日而判作无关。资料只支持问题的一部分时，先引用并回答可证实的范围，对其余部分拒绝推断，不因无法证明清单完整就整体拒答。
 8. 现场故障查不到可行方案、或用户要发起求助单时，调用 request_help，把对话中已知的机台号、告警、现象、已尝试步骤填进去；工具会告诉你还缺什么，一次只向用户追问一项，不要编造。
-7. 用户问谁会做某项技能、该找谁时，调用 lookup_skills，只报告工具返回的人员、掌握程度和作业次数，不推测其他人选。"""
+7. 用户问谁会做某项技能、该找谁时，调用 lookup_skills，只报告工具返回的人员、掌握程度和作业次数，不推测其他人选。
+9. 下方的“历史记忆”是该用户以往对话和求助单的记录，可以用来回答“上次那个问题后来怎么解决的”，回答时说明来自以往记录；涉及操作步骤或参数时，仍须调用 search_knowledge 并引用资料。“用户画像”只用于理解指代，不要据此假设本轮问的是哪台机台。"""
 
 
 class _ToolArgs(BaseModel):
@@ -165,6 +169,7 @@ class State(TypedDict, total=False):
     # checkpoint records each change in message artifacts (see knoventra.memory.drafts).
     context_window: dict | None  # per turn: {"summary", "from_id"} when older turns are compressed
     memory_trace: list[dict]  # per-turn working-memory diagnostics; never added to model messages
+    memory_context: dict | None  # per turn: profile snapshot and re-validated episodes (D12)
     route_kbs: list[str] | None  # server-chosen KB names for this turn's searches (narrowing only)
 
 
@@ -178,6 +183,9 @@ class AgentDeps:
     planner: BaseChatModel | None = None  # query planning; None keeps v3 behaviour
     memory: RedisWorkingMemory | None = None  # working memory; None = rebuild from the checkpoint
     summarizer: BaseChatModel | None = None  # history compression; None sends the full history
+    # Profile and episodic memory (D12). Off for evaluation runs: one case must not be
+    # recalled into, or shift the reply script of, a later case for the same demo user.
+    long_term_memory: bool = True
 
 
 _MARK = re.compile(r"\[S(\d+)\]")
@@ -247,7 +255,30 @@ def build_graph(deps: AgentDeps):
         # turns work on them (memory.drafts), so an unrelated turn ends the draft by itself.
         return {"retrieval_trace": [], "model_declared_refusal": False, "model_finish_reason": None,
                 "query_plan": None, "route_kbs": None, "clarification": None,
-                "context_window": None, "memory_trace": []}
+                "context_window": None, "memory_trace": [], "memory_context": None}
+
+    def recall(state: State, config: RunnableConfig):
+        if not deps.long_term_memory:
+            return {"memory_context": None}
+        cfg = config["configurable"]
+        question = next((str(m.content) for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), "")
+        try:
+            with deps.session_factory() as db:
+                user = db.get(User, cfg["user_id"])
+                snap = user_profile.snapshot(db, user)
+                found, trace = (episodic.recall(db, deps.encoder, user, question, thread_id=cfg["thread_id"])
+                                if settings.episodic_memory else ([], []))
+        except Exception as exc:  # noqa: BLE001 - memory is optional; fail closed with no memories
+            log.warning("recall failed: %s", exc)
+            return {"memory_context": None, "memory_trace": [*(state.get("memory_trace") or []),
+                                                             {"event": "recall", "error": type(exc).__name__}]}
+        context = {"profile": snap, "profile_text": user_profile.text(snap),
+                   "episodes": [{"id": e.id, "kind": e.kind, "text": e.text, "score": e.score} for e in found]}
+        return {"memory_context": context,
+                "memory_trace": [*(state.get("memory_trace") or []), {"event": "recall", "episodes": trace}]}
+
+    def default_script(state: State) -> str | None:
+        return ((state.get("memory_context") or {}).get("profile") or {}).get("preferred_script")
 
     def compact(state: State, config: RunnableConfig):
         fields, wm = wm_load(config)
@@ -255,7 +286,10 @@ def build_graph(deps: AgentDeps):
         if deps.summarizer is not None:
             def summarize(request):
                 return clean_summary(str(deps.summarizer.invoke(request).content), settings.summary_max_chars)
-        win = plan_window(state["messages"], (fields or {}).get("summary"), budget=settings.context_budget_tokens,
+        mem = state.get("memory_context") or {}
+        reserved = memory_tokens(profile=mem.get("profile_text"), episodes=[e["text"] for e in mem.get("episodes") or []])
+        budget = max(settings.context_budget_tokens - reserved, settings.context_budget_tokens // 2)
+        win = plan_window(state["messages"], (fields or {}).get("summary"), budget=budget,
                           keep_turns=settings.context_keep_turns, summarize=summarize)
         if win.new_record is not None and fields is not None:
             wm = wm_save(config, {"summary": win.new_record})
@@ -304,13 +338,23 @@ def build_graph(deps: AgentDeps):
             return {"messages": [AIMessage("", tool_calls=[{"name": "escalate_to_expert",
                        "args": {"summary": summary}, "id": "explicit-escalation", "type": "tool_call"}])],
                     "model_finish_reason": None}
-        history, system = state["messages"], SYSTEM_PROMPT
+        history, summary = state["messages"], None
         window = state.get("context_window") or {}
         start = next((i for i, m in enumerate(history) if m.id == window.get("from_id")), None) \
             if window.get("summary") else None
         if start is not None:  # older turns are replaced by their summary (checkpoint keeps them)
-            history, system = history[start:], f"{SYSTEM_PROMPT}\n\n{SUMMARY_HEADER}{window['summary']}"
-        msgs = [SystemMessage(system), *history]
+            history, summary = history[start:], window["summary"]
+        draft, draft_events = load_draft(state, config)
+        draft_text = None
+        if draft:
+            need = help_slots.missing(draft)
+            draft_text = help_slots.card(draft) + ("\n还缺：" + "、".join(help_slots.LABELS[k] for k in need) if need else "")
+        mem = state.get("memory_context") or {}
+        built = assemble(SYSTEM_PROMPT, history, budget=settings.context_budget_tokens, draft=draft_text,
+                         profile=mem.get("profile_text"), episodes=[e["text"] for e in mem.get("episodes") or []],
+                         summary=summary)
+        memory_trace = [*(state.get("memory_trace") or []), *draft_events, built.trace]
+        msgs = built.messages
         response = deps.llm.bind_tools(TOOLS).invoke(msgs)
         reason = response.response_metadata.get("finish_reason")
         reason = reason if isinstance(reason, str) else None
@@ -326,8 +370,8 @@ def build_graph(deps: AgentDeps):
             # Keep evidence/trace for diagnostics, but never present it as support for this failure.
             return {"messages": [AIMessage(text, id=response.id)], "error_code": error,
                     "sources": [], "pending": None, "model_declared_refusal": False,
-                    "model_finish_reason": reason}
-        return {"messages": [response], "model_finish_reason": reason}
+                    "model_finish_reason": reason, "memory_trace": memory_trace}
+        return {"messages": [response], "model_finish_reason": reason, "memory_trace": memory_trace}
 
     def after_agent(state: State):
         return "tools" if state["messages"][-1].tool_calls else "cite_check"
@@ -413,9 +457,11 @@ def build_graph(deps: AgentDeps):
                 if need:
                     # The artifact is the checkpoint's durable copy; Redis holds the working copy.
                     anchor = f"help-{uuid.uuid4().hex}"
+                    hint = user_profile.machine_hint((state.get("memory_context") or {}).get("profile")) \
+                        if "machine_id" in need else ""
                     out.append(ToolMessage("求助单草稿已更新。还缺："
                                            + "、".join(help_slots.LABELS[k] for k in need)
-                                           + "。请一次只向用户追问一项，不要编造。", tool_call_id=c["id"],
+                                           + "。请一次只向用户追问一项，不要编造。" + hint, tool_call_id=c["id"],
                                            id=anchor, artifact={drafts.ARTIFACT_KEY: draft}))
                     memory_trace.append(store_draft(config, anchor, draft))
                     continue
@@ -447,7 +493,8 @@ def build_graph(deps: AgentDeps):
     def clarify(state: State):
         # Answering would mix model-specific steps; ask instead and show no sources.
         question = next((m.content for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), "")
-        return {"messages": [AIMessage(format_answer(question, clarification_text(state["clarification"])))],
+        return {"messages": [AIMessage(format_answer(question, clarification_text(state["clarification"]),
+                                                     default_script(state)))],
                 "sources": [], "error_code": None}
 
     def prepare_escalation(state: State, config: RunnableConfig):
@@ -488,6 +535,10 @@ def build_graph(deps: AgentDeps):
                 rec = p.get("recommendation") or {}
                 if rec.get("assignee_id"):
                     esc = assign_by_system(db, esc.id, rec["assignee_id"], rec["reason"])
+                slots = p.get("slots") or {}
+                if kind == "field_help":
+                    user_profile.bump(db, uid, machines=[slots["machine_id"]] if slots.get("machine_id") else [],
+                                      models=[slots["machine_model"]] if slots.get("machine_model") else [])
                 db.commit()
                 label = "求助单" if kind == "field_help" else "转交记录"
                 msg = f"已创建{label} {esc.id}，状态 {esc.status}。"
@@ -504,7 +555,7 @@ def build_graph(deps: AgentDeps):
         question = next((m.content for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), "")
 
         def reply(text: str):
-            return AIMessage(format_answer(question, text), id=last.id)
+            return AIMessage(format_answer(question, text, default_script(state)), id=last.id)
 
         cited: list[str] = []
 
@@ -544,25 +595,52 @@ def build_graph(deps: AgentDeps):
         if retrieval_reply and not cited and state.get("error_code") is None:
             return {"sources": [], "error_code": "MODEL_CITATION_MISSING",
                     "messages": [reply("检索回答缺少有效引用，本轮未提供可核验的答案。请重新提问。")]}
-        text = format_answer(question, text)
+        text = format_answer(question, text, default_script(state))
         upd: dict[str, Any] = {"sources": [reg[a] for a in cited]}
         if text != content:
             upd["messages"] = [AIMessage(text, id=last.id)]
         return upd
 
+    def remember(state: State, config: RunnableConfig):
+        if not deps.long_term_memory:
+            return {}
+        cfg = config["configurable"]
+        human = next((m for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), None)
+        if human is None:
+            return {}
+        question, answer = str(human.content), state["messages"][-1]
+        chunk_ids = [s["chunk_id"] for s in state.get("sources") or []]
+        grounded = bool(chunk_ids) and not state.get("error_code") and not state.get("model_declared_refusal")
+        event = {"event": "remember", "episode": False}
+        try:
+            with deps.session_factory() as db:
+                user_profile.bump(db, cfg["user_id"], lang=answer_script(question), models=stated_models([human]))
+                if grounded and settings.episodic_memory:
+                    episodic.remember_answer(db, deps.encoder, user_id=cfg["user_id"], thread_id=cfg["thread_id"],
+                                             turn_id=human.id, question=question, answer=str(answer.content),
+                                             chunk_ids=chunk_ids)
+                    event["episode"] = True
+                db.commit()
+        except Exception as exc:  # noqa: BLE001 - memory is best effort; the answer already stands
+            log.warning("remember failed: %s", exc)
+            event = {"event": "remember", "error": type(exc).__name__}
+        return {"memory_trace": [*(state.get("memory_trace") or []), event]}
+
     g = StateGraph(State)
-    for name, fn in [("start_turn", start_turn), ("compact", compact), ("query_plan", query_plan), ("agent", agent), ("tools", tools), ("prepare_escalation", prepare_escalation),
+    for name, fn in [("start_turn", start_turn), ("recall", recall), ("compact", compact), ("query_plan", query_plan), ("agent", agent), ("tools", tools), ("prepare_escalation", prepare_escalation),
                      ("execute_escalation", execute_escalation), ("cite_check", cite_check),
-                     ("clarify", clarify)]:
+                     ("clarify", clarify), ("remember", remember)]:
         g.add_node(name, fn)
     g.add_edge(START, "start_turn")
-    g.add_edge("start_turn", "compact")
+    g.add_edge("start_turn", "recall")
+    g.add_edge("recall", "compact")
     g.add_edge("compact", "query_plan")
     g.add_conditional_edges("query_plan", after_plan, ["tools", "agent"])
     g.add_conditional_edges("agent", after_agent, ["tools", "cite_check"])
     g.add_conditional_edges("tools", after_tools, ["agent", "prepare_escalation", "clarify", END])
-    g.add_edge("clarify", END)
+    g.add_edge("clarify", "remember")
     g.add_edge("prepare_escalation", "execute_escalation")
     g.add_edge("execute_escalation", "agent")
-    g.add_edge("cite_check", END)
+    g.add_edge("cite_check", "remember")
+    g.add_edge("remember", END)
     return g.compile(checkpointer=deps.checkpointer)

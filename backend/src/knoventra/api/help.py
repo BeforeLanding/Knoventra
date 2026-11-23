@@ -17,6 +17,7 @@ from knoventra.api.deps import current_user, get_db, require_admin
 from knoventra.db.models import HelpRequest, Revision, User
 from knoventra.help.recommend import recommend
 from knoventra.help.sediment import draft_case
+from knoventra.memory.episodes import remember_help
 from knoventra.help.service import HelpError, events, roles, transition
 from knoventra.ingestion.encoder import get_encoder
 
@@ -94,6 +95,7 @@ def act(request_id: str, body: ActionBody, user: User = Depends(current_user), d
         if body.action == "resolve":
             # Same transaction: a resolution never exists without its review draft.
             draft_case(db, get_encoder(), req)
+            remember_help(db, get_encoder(), req)  # the requester's episodic memory of the fix
         db.commit()
     except HelpError as e:
         db.rollback()

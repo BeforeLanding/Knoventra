@@ -34,7 +34,7 @@ def test_invalid_batch_stops_before_any_session_or_sibling_tool(calls):
     response = AIMessage("", tool_calls=mixed)
     llm = Mock()
     llm.bind_tools.return_value.invoke.return_value = response
-    graph = build_graph(AgentDeps(factory, None, None, llm, InMemorySaver()))
+    graph = build_graph(AgentDeps(factory, None, None, llm, InMemorySaver(), long_term_memory=False))
     cfg = {"configurable": {"thread_id": uuid.uuid4().hex, "user_id": "server-user"}}
     result = graph.invoke({"messages": [HumanMessage("请求")], "evidence": {}, "sources": [], "error_code": None}, cfg)
     assert result["error_code"] == "MODEL_TOOL_CALL_INVALID" and not graph.get_state(cfg).next
@@ -57,7 +57,7 @@ def test_valid_tool_contracts_and_boundaries_match_advertised_schemas():
 def test_legacy_tools_checkpoint_is_validated_before_execution():
     factory = Mock(side_effect=AssertionError("legacy invalid call must not execute"))
     llm = ScriptedModel(script=lambda msgs: AIMessage("must not invoke"))
-    graph = build_graph(AgentDeps(factory, None, None, llm, InMemorySaver()))
+    graph = build_graph(AgentDeps(factory, None, None, llm, InMemorySaver(), long_term_memory=False))
     cfg = {"configurable": {"thread_id": uuid.uuid4().hex, "user_id": "server-user"}}
     graph.update_state(cfg, {"messages": [HumanMessage("旧请求"), AIMessage("", tool_calls=[tool(args={})])],
                              "evidence": {}, "sources": [], "error_code": None}, as_node="agent")

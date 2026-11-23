@@ -279,3 +279,32 @@ Index("uq_knv_revision_published", Revision.document_id, unique=True,
       postgresql_where=Revision.status == "PUBLISHED")
 Index("ix_knv_help_request_user_created", HelpRequest.user_id,
       HelpRequest.created_at.desc().nulls_last(), HelpRequest.id.desc())
+
+
+class Episode(Base):
+    """Long-term episodic memory (v4 D12): one per answered turn or resolved help request, per user."""
+
+    __tablename__ = "knv_episode"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("knv_user.id"), index=True)
+    source_kind: Mapped[str] = mapped_column(String(16))  # answer | help_request
+    source_id: Mapped[str] = mapped_column(String(64))  # turn id (answer) or help request id
+    thread_id: Mapped[str | None] = mapped_column(String(64))
+    text: Mapped[str] = mapped_column(Text)
+    refs: Mapped[list] = mapped_column(JSON, default=list, server_default="[]")  # cited chunk ids (answer)
+    dense = mapped_column(Vector(settings.dense_dim))
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())
+    updated_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())
+    __table_args__ = (UniqueConstraint("user_id", "source_kind", "source_id", name="uq_knv_episode_source"),
+                      CheckConstraint("source_kind IN ('answer', 'help_request')", name="ck_knv_episode_kind"))
+
+
+class Profile(Base):
+    """User profile (v4 D12): usage counts only. Department and region stay on knv_user (read-only here)."""
+
+    __tablename__ = "knv_profile"
+    user_id: Mapped[str] = mapped_column(ForeignKey("knv_user.id"), primary_key=True)
+    lang_counts: Mapped[dict] = mapped_column(JSON, default=dict, server_default="{}")
+    model_counts: Mapped[dict] = mapped_column(JSON, default=dict, server_default="{}")
+    machine_counts: Mapped[dict] = mapped_column(JSON, default=dict, server_default="{}")
+    updated_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())
