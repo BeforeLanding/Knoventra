@@ -6,8 +6,10 @@ import uuid
 from pgvector.sqlalchemy import SPARSEVEC, Vector
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     Index,
@@ -162,6 +164,50 @@ class Skill(Base):
         CheckConstraint("level IN ('none', 'familiar', 'proficient')", name="ck_knv_skill_level"),
         CheckConstraint("op_count >= 0", name="ck_knv_skill_op_count"),
     )
+
+
+class JournalCase(Base):
+    """A deduplicated, redacted field case built from one or more journal rows."""
+
+    __tablename__ = "knv_journal_case"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_id)
+    text_key: Mapped[str] = mapped_column(String(64), unique=True)
+    simhash: Mapped[int] = mapped_column(BigInteger)
+    models: Mapped[list] = mapped_column(JSON)
+    models_key: Mapped[str] = mapped_column(String(128), index=True)  # "" means unknown model
+    model_source: Mapped[str] = mapped_column(String(16))  # registry | dictionary | unknown
+    topic: Mapped[str] = mapped_column(Text)
+    content: Mapped[str] = mapped_column(Text)
+    notes: Mapped[str] = mapped_column(Text)
+    lang: Mapped[str] = mapped_column(String(8))
+    category: Mapped[str] = mapped_column(String(16))  # troubleshooting | procedure
+    symptom: Mapped[str] = mapped_column(Text)
+    alarm_codes: Mapped[list] = mapped_column(JSON)
+    cause: Mapped[str] = mapped_column(Text)
+    solution: Mapped[str] = mapped_column(Text)
+    resolved: Mapped[bool | None] = mapped_column(Boolean)
+    machine_ids: Mapped[list] = mapped_column(JSON)
+    engineers: Mapped[list] = mapped_column(JSON)
+    companies: Mapped[list] = mapped_column(JSON)
+    regions: Mapped[list] = mapped_column(JSON)
+    dates: Mapped[list] = mapped_column(JSON)
+    sources: Mapped[list] = mapped_column(JSON)
+    occurrences: Mapped[int] = mapped_column(Integer)
+    first_date: Mapped[dt.date] = mapped_column(Date)
+    last_date: Mapped[dt.date] = mapped_column(Date)
+    __table_args__ = (
+        CheckConstraint("category IN ('troubleshooting', 'procedure')", name="ck_knv_journal_case_category"),
+    )
+
+
+class IngestAudit(Base):
+    __tablename__ = "knv_ingest_audit"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_id)
+    kind: Mapped[str] = mapped_column(String(32))
+    files: Mapped[list] = mapped_column(JSON)
+    counts: Mapped[dict] = mapped_column(JSON)
+    redactions: Mapped[dict] = mapped_column(JSON)  # {"found": {...}, "residual": {...}}
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())
 
 
 Index("ix_knv_skill_key_level", Skill.skill_key, Skill.level)

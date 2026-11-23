@@ -204,6 +204,13 @@ SCENARIOS = [
                 "1.进入工程模式（口令：Fake-Eng-0420）更新 recipe；2.EAP 通讯测试正常；3.如需远程支持联系值班 FSE 电话 +65 9000 0001",
                 "工程模式用完立即退出，避免客户误操作"),
     ),
+    Scenario(
+        key="remote_support", skill="软件安装及通讯测试", models=ALL_MODELS, sensitive=True, weight=2,
+        zh=Text("远程支持连线",
+                "1.用账号 fse_demo 密码 Demo#1234 登录客户 VPN；2.远程查看 alarm log 并导出；"
+                "3.客户 IT 窗口电话 13800138000，邮箱 it-desk@example.test",
+                "远程会话结束后通知客户 IT 关闭临时账号"),
+    ),
 ]
 
 # Each entry is (topic, content, notes) for a near-duplicate rewrite of an earlier row.
@@ -355,6 +362,8 @@ def write(data: dict, out_dir: Path = OUT_DIR) -> dict:
         "label_counts": dict(sorted(labels.items())),
         "rows": manifest_rows,
     }
+    (out_dir / "machines.json").write_text(json.dumps(MACHINES, ensure_ascii=False, indent=1) + "\n",
+                                           encoding="utf-8")
     (out_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1) + "\n",
                                            encoding="utf-8")
     return manifest

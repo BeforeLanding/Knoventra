@@ -6,7 +6,7 @@ skill-matrix rows share those columns; a skill row has no date and carries
 column order and extra columns do not matter; a missing required header
 rejects the whole sheet.
 
-    uv run python -m knoventra.ingestion.journal data/demo/journals/*.xlsx
+    uv run python -m knoventra.ingestion.journal ../data/demo/journals/*.xlsx --registry ../data/demo/journals/machines.json
 """
 from __future__ import annotations
 
@@ -191,12 +191,14 @@ def skill_key(skill: str) -> str:
 
 def upsert_skills(db: Session, records: list[SkillRecord]) -> int:
     """Idempotent: one row per (machine, engineer, skill key); a re-import overwrites it."""
+    from knoventra.ingestion.cases import redact
+
     latest: dict[tuple[str, str, str], SkillRecord] = {}
     for r in records:
         latest[(r.machine, r.engineer, skill_key(r.skill))] = r  # Later rows win within a batch.
     for (machine, engineer, key), r in latest.items():
         values = dict(machine_id=machine, engineer_name=engineer, skill_key=key, skill_item=r.skill,
-                      op_count=r.op_count, level=r.level, note=r.note, company=r.company,
+                      op_count=r.op_count, level=r.level, note=redact(r.note)[0], company=r.company,
                       source_file=r.source.file, source_row=r.source.row)
         stmt = pg_insert(Skill).values(**values)
         db.execute(stmt.on_conflict_do_update(
@@ -208,24 +210,41 @@ def upsert_skills(db: Session, records: list[SkillRecord]) -> int:
     return len(latest)
 
 
-def main() -> None:
-    from knoventra.db.session import SessionLocal
+def import_workbooks(db: Session, files: list[Path], registry_path: Path | None = None) -> dict:
+    """Parse, redact, dedup and store one batch; skills, cases and the audit row commit together."""
+    from knoventra.ingestion.cases import build_cases, load_registry, store_cases, write_audit
 
-    ap = argparse.ArgumentParser(description="Import journal workbooks; stores the skill matrix.")
-    ap.add_argument("files", nargs="+", type=Path)
-    args = ap.parse_args()
     parsed = ParsedSheet()
-    for path in args.files:
+    for path in files:
         part = parse_workbook(path)
         parsed.journals += part.journals
         parsed.skills += part.skills
         parsed.rejected += part.rejected
+    registry = load_registry(registry_path) if registry_path else {}
+    drafts, stats = build_cases(parsed.journals, registry)
+    skills = upsert_skills(db, parsed.skills)
+    created, updated = store_cases(db, drafts, registry)
+    counts = {"journal_rows": len(parsed.journals), "skill_rows": len(parsed.skills), "skills_stored": skills,
+              "rejected": len(parsed.rejected), "exact_merged": stats.exact_merged,
+              "near_merged": stats.near_merged, "unknown_model": stats.unknown_model,
+              "cases_created": created, "cases_updated": updated}
+    audit = write_audit(db, files=[p.name for p in files], counts=counts, stats=stats)
+    return {"counts": counts, "redactions": audit.redactions,
+            "rejected": [f"{r.source.file}:{r.source.sheet}:{r.source.row} {r.reason}" for r in parsed.rejected]}
+
+
+def main() -> None:
+    import json
+
+    from knoventra.db.session import SessionLocal
+
+    ap = argparse.ArgumentParser(description="Import journal workbooks: skill matrix and field cases.")
+    ap.add_argument("files", nargs="+", type=Path)
+    ap.add_argument("--registry", type=Path, help="machines.json asset registry (serial -> model)")
+    args = ap.parse_args()
     with SessionLocal() as db, db.begin():
-        stored = upsert_skills(db, parsed.skills)
-    print(f"journal rows parsed: {len(parsed.journals)}; skill rows: {len(parsed.skills)} "
-          f"({stored} stored); rejected: {len(parsed.rejected)}")
-    for r in parsed.rejected:
-        print(f"  {r.source.file}:{r.source.sheet}:{r.source.row} {r.reason}")
+        report = import_workbooks(db, args.files, args.registry)
+    print(json.dumps(report, ensure_ascii=False, indent=1))
 
 
 if __name__ == "__main__":

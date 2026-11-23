@@ -1,0 +1,44 @@
+[
+ {
+  "serial": "610101",
+  "model": "WX-38",
+  "region": "CN",
+  "company": "NRS"
+ },
+ {
+  "serial": "610102",
+  "model": "WX-P",
+  "region": "CN",
+  "company": "NRS"
+ },
+ {
+  "serial": "610103",
+  "model": "ST-250",
+  "region": "CN",
+  "company": "HBF"
+ },
+ {
+  "serial": "620201",
+  "model": "WX-38",
+  "region": "TW",
+  "company": "LMC"
+ },
+ {
+  "serial": "620202",
+  "model": "WX-P",
+  "region": "TW",
+  "company": "LMC"
+ },
+ {
+  "serial": "630301",
+  "model": "WX-38",
+  "region": "SG",
+  "company": "SFC"
+ },
+ {
+  "serial": "630302",
+  "model": "ST-250",
+  "region": "SG",
+  "company": "SFC"
+ }
+]

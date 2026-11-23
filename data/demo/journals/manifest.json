@@ -1,7 +1,7 @@
 {
  "generator": "data/demo/generate_journals.py",
  "seed": 20261123,
- "content_sha256": "8b675f02533a4073a215b6e49fb7469293c17ed104e1f07eaf8b9fafbdc661fc",
+ "content_sha256": "dc820d67c0ff8be87a7e836d6641a704b9750fe97a1f656ee32eceda1007c94a",
  "headers": [
   "仪器编号",
   "日期",
@@ -108,23 +108,21 @@
  "skill_rows": 156,
  "label_counts": {
   "exact_duplicate": 3,
-  "model_variant": 43,
+  "model_variant": 44,
   "near_duplicate": 3,
-  "sensitive": 5,
+  "sensitive": 10,
   "typo": 25,
-  "unresolved": 25
+  "unresolved": 19
  },
  "rows": [
   {
    "file": "journals-CN.xlsx",
    "row": 2,
-   "scenario": "door_override",
+   "scenario": "di_filter",
    "model": "ST-250",
    "engineer": "Chen Lixing",
    "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
+   "labels": []
   },
   {
    "file": "journals-CN.xlsx",
@@ -147,29 +145,7 @@
   {
    "file": "journals-CN.xlsx",
    "row": 5,
-   "scenario": "door_override",
-   "model": "ST-250",
-   "engineer": "Zhou Lan",
-   "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 6,
-   "scenario": "spindle_replace",
-   "model": "WX-P",
-   "engineer": "Chen Lixing",
-   "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 7,
-   "scenario": "emo_test",
+   "scenario": "di_filter",
    "model": "ST-250",
    "engineer": "Zhou Lan",
    "lang": "zh-Hans",
@@ -177,254 +153,58 @@
   },
   {
    "file": "journals-CN.xlsx",
-   "row": 8,
-   "scenario": "nozzle_leak",
+   "row": 6,
+   "scenario": "chamber_teaching",
+   "model": "ST-250",
+   "engineer": "Chen Lixing",
+   "lang": "zh-Hans",
+   "labels": []
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 7,
+   "scenario": "spindle_replace",
    "model": "WX-P",
+   "engineer": "Zhou Lan",
+   "lang": "zh-Hans",
+   "labels": [
+    "model_variant"
+   ]
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 8,
+   "scenario": "chemical_flow",
+   "model": "WX-38",
    "engineer": "Chen Lixing",
    "lang": "zh-Hans",
    "labels": [
-    "unresolved"
+    "typo"
    ]
   },
   {
    "file": "journals-CN.xlsx",
    "row": 9,
-   "scenario": "chemical_flow",
-   "model": "WX-38",
+   "scenario": "door_override",
+   "model": "WX-P",
    "engineer": "Zhou Lan",
    "lang": "zh-Hans",
    "labels": [
-    "typo"
+    "model_variant"
    ]
   },
   {
    "file": "journals-CN.xlsx",
    "row": 10,
-   "scenario": "door_override",
-   "model": "WX-38",
+   "scenario": "cda_tube",
+   "model": "WX-P",
    "engineer": "Chen Lixing",
    "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
+   "labels": []
   },
   {
    "file": "journals-CN.xlsx",
    "row": 11,
-   "scenario": "cda_tube",
-   "model": "WX-P",
-   "engineer": "Zhou Lan",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 12,
-   "scenario": "loadport_level",
-   "model": "WX-P",
-   "engineer": "Chen Lixing",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 13,
-   "scenario": "spindle_replace",
-   "model": "WX-P",
-   "engineer": "Zhou Lan",
-   "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 14,
-   "scenario": "nozzle_leak",
-   "model": "WX-P",
-   "engineer": "Chen Lixing",
-   "lang": "zh-Hans",
-   "labels": [
-    "unresolved"
-   ]
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 15,
-   "scenario": "chamber_teaching",
-   "model": "WX-38",
-   "engineer": "Zhou Lan",
-   "lang": "zh-Hans",
-   "labels": [
-    "typo"
-   ]
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 16,
-   "scenario": "chamber_teaching",
-   "model": "WX-P",
-   "engineer": "Chen Lixing",
-   "lang": "zh-Hans",
-   "labels": [
-    "typo"
-   ]
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 17,
-   "scenario": "chemical_flow",
-   "model": "WX-P",
-   "engineer": "Zhou Lan",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 18,
-   "scenario": "loadport_level",
-   "model": "ST-250",
-   "engineer": "Chen Lixing",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 19,
-   "scenario": "emo_test",
-   "model": "WX-P",
-   "engineer": "Zhou Lan",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 20,
-   "scenario": "chamber_teaching",
-   "model": "ST-250",
-   "engineer": "Chen Lixing",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 21,
-   "scenario": "di_filter",
-   "model": "ST-250",
-   "engineer": "Zhou Lan",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 22,
-   "scenario": "loadport_level",
-   "model": "WX-38",
-   "engineer": "Chen Lixing",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 23,
-   "scenario": "spindle_replace",
-   "model": "WX-P",
-   "engineer": "Zhou Lan",
-   "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 24,
-   "scenario": "door_override",
-   "model": "WX-P",
-   "engineer": "Chen Lixing",
-   "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 25,
-   "scenario": "di_flow",
-   "model": "WX-38",
-   "engineer": "Zhou Lan",
-   "lang": "zh-Hans",
-   "labels": [
-    "typo"
-   ]
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 26,
-   "scenario": "spindle_replace",
-   "model": "WX-38",
-   "engineer": "Chen Lixing",
-   "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 27,
-   "scenario": "di_filter",
-   "model": "ST-250",
-   "engineer": "Zhou Lan",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 28,
-   "scenario": "spindle_replace",
-   "model": "WX-38",
-   "engineer": "Chen Lixing",
-   "lang": "zh-Hans",
-   "labels": [
-    "model_variant",
-    "near_duplicate"
-   ]
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 29,
-   "scenario": "spindle_replace",
-   "model": "WX-38",
-   "engineer": "Chen Lixing",
-   "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 30,
-   "scenario": "nozzle_leak",
-   "model": "WX-P",
-   "engineer": "Zhou Lan",
-   "lang": "zh-Hans",
-   "labels": [
-    "unresolved"
-   ]
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 31,
-   "scenario": "door_override",
-   "model": "ST-250",
-   "engineer": "Chen Lixing",
-   "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 32,
    "scenario": "golden_check",
    "model": "WX-38",
    "engineer": "Zhou Lan",
@@ -433,29 +213,41 @@
   },
   {
    "file": "journals-CN.xlsx",
-   "row": 33,
+   "row": 12,
    "scenario": "door_override",
-   "model": "ST-250",
+   "model": "WX-P",
    "engineer": "Chen Lixing",
    "lang": "zh-Hans",
    "labels": [
-    "model_variant",
-    "near_duplicate"
+    "model_variant"
    ]
   },
   {
    "file": "journals-CN.xlsx",
-   "row": 34,
-   "scenario": "di_flow",
+   "row": 13,
+   "scenario": "chamber_teaching",
    "model": "ST-250",
-   "engineer": "Chen Lixing",
+   "engineer": "Zhou Lan",
    "lang": "zh-Hans",
-   "labels": []
+   "labels": [
+    "typo"
+   ]
   },
   {
    "file": "journals-CN.xlsx",
-   "row": 35,
-   "scenario": "loadport_level",
+   "row": 14,
+   "scenario": "chamber_teaching",
+   "model": "WX-38",
+   "engineer": "Chen Lixing",
+   "lang": "zh-Hans",
+   "labels": [
+    "typo"
+   ]
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 15,
+   "scenario": "di_flow",
    "model": "WX-38",
    "engineer": "Zhou Lan",
    "lang": "zh-Hans",
@@ -463,9 +255,9 @@
   },
   {
    "file": "journals-CN.xlsx",
-   "row": 36,
-   "scenario": "wafer_slip",
-   "model": "ST-250",
+   "row": 16,
+   "scenario": "nozzle_leak",
+   "model": "WX-P",
    "engineer": "Chen Lixing",
    "lang": "zh-Hans",
    "labels": [
@@ -474,8 +266,52 @@
   },
   {
    "file": "journals-CN.xlsx",
-   "row": 37,
-   "scenario": "di_filter",
+   "row": 17,
+   "scenario": "nozzle_leak",
+   "model": "WX-P",
+   "engineer": "Zhou Lan",
+   "lang": "zh-Hans",
+   "labels": [
+    "unresolved"
+   ]
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 18,
+   "scenario": "door_override",
+   "model": "WX-P",
+   "engineer": "Chen Lixing",
+   "lang": "zh-Hans",
+   "labels": [
+    "model_variant"
+   ]
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 19,
+   "scenario": "spindle_replace",
+   "model": "WX-P",
+   "engineer": "Zhou Lan",
+   "lang": "zh-Hans",
+   "labels": [
+    "model_variant"
+   ]
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 20,
+   "scenario": "door_override",
+   "model": "WX-38",
+   "engineer": "Chen Lixing",
+   "lang": "zh-Hans",
+   "labels": [
+    "model_variant"
+   ]
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 21,
+   "scenario": "chamber_teaching",
    "model": "WX-38",
    "engineer": "Zhou Lan",
    "lang": "zh-Hans",
@@ -483,7 +319,7 @@
   },
   {
    "file": "journals-CN.xlsx",
-   "row": 38,
+   "row": 22,
    "scenario": "mixtank_alarm",
    "model": "WX-P",
    "engineer": "Chen Lixing",
@@ -492,12 +328,172 @@
   },
   {
    "file": "journals-CN.xlsx",
-   "row": 39,
-   "scenario": "chamber_teaching",
+   "row": 23,
+   "scenario": "emo_test",
+   "model": "WX-38",
+   "engineer": "Zhou Lan",
+   "lang": "zh-Hans",
+   "labels": []
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 24,
+   "scenario": "pump_noise",
+   "model": "WX-38",
+   "engineer": "Chen Lixing",
+   "lang": "zh-Hans",
+   "labels": [
+    "unresolved"
+   ]
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 25,
+   "scenario": "di_filter",
    "model": "WX-P",
    "engineer": "Zhou Lan",
    "lang": "zh-Hans",
    "labels": []
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 26,
+   "scenario": "di_filter",
+   "model": "WX-38",
+   "engineer": "Chen Lixing",
+   "lang": "zh-Hans",
+   "labels": []
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 27,
+   "scenario": "spindle_replace",
+   "model": "WX-38",
+   "engineer": "Zhou Lan",
+   "lang": "zh-Hans",
+   "labels": [
+    "model_variant"
+   ]
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 28,
+   "scenario": "di_filter",
+   "model": "WX-38",
+   "engineer": "Chen Lixing",
+   "lang": "zh-Hans",
+   "labels": [
+    "near_duplicate"
+   ]
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 29,
+   "scenario": "di_filter",
+   "model": "WX-P",
+   "engineer": "Chen Lixing",
+   "lang": "zh-Hans",
+   "labels": []
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 30,
+   "scenario": "spindle_replace",
+   "model": "WX-38",
+   "engineer": "Zhou Lan",
+   "lang": "zh-Hans",
+   "labels": [
+    "model_variant"
+   ]
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 31,
+   "scenario": "golden_check",
+   "model": "WX-38",
+   "engineer": "Chen Lixing",
+   "lang": "zh-Hans",
+   "labels": []
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 32,
+   "scenario": "di_filter",
+   "model": "ST-250",
+   "engineer": "Zhou Lan",
+   "lang": "zh-Hans",
+   "labels": []
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 33,
+   "scenario": "golden_check",
+   "model": "WX-38",
+   "engineer": "Chen Lixing",
+   "lang": "zh-Hans",
+   "labels": [
+    "near_duplicate"
+   ]
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 34,
+   "scenario": "nozzle_leak",
+   "model": "WX-P",
+   "engineer": "Chen Lixing",
+   "lang": "zh-Hans",
+   "labels": [
+    "unresolved"
+   ]
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 35,
+   "scenario": "di_flow",
+   "model": "ST-250",
+   "engineer": "Zhou Lan",
+   "lang": "zh-Hans",
+   "labels": []
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 36,
+   "scenario": "cda_tube",
+   "model": "WX-P",
+   "engineer": "Chen Lixing",
+   "lang": "zh-Hans",
+   "labels": []
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 37,
+   "scenario": "mixtank_alarm",
+   "model": "WX-38",
+   "engineer": "Zhou Lan",
+   "lang": "zh-Hans",
+   "labels": [
+    "typo"
+   ]
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 38,
+   "scenario": "golden_check",
+   "model": "WX-38",
+   "engineer": "Chen Lixing",
+   "lang": "zh-Hans",
+   "labels": []
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 39,
+   "scenario": "nozzle_leak",
+   "model": "WX-P",
+   "engineer": "Zhou Lan",
+   "lang": "zh-Hans",
+   "labels": [
+    "unresolved"
+   ]
   },
   {
    "file": "journals-CN.xlsx",
@@ -520,27 +516,7 @@
   {
    "file": "journals-CN.xlsx",
    "row": 42,
-   "scenario": "loadport_level",
-   "model": "WX-P",
-   "engineer": "Chen Lixing",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 43,
-   "scenario": "door_override",
-   "model": "WX-38",
-   "engineer": "Zhou Lan",
-   "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 44,
-   "scenario": "pump_noise",
+   "scenario": "nozzle_leak",
    "model": "WX-P",
    "engineer": "Chen Lixing",
    "lang": "zh-Hans",
@@ -550,8 +526,28 @@
   },
   {
    "file": "journals-CN.xlsx",
+   "row": 43,
+   "scenario": "mixtank_alarm",
+   "model": "WX-P",
+   "engineer": "Zhou Lan",
+   "lang": "zh-Hans",
+   "labels": []
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 44,
+   "scenario": "spindle_replace",
+   "model": "WX-38",
+   "engineer": "Chen Lixing",
+   "lang": "zh-Hans",
+   "labels": [
+    "model_variant"
+   ]
+  },
+  {
+   "file": "journals-CN.xlsx",
    "row": 45,
-   "scenario": "golden_check",
+   "scenario": "di_flow",
    "model": "WX-P",
    "engineer": "Zhou Lan",
    "lang": "zh-Hans",
@@ -560,18 +556,16 @@
   {
    "file": "journals-CN.xlsx",
    "row": 46,
-   "scenario": "spindle_replace",
-   "model": "WX-P",
+   "scenario": "di_flow",
+   "model": "WX-38",
    "engineer": "Chen Lixing",
    "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
+   "labels": []
   },
   {
    "file": "journals-CN.xlsx",
    "row": 47,
-   "scenario": "loadport_level",
+   "scenario": "emo_test",
    "model": "ST-250",
    "engineer": "Zhou Lan",
    "lang": "zh-Hans",
@@ -580,7 +574,7 @@
   {
    "file": "journals-CN.xlsx",
    "row": 48,
-   "scenario": "cda_tube",
+   "scenario": "di_filter",
    "model": "WX-38",
    "engineer": "Chen Lixing",
    "lang": "zh-Hans",
@@ -589,31 +583,38 @@
   {
    "file": "journals-CN.xlsx",
    "row": 49,
-   "scenario": "spindle_replace",
-   "model": "WX-38",
+   "scenario": "mixtank_alarm",
+   "model": "WX-P",
    "engineer": "Zhou Lan",
    "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
+   "labels": []
   },
   {
    "file": "journals-CN.xlsx",
    "row": 50,
-   "scenario": "spindle_replace",
+   "scenario": "emo_test",
    "model": "WX-38",
    "engineer": "Chen Lixing",
    "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
+   "labels": []
   },
   {
    "file": "journals-CN.xlsx",
    "row": 51,
-   "scenario": "sw_update",
+   "scenario": "pump_noise",
    "model": "WX-P",
    "engineer": "Zhou Lan",
+   "lang": "zh-Hans",
+   "labels": [
+    "unresolved"
+   ]
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 52,
+   "scenario": "sw_update",
+   "model": "WX-38",
+   "engineer": "Chen Lixing",
    "lang": "zh-Hans",
    "labels": [
     "sensitive"
@@ -621,17 +622,8 @@
   },
   {
    "file": "journals-CN.xlsx",
-   "row": 52,
-   "scenario": "loadport_level",
-   "model": "WX-P",
-   "engineer": "Chen Lixing",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-CN.xlsx",
    "row": 53,
-   "scenario": "loadport_level",
+   "scenario": "cda_tube",
    "model": "WX-38",
    "engineer": "Zhou Lan",
    "lang": "zh-Hans",
@@ -651,30 +643,26 @@
   {
    "file": "journals-CN.xlsx",
    "row": 55,
-   "scenario": "chemical_flow",
-   "model": "ST-250",
+   "scenario": "mixtank_alarm",
+   "model": "WX-P",
    "engineer": "Zhou Lan",
    "lang": "zh-Hans",
-   "labels": [
-    "typo"
-   ]
+   "labels": []
   },
   {
    "file": "journals-CN.xlsx",
    "row": 56,
-   "scenario": "spindle_replace",
-   "model": "WX-38",
+   "scenario": "emo_test",
+   "model": "WX-P",
    "engineer": "Chen Lixing",
    "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
+   "labels": []
   },
   {
    "file": "journals-CN.xlsx",
    "row": 57,
-   "scenario": "di_flow",
-   "model": "ST-250",
+   "scenario": "mixtank_alarm",
+   "model": "WX-P",
    "engineer": "Zhou Lan",
    "lang": "zh-Hans",
    "labels": [
@@ -684,42 +672,42 @@
   {
    "file": "journals-CN.xlsx",
    "row": 58,
-   "scenario": "di_flow",
-   "model": "ST-250",
-   "engineer": "Chen Lixing",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 59,
-   "scenario": "pump_noise",
-   "model": "WX-38",
-   "engineer": "Zhou Lan",
-   "lang": "zh-Hans",
-   "labels": [
-    "unresolved"
-   ]
-  },
-  {
-   "file": "journals-CN.xlsx",
-   "row": 60,
-   "scenario": "door_override",
+   "scenario": "chemical_flow",
    "model": "WX-P",
    "engineer": "Chen Lixing",
    "lang": "zh-Hans",
    "labels": [
-    "model_variant"
+    "typo"
    ]
   },
   {
    "file": "journals-CN.xlsx",
-   "row": 61,
-   "scenario": "cda_tube",
-   "model": "ST-250",
+   "row": 59,
+   "scenario": "di_flow",
+   "model": "WX-38",
    "engineer": "Zhou Lan",
    "lang": "zh-Hans",
    "labels": []
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 60,
+   "scenario": "di_filter",
+   "model": "WX-P",
+   "engineer": "Chen Lixing",
+   "lang": "zh-Hans",
+   "labels": []
+  },
+  {
+   "file": "journals-CN.xlsx",
+   "row": 61,
+   "scenario": "door_override",
+   "model": "ST-250",
+   "engineer": "Zhou Lan",
+   "lang": "zh-Hans",
+   "labels": [
+    "model_variant"
+   ]
   },
   {
    "file": "journals-CN.xlsx",
@@ -733,18 +721,19 @@
   {
    "file": "journals-CN.xlsx",
    "row": 63,
-   "scenario": "cda_tube",
+   "scenario": "door_override",
    "model": "ST-250",
    "engineer": "Zhou Lan",
    "lang": "zh-Hans",
    "labels": [
+    "model_variant",
     "exact_duplicate"
    ]
   },
   {
    "file": "journals-CN.xlsx",
    "row": 64,
-   "scenario": "golden_check",
+   "scenario": "loadport_level",
    "model": "WX-P",
    "engineer": "Zhou Lan",
    "lang": "zh-Hans",
@@ -753,30 +742,34 @@
   {
    "file": "journals-CN.xlsx",
    "row": 65,
-   "scenario": "cda_tube",
+   "scenario": "door_override",
    "model": "ST-250",
    "engineer": "Chen Lixing",
    "lang": "zh-Hans",
-   "labels": []
+   "labels": [
+    "model_variant"
+   ]
   },
   {
    "file": "journals-CN.xlsx",
    "row": 66,
-   "scenario": "cda_tube",
+   "scenario": "door_override",
    "model": "ST-250",
    "engineer": "Zhou Lan",
    "lang": "zh-Hans",
-   "labels": []
+   "labels": [
+    "model_variant"
+   ]
   },
   {
    "file": "journals-CN.xlsx",
    "row": 67,
-   "scenario": "pump_noise",
+   "scenario": "sw_update",
    "model": "WX-38",
    "engineer": "Chen Lixing",
    "lang": "zh-Hans",
    "labels": [
-    "unresolved"
+    "sensitive"
    ]
   },
   {
@@ -802,7 +795,7 @@
   {
    "file": "journals-CN.xlsx",
    "row": 70,
-   "scenario": "sw_update",
+   "scenario": "remote_support",
    "model": "WX-P",
    "engineer": "Zhou Lan",
    "lang": "zh-Hans",
@@ -869,7 +862,7 @@
   {
    "file": "journals-TW.xlsx",
    "row": 6,
-   "scenario": "emo_test",
+   "scenario": "di_filter",
    "model": "WX-P",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
@@ -878,7 +871,7 @@
   {
    "file": "journals-TW.xlsx",
    "row": 7,
-   "scenario": "di_flow",
+   "scenario": "loadport_level",
    "model": "WX-P",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
@@ -888,7 +881,7 @@
    "file": "journals-TW.xlsx",
    "row": 8,
    "scenario": "cda_tube",
-   "model": "WX-P",
+   "model": "WX-38",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
    "labels": []
@@ -896,8 +889,8 @@
   {
    "file": "journals-TW.xlsx",
    "row": 9,
-   "scenario": "cda_tube",
-   "model": "WX-38",
+   "scenario": "chamber_teaching",
+   "model": "WX-P",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
    "labels": []
@@ -905,7 +898,7 @@
   {
    "file": "journals-TW.xlsx",
    "row": 10,
-   "scenario": "golden_check",
+   "scenario": "di_filter",
    "model": "WX-38",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
@@ -914,7 +907,29 @@
   {
    "file": "journals-TW.xlsx",
    "row": 11,
-   "scenario": "di_filter",
+   "scenario": "spindle_replace",
+   "model": "WX-P",
+   "engineer": "Huang Yongqing",
+   "lang": "zh-Hant",
+   "labels": [
+    "model_variant"
+   ]
+  },
+  {
+   "file": "journals-TW.xlsx",
+   "row": 12,
+   "scenario": "spindle_replace",
+   "model": "WX-P",
+   "engineer": "Lin Boyu",
+   "lang": "zh-Hant",
+   "labels": [
+    "model_variant"
+   ]
+  },
+  {
+   "file": "journals-TW.xlsx",
+   "row": 13,
+   "scenario": "chemical_flow",
    "model": "WX-38",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
@@ -922,16 +937,16 @@
   },
   {
    "file": "journals-TW.xlsx",
-   "row": 12,
-   "scenario": "chamber_teaching",
-   "model": "WX-P",
+   "row": 14,
+   "scenario": "golden_check",
+   "model": "WX-38",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
    "labels": []
   },
   {
    "file": "journals-TW.xlsx",
-   "row": 13,
+   "row": 15,
    "scenario": "pump_noise",
    "model": "WX-P",
    "engineer": "Huang Yongqing",
@@ -942,47 +957,29 @@
   },
   {
    "file": "journals-TW.xlsx",
-   "row": 14,
-   "scenario": "di_flow",
-   "model": "WX-38",
-   "engineer": "Lin Boyu",
-   "lang": "zh-Hant",
-   "labels": []
-  },
-  {
-   "file": "journals-TW.xlsx",
-   "row": 15,
-   "scenario": "golden_check",
-   "model": "WX-38",
-   "engineer": "Huang Yongqing",
-   "lang": "zh-Hant",
-   "labels": []
-  },
-  {
-   "file": "journals-TW.xlsx",
    "row": 16,
-   "scenario": "emo_test",
-   "model": "WX-P",
-   "engineer": "Lin Boyu",
-   "lang": "zh-Hant",
-   "labels": []
-  },
-  {
-   "file": "journals-TW.xlsx",
-   "row": 17,
-   "scenario": "di_flow",
+   "scenario": "remote_support",
    "model": "WX-38",
-   "engineer": "Huang Yongqing",
+   "engineer": "Lin Boyu",
    "lang": "zh-Hant",
    "labels": [
-    "typo"
+    "sensitive"
    ]
   },
   {
    "file": "journals-TW.xlsx",
+   "row": 17,
+   "scenario": "loadport_level",
+   "model": "WX-P",
+   "engineer": "Huang Yongqing",
+   "lang": "zh-Hant",
+   "labels": []
+  },
+  {
+   "file": "journals-TW.xlsx",
    "row": 18,
-   "scenario": "door_override",
-   "model": "WX-38",
+   "scenario": "spindle_replace",
+   "model": "WX-P",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
    "labels": [
@@ -992,18 +989,18 @@
   {
    "file": "journals-TW.xlsx",
    "row": 19,
-   "scenario": "sw_update",
+   "scenario": "chemical_flow",
    "model": "WX-38",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
    "labels": [
-    "sensitive"
+    "typo"
    ]
   },
   {
    "file": "journals-TW.xlsx",
    "row": 20,
-   "scenario": "mixtank_alarm",
+   "scenario": "di_filter",
    "model": "WX-38",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
@@ -1012,11 +1009,13 @@
   {
    "file": "journals-TW.xlsx",
    "row": 21,
-   "scenario": "di_filter",
+   "scenario": "pump_noise",
    "model": "WX-38",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
-   "labels": []
+   "labels": [
+    "unresolved"
+   ]
   },
   {
    "file": "journals-TW.xlsx",
@@ -1032,27 +1031,20 @@
   {
    "file": "journals-TW.xlsx",
    "row": 23,
-   "scenario": "loadport_level",
-   "model": "WX-38",
+   "scenario": "spindle_replace",
+   "model": "WX-P",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
-   "labels": []
+   "labels": [
+    "model_variant"
+   ]
   },
   {
    "file": "journals-TW.xlsx",
    "row": 24,
    "scenario": "di_flow",
-   "model": "WX-P",
+   "model": "WX-38",
    "engineer": "Lin Boyu",
-   "lang": "zh-Hant",
-   "labels": []
-  },
-  {
-   "file": "journals-TW.xlsx",
-   "row": 25,
-   "scenario": "chamber_teaching",
-   "model": "WX-P",
-   "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
    "labels": [
     "typo"
@@ -1060,7 +1052,36 @@
   },
   {
    "file": "journals-TW.xlsx",
+   "row": 25,
+   "scenario": "di_flow",
+   "model": "WX-P",
+   "engineer": "Huang Yongqing",
+   "lang": "zh-Hant",
+   "labels": []
+  },
+  {
+   "file": "journals-TW.xlsx",
    "row": 26,
+   "scenario": "di_filter",
+   "model": "WX-P",
+   "engineer": "Lin Boyu",
+   "lang": "zh-Hant",
+   "labels": []
+  },
+  {
+   "file": "journals-TW.xlsx",
+   "row": 27,
+   "scenario": "door_override",
+   "model": "WX-P",
+   "engineer": "Huang Yongqing",
+   "lang": "zh-Hant",
+   "labels": [
+    "model_variant"
+   ]
+  },
+  {
+   "file": "journals-TW.xlsx",
+   "row": 28,
    "scenario": "nozzle_leak",
    "model": "WX-P",
    "engineer": "Lin Boyu",
@@ -1071,27 +1092,9 @@
   },
   {
    "file": "journals-TW.xlsx",
-   "row": 27,
-   "scenario": "di_flow",
-   "model": "WX-38",
-   "engineer": "Huang Yongqing",
-   "lang": "zh-Hant",
-   "labels": []
-  },
-  {
-   "file": "journals-TW.xlsx",
-   "row": 28,
-   "scenario": "golden_check",
-   "model": "WX-38",
-   "engineer": "Lin Boyu",
-   "lang": "zh-Hant",
-   "labels": []
-  },
-  {
-   "file": "journals-TW.xlsx",
    "row": 29,
    "scenario": "golden_check",
-   "model": "WX-P",
+   "model": "WX-38",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
    "labels": []
@@ -1103,24 +1106,24 @@
    "model": "WX-P",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
+   "labels": []
+  },
+  {
+   "file": "journals-TW.xlsx",
+   "row": 31,
+   "scenario": "di_flow",
+   "model": "WX-P",
+   "engineer": "Huang Yongqing",
+   "lang": "zh-Hant",
    "labels": [
     "typo"
    ]
   },
   {
    "file": "journals-TW.xlsx",
-   "row": 31,
-   "scenario": "di_flow",
-   "model": "WX-38",
-   "engineer": "Huang Yongqing",
-   "lang": "zh-Hant",
-   "labels": []
-  },
-  {
-   "file": "journals-TW.xlsx",
    "row": 32,
    "scenario": "loadport_level",
-   "model": "WX-P",
+   "model": "WX-38",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
    "labels": []
@@ -1128,23 +1131,20 @@
   {
    "file": "journals-TW.xlsx",
    "row": 33,
-   "scenario": "pump_noise",
+   "scenario": "emo_test",
    "model": "WX-P",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
-   "labels": [
-    "unresolved"
-   ]
+   "labels": []
   },
   {
    "file": "journals-TW.xlsx",
    "row": 34,
-   "scenario": "pump_noise",
+   "scenario": "emo_test",
    "model": "WX-P",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
    "labels": [
-    "unresolved",
     "exact_duplicate"
    ]
   },
@@ -1155,27 +1155,34 @@
    "model": "WX-P",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
-   "labels": [
-    "typo"
-   ]
+   "labels": []
   },
   {
    "file": "journals-TW.xlsx",
    "row": 36,
-   "scenario": "nozzle_leak",
-   "model": "WX-P",
+   "scenario": "chamber_teaching",
+   "model": "WX-38",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
    "labels": [
-    "unresolved"
+    "typo"
    ]
   },
   {
    "file": "journals-TW.xlsx",
    "row": 37,
-   "scenario": "chamber_teaching",
+   "scenario": "di_filter",
    "model": "WX-P",
    "engineer": "Lin Boyu",
+   "lang": "zh-Hant",
+   "labels": []
+  },
+  {
+   "file": "journals-TW.xlsx",
+   "row": 38,
+   "scenario": "chemical_flow",
+   "model": "WX-P",
+   "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
    "labels": [
     "typo"
@@ -1183,19 +1190,19 @@
   },
   {
    "file": "journals-TW.xlsx",
-   "row": 38,
-   "scenario": "golden_check",
-   "model": "WX-38",
-   "engineer": "Huang Yongqing",
+   "row": 39,
+   "scenario": "chamber_teaching",
+   "model": "WX-P",
+   "engineer": "Lin Boyu",
    "lang": "zh-Hant",
    "labels": []
   },
   {
    "file": "journals-TW.xlsx",
-   "row": 39,
+   "row": 40,
    "scenario": "spindle_replace",
-   "model": "WX-P",
-   "engineer": "Lin Boyu",
+   "model": "WX-38",
+   "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
    "labels": [
     "model_variant"
@@ -1203,29 +1210,20 @@
   },
   {
    "file": "journals-TW.xlsx",
-   "row": 40,
-   "scenario": "emo_test",
-   "model": "WX-38",
-   "engineer": "Huang Yongqing",
-   "lang": "zh-Hant",
-   "labels": []
-  },
-  {
-   "file": "journals-TW.xlsx",
    "row": 41,
-   "scenario": "pump_noise",
-   "model": "WX-38",
+   "scenario": "di_flow",
+   "model": "WX-P",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
    "labels": [
-    "unresolved"
+    "typo"
    ]
   },
   {
    "file": "journals-TW.xlsx",
    "row": 42,
    "scenario": "mixtank_alarm",
-   "model": "WX-P",
+   "model": "WX-38",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
    "labels": []
@@ -1233,19 +1231,17 @@
   {
    "file": "journals-TW.xlsx",
    "row": 43,
-   "scenario": "door_override",
-   "model": "WX-38",
+   "scenario": "di_filter",
+   "model": "WX-P",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
-   "labels": [
-    "model_variant"
-   ]
+   "labels": []
   },
   {
    "file": "journals-TW.xlsx",
    "row": 44,
    "scenario": "spindle_replace",
-   "model": "WX-38",
+   "model": "WX-P",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
    "labels": [
@@ -1255,19 +1251,17 @@
   {
    "file": "journals-TW.xlsx",
    "row": 45,
-   "scenario": "spindle_replace",
-   "model": "WX-38",
+   "scenario": "emo_test",
+   "model": "WX-P",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
-   "labels": [
-    "model_variant"
-   ]
+   "labels": []
   },
   {
    "file": "journals-TW.xlsx",
    "row": 46,
-   "scenario": "chemical_flow",
-   "model": "WX-38",
+   "scenario": "cda_tube",
+   "model": "WX-P",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
    "labels": []
@@ -1275,18 +1269,16 @@
   {
    "file": "journals-TW.xlsx",
    "row": 47,
-   "scenario": "door_override",
-   "model": "WX-38",
+   "scenario": "cda_tube",
+   "model": "WX-P",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
-   "labels": [
-    "model_variant"
-   ]
+   "labels": []
   },
   {
    "file": "journals-TW.xlsx",
    "row": 48,
-   "scenario": "mixtank_alarm",
+   "scenario": "cda_tube",
    "model": "WX-P",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
@@ -1295,7 +1287,7 @@
   {
    "file": "journals-TW.xlsx",
    "row": 49,
-   "scenario": "mixtank_alarm",
+   "scenario": "cda_tube",
    "model": "WX-P",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
@@ -1306,33 +1298,33 @@
   {
    "file": "journals-TW.xlsx",
    "row": 50,
-   "scenario": "loadport_level",
-   "model": "WX-38",
+   "scenario": "mixtank_alarm",
+   "model": "WX-P",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
-   "labels": []
+   "labels": [
+    "typo"
+   ]
   },
   {
    "file": "journals-TW.xlsx",
    "row": 51,
-   "scenario": "nozzle_leak",
+   "scenario": "remote_support",
    "model": "WX-P",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
    "labels": [
-    "unresolved"
+    "sensitive"
    ]
   },
   {
    "file": "journals-TW.xlsx",
    "row": 52,
-   "scenario": "door_override",
-   "model": "WX-38",
+   "scenario": "chemical_flow",
+   "model": "WX-P",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
-   "labels": [
-    "model_variant"
-   ]
+   "labels": []
   },
   {
    "file": "journals-TW.xlsx",
@@ -1346,29 +1338,38 @@
   {
    "file": "journals-TW.xlsx",
    "row": 54,
-   "scenario": "di_flow",
+   "scenario": "emo_test",
    "model": "WX-38",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
-   "labels": [
-    "typo"
-   ]
+   "labels": []
   },
   {
    "file": "journals-TW.xlsx",
    "row": 55,
-   "scenario": "cda_tube",
+   "scenario": "remote_support",
    "model": "WX-38",
    "engineer": "Huang Yongqing",
+   "lang": "zh-Hant",
+   "labels": [
+    "sensitive"
+   ]
+  },
+  {
+   "file": "journals-TW.xlsx",
+   "row": 56,
+   "scenario": "golden_check",
+   "model": "WX-38",
+   "engineer": "Lin Boyu",
    "lang": "zh-Hant",
    "labels": []
   },
   {
    "file": "journals-TW.xlsx",
-   "row": 56,
-   "scenario": "mixtank_alarm",
+   "row": 57,
+   "scenario": "chamber_teaching",
    "model": "WX-P",
-   "engineer": "Lin Boyu",
+   "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
    "labels": [
     "typo"
@@ -1376,26 +1377,19 @@
   },
   {
    "file": "journals-TW.xlsx",
-   "row": 57,
-   "scenario": "golden_check",
-   "model": "WX-38",
-   "engineer": "Huang Yongqing",
-   "lang": "zh-Hant",
-   "labels": []
-  },
-  {
-   "file": "journals-TW.xlsx",
    "row": 58,
-   "scenario": "loadport_level",
-   "model": "WX-38",
+   "scenario": "spindle_replace",
+   "model": "WX-P",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
-   "labels": []
+   "labels": [
+    "model_variant"
+   ]
   },
   {
    "file": "journals-TW.xlsx",
    "row": 59,
-   "scenario": "emo_test",
+   "scenario": "cda_tube",
    "model": "WX-38",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
@@ -1433,8 +1427,8 @@
   {
    "file": "journals-TW.xlsx",
    "row": 63,
-   "scenario": "nozzle_leak",
-   "model": "WX-P",
+   "scenario": "pump_noise",
+   "model": "WX-38",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
    "labels": [
@@ -1473,32 +1467,34 @@
   {
    "file": "journals-TW.xlsx",
    "row": 67,
-   "scenario": "cda_tube",
+   "scenario": "door_override",
    "model": "WX-P",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
-   "labels": []
+   "labels": [
+    "model_variant"
+   ]
   },
   {
    "file": "journals-TW.xlsx",
    "row": 68,
-   "scenario": "pump_noise",
+   "scenario": "sw_update",
    "model": "WX-P",
    "engineer": "Lin Boyu",
    "lang": "zh-Hant",
    "labels": [
-    "unresolved"
+    "sensitive"
    ]
   },
   {
    "file": "journals-TW.xlsx",
    "row": 69,
-   "scenario": "pump_noise",
+   "scenario": "sw_update",
    "model": "WX-38",
    "engineer": "Huang Yongqing",
    "lang": "zh-Hant",
    "labels": [
-    "unresolved"
+    "sensitive"
    ]
   },
   {
@@ -1548,8 +1544,8 @@
   {
    "file": "journals-SG.xlsx",
    "row": 6,
-   "scenario": "emo_test",
-   "model": "ST-250",
+   "scenario": "di_flow",
+   "model": "WX-38",
    "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
    "labels": []
@@ -1557,16 +1553,18 @@
   {
    "file": "journals-SG.xlsx",
    "row": 7,
-   "scenario": "chamber_teaching",
-   "model": "WX-38",
+   "scenario": "door_override",
+   "model": "ST-250",
    "engineer": "Priya Nair",
-   "lang": "en",
-   "labels": []
+   "lang": "zh-Hans",
+   "labels": [
+    "model_variant"
+   ]
   },
   {
    "file": "journals-SG.xlsx",
    "row": 8,
-   "scenario": "chamber_teaching",
+   "scenario": "cda_tube",
    "model": "ST-250",
    "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
@@ -1575,18 +1573,9 @@
   {
    "file": "journals-SG.xlsx",
    "row": 9,
-   "scenario": "golden_check",
+   "scenario": "door_override",
    "model": "WX-38",
    "engineer": "Priya Nair",
-   "lang": "en",
-   "labels": []
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 10,
-   "scenario": "spindle_replace",
-   "model": "WX-38",
-   "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
    "labels": [
     "model_variant"
@@ -1594,27 +1583,18 @@
   },
   {
    "file": "journals-SG.xlsx",
-   "row": 11,
-   "scenario": "golden_check",
-   "model": "WX-38",
-   "engineer": "Priya Nair",
-   "lang": "en",
-   "labels": []
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 12,
-   "scenario": "chemical_flow",
-   "model": "WX-38",
+   "row": 10,
+   "scenario": "cda_tube",
+   "model": "ST-250",
    "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
    "labels": []
   },
   {
    "file": "journals-SG.xlsx",
-   "row": 13,
-   "scenario": "mixtank_alarm",
-   "model": "WX-38",
+   "row": 11,
+   "scenario": "di_flow",
+   "model": "ST-250",
    "engineer": "Priya Nair",
    "lang": "en",
    "labels": [
@@ -1623,20 +1603,42 @@
   },
   {
    "file": "journals-SG.xlsx",
+   "row": 12,
+   "scenario": "mixtank_alarm",
+   "model": "WX-38",
+   "engineer": "Tan Wei Ming",
+   "lang": "zh-Hans",
+   "labels": [
+    "typo"
+   ]
+  },
+  {
+   "file": "journals-SG.xlsx",
+   "row": 13,
+   "scenario": "door_override",
+   "model": "WX-38",
+   "engineer": "Priya Nair",
+   "lang": "zh-Hans",
+   "labels": [
+    "model_variant"
+   ]
+  },
+  {
+   "file": "journals-SG.xlsx",
    "row": 14,
-   "scenario": "wafer_slip",
+   "scenario": "chamber_teaching",
    "model": "ST-250",
    "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
    "labels": [
-    "unresolved"
+    "typo"
    ]
   },
   {
    "file": "journals-SG.xlsx",
    "row": 15,
-   "scenario": "spindle_replace",
-   "model": "WX-38",
+   "scenario": "door_override",
+   "model": "ST-250",
    "engineer": "Priya Nair",
    "lang": "zh-Hans",
    "labels": [
@@ -1646,7 +1648,7 @@
   {
    "file": "journals-SG.xlsx",
    "row": 16,
-   "scenario": "di_flow",
+   "scenario": "di_filter",
    "model": "WX-38",
    "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
@@ -1659,14 +1661,12 @@
    "model": "WX-38",
    "engineer": "Priya Nair",
    "lang": "en",
-   "labels": [
-    "typo"
-   ]
+   "labels": []
   },
   {
    "file": "journals-SG.xlsx",
    "row": 18,
-   "scenario": "spindle_replace",
+   "scenario": "door_override",
    "model": "WX-38",
    "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
@@ -1677,46 +1677,24 @@
   {
    "file": "journals-SG.xlsx",
    "row": 19,
-   "scenario": "di_flow",
+   "scenario": "golden_check",
    "model": "WX-38",
    "engineer": "Priya Nair",
    "lang": "en",
-   "labels": [
-    "typo"
-   ]
+   "labels": []
   },
   {
    "file": "journals-SG.xlsx",
    "row": 20,
-   "scenario": "sw_update",
+   "scenario": "di_flow",
    "model": "ST-250",
    "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
-   "labels": [
-    "sensitive"
-   ]
+   "labels": []
   },
   {
    "file": "journals-SG.xlsx",
    "row": 21,
-   "scenario": "mixtank_alarm",
-   "model": "WX-38",
-   "engineer": "Priya Nair",
-   "lang": "en",
-   "labels": []
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 22,
-   "scenario": "emo_test",
-   "model": "ST-250",
-   "engineer": "Tan Wei Ming",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 23,
    "scenario": "wafer_slip",
    "model": "ST-250",
    "engineer": "Priya Nair",
@@ -1727,43 +1705,47 @@
   },
   {
    "file": "journals-SG.xlsx",
-   "row": 24,
-   "scenario": "di_filter",
+   "row": 22,
+   "scenario": "loadport_level",
    "model": "WX-38",
    "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
    "labels": []
+  },
+  {
+   "file": "journals-SG.xlsx",
+   "row": 23,
+   "scenario": "golden_check",
+   "model": "WX-38",
+   "engineer": "Priya Nair",
+   "lang": "en",
+   "labels": []
+  },
+  {
+   "file": "journals-SG.xlsx",
+   "row": 24,
+   "scenario": "chamber_teaching",
+   "model": "ST-250",
+   "engineer": "Tan Wei Ming",
+   "lang": "zh-Hans",
+   "labels": [
+    "typo"
+   ]
   },
   {
    "file": "journals-SG.xlsx",
    "row": 25,
-   "scenario": "golden_check",
+   "scenario": "door_override",
    "model": "WX-38",
    "engineer": "Priya Nair",
-   "lang": "en",
-   "labels": []
+   "lang": "zh-Hans",
+   "labels": [
+    "model_variant"
+   ]
   },
   {
    "file": "journals-SG.xlsx",
    "row": 26,
-   "scenario": "loadport_level",
-   "model": "ST-250",
-   "engineer": "Tan Wei Ming",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 27,
-   "scenario": "golden_check",
-   "model": "WX-38",
-   "engineer": "Priya Nair",
-   "lang": "en",
-   "labels": []
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 28,
    "scenario": "mixtank_alarm",
    "model": "WX-38",
    "engineer": "Tan Wei Ming",
@@ -1772,8 +1754,26 @@
   },
   {
    "file": "journals-SG.xlsx",
+   "row": 27,
+   "scenario": "di_flow",
+   "model": "ST-250",
+   "engineer": "Priya Nair",
+   "lang": "en",
+   "labels": []
+  },
+  {
+   "file": "journals-SG.xlsx",
+   "row": 28,
+   "scenario": "golden_check",
+   "model": "WX-38",
+   "engineer": "Tan Wei Ming",
+   "lang": "zh-Hans",
+   "labels": []
+  },
+  {
+   "file": "journals-SG.xlsx",
    "row": 29,
-   "scenario": "chamber_teaching",
+   "scenario": "mixtank_alarm",
    "model": "WX-38",
    "engineer": "Priya Nair",
    "lang": "en",
@@ -1782,13 +1782,11 @@
   {
    "file": "journals-SG.xlsx",
    "row": 30,
-   "scenario": "door_override",
+   "scenario": "di_flow",
    "model": "WX-38",
    "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
+   "labels": []
   },
   {
    "file": "journals-SG.xlsx",
@@ -1804,22 +1802,22 @@
   {
    "file": "journals-SG.xlsx",
    "row": 32,
-   "scenario": "golden_check",
-   "model": "WX-38",
+   "scenario": "sw_update",
+   "model": "ST-250",
    "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
-   "labels": []
+   "labels": [
+    "sensitive"
+   ]
   },
   {
    "file": "journals-SG.xlsx",
    "row": 33,
-   "scenario": "door_override",
+   "scenario": "chamber_teaching",
    "model": "ST-250",
    "engineer": "Priya Nair",
-   "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
+   "lang": "en",
+   "labels": []
   },
   {
    "file": "journals-SG.xlsx",
@@ -1828,24 +1826,24 @@
    "model": "WX-38",
    "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 35,
-   "scenario": "chamber_teaching",
-   "model": "WX-38",
-   "engineer": "Priya Nair",
-   "lang": "en",
    "labels": [
     "typo"
    ]
   },
   {
    "file": "journals-SG.xlsx",
+   "row": 35,
+   "scenario": "mixtank_alarm",
+   "model": "WX-38",
+   "engineer": "Priya Nair",
+   "lang": "en",
+   "labels": []
+  },
+  {
+   "file": "journals-SG.xlsx",
    "row": 36,
-   "scenario": "door_override",
-   "model": "ST-250",
+   "scenario": "spindle_replace",
+   "model": "WX-38",
    "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
    "labels": [
@@ -1866,18 +1864,16 @@
   {
    "file": "journals-SG.xlsx",
    "row": 38,
-   "scenario": "door_override",
-   "model": "ST-250",
+   "scenario": "chemical_flow",
+   "model": "WX-38",
    "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
+   "labels": []
   },
   {
    "file": "journals-SG.xlsx",
    "row": 39,
-   "scenario": "door_override",
+   "scenario": "spindle_replace",
    "model": "WX-38",
    "engineer": "Priya Nair",
    "lang": "zh-Hans",
@@ -1888,95 +1884,6 @@
   {
    "file": "journals-SG.xlsx",
    "row": 40,
-   "scenario": "pump_noise",
-   "model": "WX-38",
-   "engineer": "Tan Wei Ming",
-   "lang": "zh-Hans",
-   "labels": [
-    "unresolved"
-   ]
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 41,
-   "scenario": "di_flow",
-   "model": "WX-38",
-   "engineer": "Priya Nair",
-   "lang": "en",
-   "labels": [
-    "typo"
-   ]
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 42,
-   "scenario": "di_flow",
-   "model": "ST-250",
-   "engineer": "Tan Wei Ming",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 43,
-   "scenario": "door_override",
-   "model": "ST-250",
-   "engineer": "Priya Nair",
-   "lang": "zh-Hans",
-   "labels": [
-    "model_variant"
-   ]
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 44,
-   "scenario": "loadport_level",
-   "model": "ST-250",
-   "engineer": "Tan Wei Ming",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 45,
-   "scenario": "golden_check",
-   "model": "WX-38",
-   "engineer": "Priya Nair",
-   "lang": "en",
-   "labels": []
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 46,
-   "scenario": "cda_tube",
-   "model": "ST-250",
-   "engineer": "Tan Wei Ming",
-   "lang": "zh-Hans",
-   "labels": []
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 47,
-   "scenario": "golden_check",
-   "model": "WX-38",
-   "engineer": "Priya Nair",
-   "lang": "en",
-   "labels": []
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 48,
-   "scenario": "golden_check",
-   "model": "WX-38",
-   "engineer": "Priya Nair",
-   "lang": "en",
-   "labels": [
-    "exact_duplicate"
-   ]
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 49,
    "scenario": "mixtank_alarm",
    "model": "WX-38",
    "engineer": "Tan Wei Ming",
@@ -1987,7 +1894,27 @@
   },
   {
    "file": "journals-SG.xlsx",
-   "row": 50,
+   "row": 41,
+   "scenario": "door_override",
+   "model": "WX-38",
+   "engineer": "Priya Nair",
+   "lang": "zh-Hans",
+   "labels": [
+    "model_variant"
+   ]
+  },
+  {
+   "file": "journals-SG.xlsx",
+   "row": 42,
+   "scenario": "loadport_level",
+   "model": "WX-38",
+   "engineer": "Tan Wei Ming",
+   "lang": "zh-Hans",
+   "labels": []
+  },
+  {
+   "file": "journals-SG.xlsx",
+   "row": 43,
    "scenario": "pump_noise",
    "model": "ST-250",
    "engineer": "Priya Nair",
@@ -1998,47 +1925,27 @@
   },
   {
    "file": "journals-SG.xlsx",
-   "row": 51,
-   "scenario": "chemical_flow",
-   "model": "ST-250",
+   "row": 44,
+   "scenario": "cda_tube",
+   "model": "WX-38",
    "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
    "labels": []
   },
   {
    "file": "journals-SG.xlsx",
-   "row": 52,
-   "scenario": "di_flow",
+   "row": 45,
+   "scenario": "spindle_replace",
    "model": "WX-38",
    "engineer": "Priya Nair",
-   "lang": "en",
-   "labels": [
-    "typo"
-   ]
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 53,
-   "scenario": "sw_update",
-   "model": "WX-38",
-   "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
    "labels": [
-    "sensitive"
+    "model_variant"
    ]
   },
   {
    "file": "journals-SG.xlsx",
-   "row": 54,
-   "scenario": "golden_check",
-   "model": "WX-38",
-   "engineer": "Priya Nair",
-   "lang": "en",
-   "labels": []
-  },
-  {
-   "file": "journals-SG.xlsx",
-   "row": 55,
+   "row": 46,
    "scenario": "spindle_replace",
    "model": "WX-38",
    "engineer": "Tan Wei Ming",
@@ -2049,13 +1956,105 @@
   },
   {
    "file": "journals-SG.xlsx",
-   "row": 56,
+   "row": 47,
+   "scenario": "pump_noise",
+   "model": "ST-250",
+   "engineer": "Priya Nair",
+   "lang": "zh-Hans",
+   "labels": [
+    "unresolved"
+   ]
+  },
+  {
+   "file": "journals-SG.xlsx",
+   "row": 48,
+   "scenario": "pump_noise",
+   "model": "ST-250",
+   "engineer": "Priya Nair",
+   "lang": "zh-Hans",
+   "labels": [
+    "unresolved",
+    "exact_duplicate"
+   ]
+  },
+  {
+   "file": "journals-SG.xlsx",
+   "row": 49,
+   "scenario": "loadport_level",
+   "model": "ST-250",
+   "engineer": "Tan Wei Ming",
+   "lang": "zh-Hans",
+   "labels": []
+  },
+  {
+   "file": "journals-SG.xlsx",
+   "row": 50,
+   "scenario": "chamber_teaching",
+   "model": "WX-38",
+   "engineer": "Priya Nair",
+   "lang": "en",
+   "labels": []
+  },
+  {
+   "file": "journals-SG.xlsx",
+   "row": 51,
+   "scenario": "mixtank_alarm",
+   "model": "WX-38",
+   "engineer": "Tan Wei Ming",
+   "lang": "zh-Hans",
+   "labels": [
+    "typo"
+   ]
+  },
+  {
+   "file": "journals-SG.xlsx",
+   "row": 52,
+   "scenario": "spindle_replace",
+   "model": "WX-38",
+   "engineer": "Priya Nair",
+   "lang": "zh-Hans",
+   "labels": [
+    "model_variant"
+   ]
+  },
+  {
+   "file": "journals-SG.xlsx",
+   "row": 53,
+   "scenario": "cda_tube",
+   "model": "WX-38",
+   "engineer": "Tan Wei Ming",
+   "lang": "zh-Hans",
+   "labels": []
+  },
+  {
+   "file": "journals-SG.xlsx",
+   "row": 54,
    "scenario": "mixtank_alarm",
    "model": "WX-38",
    "engineer": "Priya Nair",
    "lang": "en",
+   "labels": []
+  },
+  {
+   "file": "journals-SG.xlsx",
+   "row": 55,
+   "scenario": "sw_update",
+   "model": "ST-250",
+   "engineer": "Tan Wei Ming",
+   "lang": "zh-Hans",
    "labels": [
-    "typo"
+    "sensitive"
+   ]
+  },
+  {
+   "file": "journals-SG.xlsx",
+   "row": 56,
+   "scenario": "spindle_replace",
+   "model": "WX-38",
+   "engineer": "Priya Nair",
+   "lang": "zh-Hans",
+   "labels": [
+    "model_variant"
    ]
   },
   {
@@ -2157,11 +2156,13 @@
   {
    "file": "journals-SG.xlsx",
    "row": 67,
-   "scenario": "cda_tube",
+   "scenario": "door_override",
    "model": "WX-38",
    "engineer": "Tan Wei Ming",
    "lang": "zh-Hans",
-   "labels": []
+   "labels": [
+    "model_variant"
+   ]
   },
   {
    "file": "journals-SG.xlsx",
