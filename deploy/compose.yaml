@@ -13,5 +13,21 @@ services:
       test: ["CMD-SHELL", "pg_isready -U knoventra"]
       interval: 3s
       retries: 20
+  es:
+    build: ./elasticsearch
+    image: knoventra-es:8.15.3-ik
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "59200:9200"
+    volumes:
+      - knv_esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=2s"]
+      interval: 5s
+      retries: 40
 volumes:
   knv_pgdata:
+  knv_esdata:

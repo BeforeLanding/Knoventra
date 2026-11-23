@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     encoder: Literal["hash", "bge-m3"] = "hash"
     dense_dim: int = Field(default=1024, gt=0)
     sparse_dim: int = Field(default=250002, gt=0)  # BGE-M3 XLM-R vocabulary size
+    # Elasticsearch keyword channel; empty URL disables it (pgvector channels only).
+    es_url: str = ""
+    es_index: str = "knv_chunks"
+    es_timeout_s: float = Field(default=2.0, gt=0)
     recall_top_k: int = 20
     final_top_k: int = 5
     rrf_k: int = 60

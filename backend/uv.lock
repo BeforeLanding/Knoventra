@@ -358,6 +358,33 @@ wheels = [
 ]
 
 [[package]]
+name = "elastic-transport"
+version = "8.19.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "certifi" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/19/d7/7db60bad91fa6e887fe1f75350342425919bf7722afa715cc578caf0891d/elastic_transport-8.19.1.tar.gz", hash = "sha256:47bf0ffd2071a2791dae2e1e764af6477aa33ff686e087c96a88512414b7b83b", size = 74767, upload-time = "2026-11-16T20:02:48.29Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/13/7f/6bd5806c41ce6fa5d2773e739102848878602fab04d02c661eaa259a601f/elastic_transport-8.19.1-py3-none-any.whl", hash = "sha256:fcd5cf86242317e2dd43cd697694cba606eee8728df878c276c8f511febdf24b", size = 65170, upload-time = "2026-11-16T20:02:46.9Z" },
+]
+
+[[package]]
+name = "elasticsearch"
+version = "8.19.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "elastic-transport" },
+    { name = "python-dateutil" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6b/79/365e306017a9fcfbbefab1a3b588d2404bea8806b36766ff0f886509a20e/elasticsearch-8.19.3.tar.gz", hash = "sha256:e84dd618a220cac25b962790085045dd27ac72e01c0a5d81bd29a2d47a71f03f", size = 800298, upload-time = "2025-12-23T12:56:00.72Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/56/0f/ac126833c385b06166d41c486e4911f58ad7791fd1a53dd6e0b8d16ff214/elasticsearch-8.19.3-py3-none-any.whl", hash = "sha256:fe1db2555811192e8a1be78b01234d0a49d32b185ea7eeeb6f059331dee32838", size = 952820, upload-time = "2025-12-23T12:55:56.796Z" },
+]
+
+[[package]]
 name = "et-xmlfile"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -684,6 +711,7 @@ source = { editable = "." }
 dependencies = [
     { name = "alembic" },
     { name = "bcrypt" },
+    { name = "elasticsearch" },
     { name = "fastapi" },
     { name = "langchain-core" },
     { name = "langchain-openai" },
@@ -721,6 +749,7 @@ dev = [
 requires-dist = [
     { name = "alembic", specifier = ">=1.13" },
     { name = "bcrypt", specifier = ">=4.2" },
+    { name = "elasticsearch", specifier = ">=8.15,<9" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "flagembedding", marker = "extra == 'ml'", specifier = ">=1.3" },
     { name = "langchain-core", specifier = ">=1.7.3" },

@@ -1,0 +1,9 @@
+# Spelling fixes applied at index and query time, so both sides meet on the correct form.
+shotting => shooting
+troubleshoting, troubleshootting => troubleshooting
+chamical, chemucal, chemcial => chemical
+tecahing, teching, teachig => teaching
+overiew => overview
+sfaety => safety
+loas => load
+spidle, spinde => spindle

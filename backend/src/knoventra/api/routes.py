@@ -104,6 +104,9 @@ def publish_revision(revision_id: str, _: User = Depends(require_admin), db: Ses
     except ValueError as e:
         db.rollback()
         raise HTTPException(409, str(e)) from None
+    from knoventra.search_es.sync import drain_after_commit
+
+    drain_after_commit(db)
     rev = db.get(Revision, revision_id)
     return {"revision_id": rev.id, "status": rev.status}
 

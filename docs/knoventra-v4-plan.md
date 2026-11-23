@@ -1,6 +1,6 @@
 # Knoventra v4 扩展计划：现场经验沉淀、混合检索与分层记忆
 
-版本：v4.0 草案 · 2026-11-23 · 状态：开发中（D2 完成） · 工期目标：3 周（15 个工作日）
+版本：v4.0 草案 · 2026-11-23 · 状态：开发中（D3 完成） · 工期目标：3 周（15 个工作日）
 
 本计划在 v3 MVP（`main` c8c81956）的基础上扩展，不推翻已有实现。v3 已经做实、这里直接复用的能力：权限在召回 SQL 内生效、已发布版本过滤、编号精确门槛、来源卡片、interrupt 确认与幂等转交、Checkpoint 恢复。
 
@@ -143,7 +143,7 @@ v4 推翻了 [DECISIONS.md](DECISIONS.md) 中“无 Redis、Elasticsearch”和�
 ### 第 1 周：数据与混合检索
 - **D1**：虚构数据生成脚本、模板适配、技能表入库。✅ 2026-11-23：`data/demo/generate_journals.py` 生成三地日志（206 行，含 3 行精确重复、3 行近似重复）与技能行 156 条；`knoventra.ingestion.journal` 按表头定位列，并区分同表混排的日志行与技能行；`knv_skill`（迁移 0007）幂等 upsert。SOP 文档未在 D1 生成，移到 D2。
 - **D2**：脱敏、精确去重和近似去重、机型抽取、案例字段规则抽取。✅ 2026-11-23：`knoventra.ingestion.cases`：口令、电话、邮箱规则脱敏，审计记“命中数 / 替换后残留数”；机型先查资产登记表 `machines.json`，再用别名字典，都没有就留空；精确去重用归一化文本哈希，近似去重用 SimHash（≤10）粗筛、3-gram Jaccard（≥0.6）复核，且只在同机型内合并；案例字段规则抽取。演示数据 206 行 → 44 个案例，没有跨场景合并。结果存入 `knv_journal_case` 与 `knv_ingest_audit`（迁移 0008）。10 份 SOP 放在 `data/demo/docs/sop/`，由附加清单 `manifest.sop.json` 加载。
-- **D3**：Compose 加入 ES，自建分词镜像，完成映射、同义词和纠错表、发布与撤销同步、对账命令。
+- **D3**：Compose 加入 ES，自建分词镜像，完成映射、同义词和纠错表、发布与撤销同步、对账命令。✅ 2026-11-23：`deploy/elasticsearch/Dockerfile`（ES 8.15.3，基础镜像固定 digest，IK 插件校验 SHA-256），compose 服务 `es` 在 59200 端口；不需要退回 smartcn。实测 IK 会把繁体切成单字，所以索引和查询都用 OpenCC 简体化后的 `text_norm`。纠错表在索引和查询两侧都生效，同义词只在查询侧（`synonym_graph`）；映射哈希写进物理索引名，经别名访问。同步走事务性 outbox（`knv_es_outbox`，迁移 0009）：发布时在同一事务入队，提交后 drain 按 PG 当前状态重算 ES；失败保留在 outbox 并记录错误。`python -m knoventra.search_es.sync drain|reconcile|rebuild` 负责补齐、双向对账和换别名重建。outbox 不加外键，文档删除后仍能清掉 ES 里的副本。ES 测试连不上时会跳过，CI 的 ES job 留到 D14。
 - **D4**：ES 通道接入检索，加入回表校验、降级和加权 RRF；越权和残留修订测试。另一项验收：把 SOP 并入默认种子后，`test_exact_identifier_in_text_or_heading_survives_normalization` 仍须通过。D2 实测发现，只多 SOP 这 30 多个分块，E17-07 这类精确编号就会被挤出 dense/sparse 的 top-k；现有链路只在召回结果里过滤编号，没有按编号召回的通道。
 - **D5**：检索层离线评测和三种配置对比；更新 DECISIONS。
 

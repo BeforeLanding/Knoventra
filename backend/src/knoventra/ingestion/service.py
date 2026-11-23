@@ -102,4 +102,8 @@ def publish(db: Session, revision_id: str) -> None:
     )
     rev.status = "PUBLISHED"
     rev.published_at = dt.datetime.now(dt.UTC)
+    # Same transaction as the status change: the ES copy can lag but never lose this event.
+    from knoventra.search_es.sync import enqueue
+
+    enqueue(db, rev.document_id)
     db.flush()

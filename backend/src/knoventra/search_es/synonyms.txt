@@ -1,0 +1,15 @@
+# Query-time equivalences (Solr format). Text is already OpenCC-simplified and lowercased.
+alarm, 报警, 告警
+troubleshooting, trouble shooting, 排障, 故障排除
+pump, 泵
+chamber, 腔体
+teaching, 示教
+spindle, 主轴
+mix tank, 混液槽
+load port, 装载口
+door override, 门超控
+interlock, 联锁
+flow meter, 流量计
+needle valve, 针阀
+dummy wafer, 陪片
+leveling, 调平

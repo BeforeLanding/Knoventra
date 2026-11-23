@@ -210,6 +210,18 @@ class IngestAudit(Base):
     created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())
 
 
+class EsOutbox(Base):
+    """Documents whose ES keyword index must be recomputed from PG (transactional outbox)."""
+
+    __tablename__ = "knv_es_outbox"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    # No foreign key: the row must outlive a deleted document so drain can purge its ES copy.
+    document_id: Mapped[str] = mapped_column(String(32), unique=True)
+    enqueued_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())
+    attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    last_error: Mapped[str | None] = mapped_column(Text)
+
+
 Index("ix_knv_skill_key_level", Skill.skill_key, Skill.level)
 Index("ix_knv_chunk_dense", Chunk.dense, postgresql_using="hnsw",
       postgresql_with={"m": 16, "ef_construction": 64},

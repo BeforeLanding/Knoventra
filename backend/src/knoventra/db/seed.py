@@ -63,6 +63,10 @@ def main() -> None:
     with SessionLocal.begin() as db:
         r = seed(db, get_encoder(), args.manifest)
     print(f"seeded {len(r)} documents")
+    from knoventra.search_es.sync import drain_after_commit
+
+    with SessionLocal() as db:
+        drain_after_commit(db)
 
 
 if __name__ == "__main__":
