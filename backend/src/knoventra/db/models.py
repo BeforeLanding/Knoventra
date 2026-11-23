@@ -35,6 +35,7 @@ class Base(DeclarativeBase):
 
 class User(Base):
     __tablename__ = "knv_user"
+    __table_args__ = (UniqueConstraint("engineer_name", name="knv_user_engineer_name_key"),)
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_id)
     email: Mapped[str] = mapped_column(String(255), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
@@ -42,6 +43,8 @@ class User(Base):
     department: Mapped[str] = mapped_column(String(32))
     role: Mapped[str] = mapped_column(String(16), default="user")  # user | admin
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Links a login to its row in the skill matrix (knv_skill.engineer_name); NULL for non-engineers.
+    engineer_name: Mapped[str | None] = mapped_column(String(128))
 
 
 class KnowledgeBase(Base):

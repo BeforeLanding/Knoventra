@@ -43,7 +43,8 @@ def login(body: LoginIn, db: Session = Depends(get_db)):
 @router.get("/me")
 def me(user: User = Depends(current_user)):
     return {"id": user.id, "email": user.email, "region": user.region,
-            "department": user.department, "role": user.role, "chat_max_chars": settings.chat_max_chars}
+            "department": user.department, "role": user.role, "chat_max_chars": settings.chat_max_chars,
+            "engineer_name": user.engineer_name}
 
 
 @router.get("/debug/search")

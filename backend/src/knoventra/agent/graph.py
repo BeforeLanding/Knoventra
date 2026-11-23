@@ -31,7 +31,8 @@ from knoventra.agent.escalation_intent import direct_escalation_summary
 from knoventra.agent.model_variants import clarification_needed, clarification_text, stated_models
 from knoventra.agent.query_plan import RETRIEVAL_INTENTS, plan_query
 from knoventra.help import slots as help_slots
-from knoventra.help.service import create_request
+from knoventra.help.recommend import recommend
+from knoventra.help.service import assign_by_system, create_request
 from knoventra.skills import can_view_skills, format_hits
 from knoventra.skills import lookup_skills as lookup_skills_in_db
 from knoventra.db.models import Confirmation, Escalation, User
@@ -330,10 +331,14 @@ def build_graph(deps: AgentDeps):
                                            + "。请一次只向用户追问一项，不要编造。", tool_call_id=c["id"]))
                     continue
                 help_update = draft
+                with deps.session_factory() as db:
+                    rec = recommend(db, db.get(User, uid), f"{draft['symptom']} {draft.get('tried_steps', '')}")
+                card = help_slots.card(draft) + (f"\n推荐专家：{rec.chosen.engineer}（{rec.reason}）" if rec.chosen
+                                                 else f"\n派单：{rec.reason}")
                 turn_id = next(m.id for m in reversed(state["messages"]) if isinstance(m, HumanMessage))
                 op_id = hashlib.sha256(f"{config['configurable']['thread_id']}:{turn_id}:{c['id']}".encode()).hexdigest()[:32]
-                pending = {"tool_call_id": c["id"], "args": {"summary": help_slots.card(draft)},
-                           "operation_id": op_id, "kind": "field_help", "slots": draft}
+                pending = {"tool_call_id": c["id"], "args": {"summary": card}, "operation_id": op_id,
+                           "kind": "field_help", "slots": draft, "recommendation": rec.as_dict()}
             elif c["name"] == "escalate_to_expert" and pending is None:
                 turn_id = next(m.id for m in reversed(state["messages"]) if isinstance(m, HumanMessage))
                 op_id = hashlib.sha256(f"{config['configurable']['thread_id']}:{turn_id}:{c['id']}".encode()).hexdigest()[:32]
@@ -390,6 +395,9 @@ def build_graph(deps: AgentDeps):
             with deps.session_factory() as db:
                 esc = create_request(db, request_id=eid, requester_id=uid, operation_id=p["operation_id"],
                                      kind=kind, summary=p["summary"], evidence_refs=refs, slots=p.get("slots"))
+                rec = p.get("recommendation") or {}
+                if rec.get("assignee_id"):
+                    esc = assign_by_system(db, esc.id, rec["assignee_id"], rec["reason"])
                 db.commit()
                 label = "求助单" if kind == "field_help" else "转交记录"
                 msg = f"已创建{label} {esc.id}，状态 {esc.status}。"

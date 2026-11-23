@@ -1,4 +1,5 @@
-export type Me = { id: string; email: string; region: string | null; department: string; role: string; chat_max_chars?: number }
+export type Me = { id: string; email: string; region: string | null; department: string; role: string; chat_max_chars?: number;
+  engineer_name?: string | null }
 export type Source = {
   alias: string; chunk_id: string; document_title: string; revision: number
   page: number | null; section_path: string; lang: string; snippet: string
@@ -11,6 +12,13 @@ export type Confirmation = {
 }
 export type EscalationRecord = { id: string; summary: string; status: string; created_at: string | null; evidence_refs: string[] }
 export type EscalationPage = { items: EscalationRecord[]; next_cursor: string | null }
+export type HelpEvent = { action: string; from_status: string | null; to_status: string; note: string; actor: string; at: string }
+export type HelpItem = { id: string; kind: string; status: string; summary: string; machine_id: string | null;
+  machine_model: string | null; alarm_codes: string[]; symptom: string; tried_steps: string; resolution: string;
+  requester: string | null; assignee: string | null; assignee_id: string | null; created_at: string | null;
+  updated_at: string; my_roles: string[]; events?: HelpEvent[] }
+export type HelpAction = { action: string; note?: string; assignee_id?: string; resolution?: string }
+export type HelpCandidate = { user_id: string; engineer: string; reason: string }
 export type ConversationSummary = { id: string; title: string; created_at?: string }
 export type ConversationPage = { items: ConversationSummary[]; next_cursor: string | null }
 export type AdminDocuments = { kbs: string[]; upload_max_bytes?: number
@@ -107,6 +115,15 @@ export const api = {
     (await req(`/evidence/${encodeURIComponent(chunkId)}`, { signal })).json(),
   escalations: async (before?: string, signal?: AbortSignal): Promise<EscalationPage> =>
     (await req('/escalations' + (before ? `?before=${encodeURIComponent(before)}` : ''), { signal })).json(),
+  helpRequests: async (scope: 'mine' | 'assigned' | 'queue', signal?: AbortSignal): Promise<{ items: HelpItem[] }> =>
+    (await req(`/help-requests?scope=${scope}`, { signal })).json(),
+  helpRequest: async (id: string, signal?: AbortSignal): Promise<HelpItem> =>
+    (await req(`/help-requests/${encodeURIComponent(id)}`, { signal })).json(),
+  helpAction: async (id: string, body: HelpAction, signal?: AbortSignal): Promise<HelpItem> =>
+    (await req(`/help-requests/${encodeURIComponent(id)}/actions`,
+      { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(body), signal })).json(),
+  helpCandidates: async (id: string, signal?: AbortSignal): Promise<{ reason: string; candidates: HelpCandidate[] }> =>
+    (await req(`/help-requests/${encodeURIComponent(id)}/recommendation`, { signal })).json(),
   adminDocs: async (signal?: AbortSignal): Promise<AdminDocuments> => (await req('/admin/documents', { signal })).json(),
   upload: async (form: FormData, signal?: AbortSignal): Promise<{ version: number }> =>
     (await req('/admin/documents', { method: 'POST', body: form, signal })).json(),

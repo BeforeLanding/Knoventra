@@ -117,3 +117,20 @@ def transition(db: Session, request_id: str, actor: User, action: str, *, note: 
 def events(db: Session, request_id: str) -> list[HelpEvent]:
     return list(db.scalars(select(HelpEvent).where(HelpEvent.request_id == request_id)
                            .order_by(HelpEvent.at, HelpEvent.id)))
+
+
+def assign_by_system(db: Session, request_id: str, assignee_id: str, reason: str) -> HelpRequest:
+    """Auto-assignment at creation. Only an OPEN, unassigned request is touched, so a replayed
+    confirmation or a request an admin already dispatched is left alone."""
+    req = db.scalar(select(HelpRequest).where(HelpRequest.id == request_id).with_for_update()
+                    .execution_options(populate_existing=True))
+    assignee = db.get(User, assignee_id)
+    if req is None or req.status != "OPEN" or req.assignee_id is not None or assignee is None or not assignee.enabled:
+        return req
+    db.add(HelpEvent(request_id=req.id, actor_id=None, action="assign", from_status="OPEN", to_status="ASSIGNED",
+                     note=f"系统推荐：{reason}"))
+    req.assignee_id = assignee.id
+    req.status = "ASSIGNED"
+    req.updated_at = dt.datetime.now(dt.UTC)
+    db.flush()
+    return req

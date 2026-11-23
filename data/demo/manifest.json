@@ -6,7 +6,13 @@
     {"email": "cn-ops@example.test", "region": "CN", "department": "Ops", "role": "user"},
     {"email": "hr@example.test", "region": "SG", "department": "HR", "role": "user"},
     {"email": "fin@example.test", "region": "CN", "department": "FIN", "role": "user"},
-    {"email": "admin@example.test", "region": null, "department": "IT", "role": "admin"}
+    {"email": "admin@example.test", "region": null, "department": "IT", "role": "admin"},
+    {"email": "chen.lixing@example.test", "region": "CN", "department": "Ops", "role": "user", "engineer_name": "Chen Lixing"},
+    {"email": "zhou.lan@example.test", "region": "CN", "department": "Ops", "role": "user", "engineer_name": "Zhou Lan"},
+    {"email": "lin.boyu@example.test", "region": "TW", "department": "Ops", "role": "user", "engineer_name": "Lin Boyu"},
+    {"email": "huang.yongqing@example.test", "region": "TW", "department": "Ops", "role": "user", "engineer_name": "Huang Yongqing"},
+    {"email": "tan.wei.ming@example.test", "region": "SG", "department": "Ops", "role": "user", "engineer_name": "Tan Wei Ming"},
+    {"email": "priya.nair@example.test", "region": "SG", "department": "Ops", "role": "user", "engineer_name": "Priya Nair"}
   ],
   "kbs": [
     {"name": "ops-global", "description": "三地 Ops 故障手册", "grants": [{"department": "Ops"}]},
