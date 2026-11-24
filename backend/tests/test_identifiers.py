@@ -143,3 +143,33 @@ def test_no_access_never_runs_recall_or_rerank(monkeypatch):
     assert out.status == pipeline.NO_ACCESS and not out.required_identifiers
     recall.assert_not_called()
     rr.score.assert_not_called()
+
+
+def test_model_names_are_not_required_codes_but_real_codes_are():
+    from knoventra.retrieval.search import _codes_without_models
+
+    codes = extract_query_identifiers("WX-38 和 ST-250 报 E17-42，按 SOP-WCL-380120-002 处理，告警 A-1301")
+    assert {"WX-38", "ST-250"} <= codes  # they look like codes ...
+    assert _codes_without_models(codes) == codes - {"WX-38", "ST-250"}  # ... but are not required
+    assert {"E17-42", "SOP-WCL-380120-002", "A-1301"} <= _codes_without_models(codes)
+
+
+def test_a_comparison_sub_query_keeps_the_other_models_section(db, enc, users):
+    """Agent dev run a1-04: with the user's question as original_query, "WX-38" was required in
+    every search, so the WX-P search dropped the WX-P section (it says 双面机, not WX-38)."""
+    from sqlalchemy import select
+
+    from knoventra.access.scope import compute_scope
+    from knoventra.db.models import Chunk, Document, Revision
+
+    wxp = db.scalar(select(Chunk.id).join(Revision, Revision.id == Chunk.revision_id)
+                    .join(Document, Document.id == Revision.document_id)
+                    .where(Document.title.like("SOP-WCL-380120%"), Revision.status == "PUBLISHED",
+                           Chunk.section_path.like("%WX-P%")))
+    assert wxp is not None
+    res = search(db, enc, compute_scope(db, users["tw-ops"]), "WX-P spindle 扭矩",
+                 original_query="WX-38 和 WX-P 的 spindle 扭矩有什么区别", machine_model="WX-P")
+    assert res.required_identifiers == [] and "identifier_match" not in res.stages
+    # Whatever the offline encoder ranks, the section is never removed by a model-name "code".
+    if wxp in res.stages["fused"]:
+        assert wxp in res.stages["model_filter"]

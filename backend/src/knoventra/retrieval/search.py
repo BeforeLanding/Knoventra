@@ -13,6 +13,19 @@ from knoventra.ingestion.normalize import to_simplified
 from knoventra.retrieval.identifiers import evidence_identifiers, extract_query_identifiers, normalize_query_identifiers
 from knoventra.search_es.query import default_keyword_channel
 
+
+def _codes_without_models(codes: frozenset[str]) -> frozenset[str]:
+    """Exact codes a chunk must contain, minus machine-model names (e.g. WX-38, ST-250).
+
+    A model name only looks like a code. Model-specific content is handled by the model
+    filter and clarification, and documents often name models by alias (单面机 / 双面机), so
+    requiring the literal name dropped valid sections: in a WX-38 vs WX-P comparison every
+    search had to contain "WX-38", which removed the WX-P section (agent dev run, a1-04).
+    """
+    from knoventra.ingestion.cases import models_from_text  # local: cases imports retrieval
+
+    return frozenset(c for c in codes if not models_from_text(c))
+
 QUERY_VECTOR_POLICY = "float32-finite-v1"
 QUERY_ENCODING_POLICY = "distinct-batch-v1"
 
@@ -130,7 +143,7 @@ def search(db: Session, enc: Encoder, scope: AccessScope, query: str, *,
     sparse_ips: dict[str, float] = {}
     rankings: dict[str, list[str]] = {"dense": []}
     unscorable: dict[str, list[str]] = {}
-    required = extract_query_identifiers(query) | extract_query_identifiers(original_query)
+    required = _codes_without_models(extract_query_identifiers(query) | extract_query_identifiers(original_query))
     degraded: list[str] = []
     extra_stages: dict[str, list[str]] = {}
 
