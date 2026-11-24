@@ -1,0 +1,1685 @@
+{
+ "date": "2026-11-24",
+ "split": "dev",
+ "cases_sha256": "dc0fd1b0ed7d8cfc3c7e781b414d982512dec1833f3d0fc9409f8816fc891fe2",
+ "n_cases": 24,
+ "config": {
+  "llm_model": "deepseek-flash",
+  "encoder": "bge-m3",
+  "rerank": "off",
+  "query_plan_min_confidence": 0.6,
+  "max_output_tokens": 1024,
+  "estimate": {
+   "cases": 24,
+   "turns": 31,
+   "expected_model_calls": 67,
+   "max_model_calls": 185
+  }
+ },
+ "summary": {
+  "cases": 24,
+  "turns": 31,
+  "cases_ok": 24,
+  "routing_accuracy": {
+   "n": 23,
+   "correct": 23,
+   "rate": 1.0
+  },
+  "clarification": {
+   "should_ask": 2,
+   "asked": 2,
+   "trigger_rate": 1.0,
+   "should_not_ask": 4,
+   "asked_anyway": 0,
+   "false_trigger_rate": 0.0
+  },
+  "tool_accuracy": {
+   "n": 31,
+   "correct": 31,
+   "rate": 1.0
+  },
+  "multi_question_split": {
+   "min": {
+    "n": 2,
+    "correct": 2,
+    "rate": 1.0
+   },
+   "single_stays_single": {
+    "n": 1,
+    "correct": 1,
+    "rate": 1.0
+   }
+  },
+  "coreference_rewrite": {
+   "n": 3,
+   "correct": 3,
+   "rate": 1.0
+  },
+  "skill_item": {
+   "n": 3,
+   "correct": 3,
+   "rate": 1.0
+  },
+  "slot_prompt": {
+   "n": 4,
+   "correct": 4,
+   "rate": 1.0
+  },
+  "card_reached_as_expected": {
+   "n": 4,
+   "correct": 4,
+   "rate": 1.0
+  },
+  "slot_completeness": {
+   "cases": 3,
+   "expected_slots": 11,
+   "filled": 11,
+   "rate": 1.0,
+   "cases_all_slots": 3
+  },
+  "filings": {
+   "expected": 3,
+   "actual": 3,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "refresh_mismatches": 0,
+   "pending_after_reload": 0
+  },
+  "planner_fallbacks": 0,
+  "intent_confusion": {},
+  "by_category": {
+   "clarify_model": {
+    "n": 4,
+    "ok": 4
+   },
+   "multi_question": {
+    "n": 3,
+    "ok": 3
+   },
+   "skill_lookup": {
+    "n": 3,
+    "ok": 3
+   },
+   "help_status": {
+    "n": 2,
+    "ok": 2
+   },
+   "coreference": {
+    "n": 3,
+    "ok": 3
+   },
+   "help_slots": {
+    "n": 4,
+    "ok": 4
+   },
+   "routing": {
+    "n": 5,
+    "ok": 5
+   }
+  },
+  "model_calls": 64
+ },
+ "results": [
+  {
+   "id": "a1-01",
+   "category": "clarify_model",
+   "user": "sg-ops",
+   "thread_id": "cd129d463edf4884b7a957d59a47d8f3",
+   "turns": [
+    {
+     "user": "spindle 更换后固定螺丝扭矩多少",
+     "expect": {
+      "intent": "case_sop",
+      "clarify": true,
+      "tool": "search_knowledge"
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "spindle 更换后固定螺丝的扭矩是多少"
+     ],
+     "rewritten": "spindle 更换后固定螺丝的扭矩是多少",
+     "clarified": true,
+     "missing": null,
+     "error_code": null,
+     "answer": "这个操作在不同机型上的做法不一样：《SOP-WCL-380120-002 Spindle 更换》分别写了 WX-38、WX-P。请问你的机台是哪个机型？",
+     "tool_rejection": null,
+     "sources": [],
+     "checks": {
+      "intent": true,
+      "clarify": true,
+      "tool": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 3611.2,
+   "model_calls": 1,
+   "ok": true
+  },
+  {
+   "id": "a1-02",
+   "category": "clarify_model",
+   "user": "cn-ops",
+   "thread_id": "81f2b8f91f8243d597fdc1327a6b9846",
+   "turns": [
+    {
+     "user": "service door override 怎么打开",
+     "expect": {
+      "intent": "case_sop",
+      "clarify": true,
+      "tool": "search_knowledge"
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "service door override 怎么打开"
+     ],
+     "rewritten": "service door override 怎么打开",
+     "clarified": true,
+     "missing": null,
+     "error_code": null,
+     "answer": "这个操作在不同机型上的做法不一样：《SOP-GEN-200310-001 Service door override》分别写了 ST-250、WX-38、WX-P。请问你的机台是哪个机型？",
+     "tool_rejection": null,
+     "sources": [],
+     "checks": {
+      "intent": true,
+      "clarify": true,
+      "tool": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 1396.1,
+   "model_calls": 1,
+   "ok": true
+  },
+  {
+   "id": "a1-03",
+   "category": "clarify_model",
+   "user": "sg-ops",
+   "thread_id": "e9baed380e884449a3cb41345cecc965",
+   "turns": [
+    {
+     "user": "WX-38 spindle 更换的扭矩是多少",
+     "expect": {
+      "intent": "case_sop",
+      "clarify": false,
+      "tool": "search_knowledge"
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "WX-38 机型 spindle 更换时的扭矩值是多少"
+     ],
+     "rewritten": "WX-38 机型 spindle 更换时的扭矩值是多少",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "WX-38 为单面机，只有一组 spindle，固定螺丝扭矩为 **12 N·m**，按对角顺序锁付；完成后执行 run-out 检查，要求 < 5 μm。资料特别提示：单面机的扭矩不要按双面机设置 [S1][S2]。",
+     "tool_rejection": null,
+     "sources": [
+      "CASE-32B2296F5BAE56B3 spindle 更换（单面机） > CASE-32B2296F5BAE56B3 spindle 更换（单面机）",
+      "SOP-WCL-380120-002 Spindle 更换 > SOP-WCL-380120-002 Spindle 更换 > 2 WX-38 单面机"
+     ],
+     "checks": {
+      "intent": true,
+      "clarify": true,
+      "tool": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 2496.3,
+   "model_calls": 2,
+   "ok": true
+  },
+  {
+   "id": "a1-04",
+   "category": "clarify_model",
+   "user": "tw-ops",
+   "thread_id": "0d0e74c85d2f4187aee552a018803e37",
+   "turns": [
+    {
+     "user": "WX-38 和 WX-P 的 spindle 扭矩有什么区别",
+     "expect": {
+      "intent": "case_sop",
+      "clarify": false,
+      "tool": "search_knowledge"
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge",
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "WX-38 spindle 扭矩参数",
+      "WX-P spindle 扭矩参数"
+     ],
+     "rewritten": "WX-38 和 WX-P 的 spindle 扭矩有什么区别",
+     "clarified": false,
+     "missing": null,
+     "error_code": "INSUFFICIENT_EVIDENCE",
+     "answer": "现有资料只写明 WX-38 单面机 spindle 固定螺丝的扭矩为 12 N·m，并要求完成后执行 run-out 检查（< 5 μm），注意事项还特别指出“单面机只有一组 spindle，扭矩不要按双面机设置”。\n\n资料中没有给出 WX-P（双面机）spindle 的扭矩数值，因此无法就两者的扭矩差异作出比较，也不能据此推断 WX-P 的设定值。建议联系 Ops 团队确认 WX-P 的规格。",
+     "tool_rejection": null,
+     "sources": [],
+     "checks": {
+      "intent": true,
+      "clarify": true,
+      "tool": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 2906.8,
+   "model_calls": 2,
+   "ok": true
+  },
+  {
+   "id": "a2-01",
+   "category": "multi_question",
+   "user": "sg-ops",
+   "thread_id": "9c5e4cc9df62495ca14aa216c2c2ac74",
+   "turns": [
+    {
+     "user": "EMO 测试前通知谁，CDA 保压多久",
+     "expect": {
+      "intent": "case_sop",
+      "tool": "search_knowledge",
+      "queries_min": 2
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge",
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "EMO测试前需要通知哪些人",
+      "CDA保压时间要求多久"
+     ],
+     "rewritten": "EMO测试前需要通知谁，CDA保压需要多久",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "**EMO 测试前通知对象**：客户厂务，避免被误判为异常断电 [S1]。历史案例中的注意事项也一致 [S2][S4][S5]。\n\n**CDA 保压时长**：加压至工作压力后保压 30 分钟，压降小于 0.02 MPa 为合格 [S6]（案例记录同样为保压 30 分钟、压降 < 0.02 MPa [S7][S8][S9]）。",
+     "tool_rejection": null,
+     "sources": [
+      "SOP-SAF-900110-001 EMO 测试 > SOP-SAF-900110-001 EMO 测试 > 1 测试前",
+      "CASE-68FB68A58EAB8376 EMO 测试 > CASE-68FB68A58EAB8376 EMO 测试",
+      "CASE-B84F3C9BF64EBF12 EMO 測試 > CASE-B84F3C9BF64EBF12 EMO 測試",
+      "CASE-1F9C7CA059229C4E EMO 测试 > CASE-1F9C7CA059229C4E EMO 测试",
+      "SOP-FAC-100210-001 CDA 管路连接与保压 > SOP-FAC-100210-001 CDA 管路连接与保压 > 2 保压",
+      "CASE-CEDBD88D19BF347C CDA 供应管路连接验证 > CASE-CEDBD88D19BF347C CDA 供应管路连接验证",
+      "CASE-550DC0C6E5F7448F CDA 供应管路连接验证 > CASE-550DC0C6E5F7448F CDA 供应管路连接验证",
+      "CASE-D519D134156E1E71 CDA 供應管路連接驗證 > CASE-D519D134156E1E71 CDA 供應管路連接驗證"
+     ],
+     "checks": {
+      "intent": true,
+      "tool": true,
+      "queries_min": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 2859.8,
+   "model_calls": 2,
+   "ok": true
+  },
+  {
+   "id": "a2-02",
+   "category": "multi_question",
+   "user": "cn-ops",
+   "thread_id": "253518726df04df8bbf7e981e5f4e33e",
+   "turns": [
+    {
+     "user": "golden check 偏心要求多少？DI flow 流量设定多少？",
+     "expect": {
+      "intent": "case_sop",
+      "tool": "search_knowledge",
+      "queries_min": 2
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge",
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "golden check 偏心要求是多少",
+      "DI flow 流量设定值是多少"
+     ],
+     "rewritten": "golden check 偏心要求多少？DI flow 流量设定多少？",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "**Golden check 偏心要求**：wafer 在 chuck 上的偏心要求小于 0.3 mm [S1]。使用专用 golden wafer 跑一次完整取放流程后检查该偏心，结果记录到 golden check 表，并由第二人复核签字 [S1]。\n\n**DI flow 流量设定**：按 PM1 设定流量 2.0 L/min [S6]。调试时通水前需确认所有接头已锁紧，打开 DI 水阀确认管路有水 [S6]；若 flow 读值跳动，检查 flow meter 前端 filter 是否堵塞 [S6]。\n\n补充：资料中另有 Chemical flow 的设定值，DHF 为 1.2 L/min、SC1 为 1.5 L/min [S8]；这些是 Chemical flow 的设定值，不属于 DI flow。",
+     "tool_rejection": null,
+     "sources": [
+      "SOP-GEN-200420-001 Golden check > SOP-GEN-200420-001 Golden check > 1 步骤",
+      "SOP-FAC-100120-001 DI flow 调试与 DI filter 更换 > SOP-FAC-100120-001 DI flow 调试与 DI filter 更换 > 1 DI flow 调试",
+      "SOP-FAC-100110-001 Chemical flow 调试 > SOP-FAC-100110-001 Chemical flow 调试 > 2 调试"
+     ],
+     "checks": {
+      "intent": true,
+      "tool": true,
+      "queries_min": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 3474.3,
+   "model_calls": 2,
+   "ok": true
+  },
+  {
+   "id": "a2-03",
+   "category": "multi_question",
+   "user": "sg-ops",
+   "thread_id": "08388f9ef38648b586ce3580dcbdd779",
+   "turns": [
+    {
+     "user": "CDA 管路保压要多久",
+     "expect": {
+      "intent": "case_sop",
+      "tool": "search_knowledge",
+      "queries_max": 1
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "CDA 管路保压要多久"
+     ],
+     "rewritten": "CDA 管路保压要多久",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "CDA 管路保压要求如下：\n\n- **保压时间：30 分钟**。加压至工作压力后保持 30 分钟 [S2]。\n- **合格判定：压降小于 0.02 MPa** [S2]。\n\n在多份现场案例记录中，CDA 供应管路连接验证的第 3 步同样是“保压 30 分钟，压降 < 0.02 MPa”，涉及 WX-P、ST-250、WX-38 等机型 [S1][S3][S5]。\n\n与之配套的连接步骤是：先检查 CDA 管件螺纹连接，再将特氟龙带沿螺纹方向缠绕 2-3 层，注意不要盖住管口第一牙，防止碎屑进入管路 [S4][S1]。",
+     "tool_rejection": null,
+     "sources": [
+      "SOP-FAC-100210-001 CDA 管路连接与保压 > SOP-FAC-100210-001 CDA 管路连接与保压 > 2 保压",
+      "CASE-CEDBD88D19BF347C CDA 供应管路连接验证 > CASE-CEDBD88D19BF347C CDA 供应管路连接验证",
+      "CASE-550DC0C6E5F7448F CDA 供应管路连接验证 > CASE-550DC0C6E5F7448F CDA 供应管路连接验证",
+      "CASE-D519D134156E1E71 CDA 供應管路連接驗證 > CASE-D519D134156E1E71 CDA 供應管路連接驗證",
+      "SOP-FAC-100210-001 CDA 管路连接与保压 > SOP-FAC-100210-001 CDA 管路连接与保压 > 1 连接"
+     ],
+     "checks": {
+      "intent": true,
+      "tool": true,
+      "queries_max": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 3202.5,
+   "model_calls": 2,
+   "ok": true
+  },
+  {
+   "id": "a3-01",
+   "category": "skill_lookup",
+   "user": "sg-ops",
+   "thread_id": "f9a755cffe8e4d4abe37908ca442d5a6",
+   "turns": [
+    {
+     "user": "谁会做 golden check",
+     "expect": {
+      "intent": "skill_lookup",
+      "tool": "lookup_skills",
+      "skill_any": [
+       "golden check"
+      ]
+     },
+     "card": false,
+     "tools": [
+      "lookup_skills"
+     ],
+     "skill_args": [
+      "golden check"
+     ],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "skill_lookup",
+     "queries": [
+      "谁会做 golden check"
+     ],
+     "rewritten": "谁会做 golden check",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "根据技能矩阵查询结果，会做 golden check 的工程师如下：\n\n**掌握**\n- Priya Nair（掌握，作业 3 次，机台 630301）\n\n**了解**\n- Chen Lixing（了解，作业 2 次，机台 610101）\n- Chen Lixing（了解，作业 2 次，机台 610102）\n- Lin Boyu（了解，作业 2 次，机台 620201）\n- Tan Wei Ming（了解，作业 2 次，机台 630301）\n- Huang Yongqing（了解，作业 1 次，机台 620201）\n- Zhou Lan（了解，作业 1 次，机台 610101）",
+     "tool_rejection": null,
+     "sources": [],
+     "checks": {
+      "intent": true,
+      "tool": true,
+      "skill_any": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 2448.2,
+   "model_calls": 2,
+   "ok": true
+  },
+  {
+   "id": "a3-02",
+   "category": "skill_lookup",
+   "user": "cn-ops",
+   "thread_id": "d6ea421cb98246d28447df4dbf8f1457",
+   "turns": [
+    {
+     "user": "chamber 示教找谁比较好",
+     "expect": {
+      "intent": "skill_lookup",
+      "tool": "lookup_skills",
+      "skill_any": [
+       "chamber",
+       "示教"
+      ]
+     },
+     "card": false,
+     "tools": [
+      "lookup_skills"
+     ],
+     "skill_args": [
+      "chamber teaching"
+     ],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "skill_lookup",
+     "queries": [
+      "chamber 示教找谁比较好"
+     ],
+     "rewritten": "chamber 示教找谁比较好",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "根据技能矩阵查询结果，「chamber teaching」目前登记的人员如下（掌握程度均为「了解」）：\n\n| 人员 | 掌握程度 | 作业次数 | 机台 |\n|---|---|---|---|\n| Chen Lixing | 了解 | 2 次 | 610103 |\n| Huang Yongqing | 了解 | 2 次 | 620202 |\n| Priya Nair | 了解 | 2 次 | 630301 |\n| Tan Wei Ming | 了解 | 2 次 | 630302 |\n| Zhou Lan | 了解 | 2 次 | 610103 |\n| Chen Lixing | 了解 | 1 次 | 610101 |\n| Huang Yongqing | 了解 | 1 次 | 620201 |\n| Lin Boyu | 了解 | 1 次 | 620202 |\n\n也就是说，作业次数最多（2 ",
+     "tool_rejection": null,
+     "sources": [],
+     "checks": {
+      "intent": true,
+      "tool": true,
+      "skill_any": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 2685.9,
+   "model_calls": 2,
+   "ok": true
+  },
+  {
+   "id": "a3-03",
+   "category": "skill_lookup",
+   "user": "tw-ops",
+   "thread_id": "99cfe4c5451340ba8d02ec393fc56968",
+   "turns": [
+    {
+     "user": "哪位工程師熟悉 spindle 更換",
+     "expect": {
+      "intent": "skill_lookup",
+      "tool": "lookup_skills",
+      "skill_any": [
+       "spindle"
+      ]
+     },
+     "card": false,
+     "tools": [
+      "lookup_skills"
+     ],
+     "skill_args": [
+      "spindle 更換"
+     ],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "skill_lookup",
+     "queries": [
+      "哪位工程師熟悉 spindle 更換"
+     ],
+     "rewritten": "哪位工程師熟悉 spindle 更換",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "依技能矩陣，「spindle replacement」這項技能有以下幾位工程師：\n\n- **Priya Nair**：掌握，作業 6 次（機臺 630301）\n- **Lin Boyu**：掌握，作業 4 次（機臺 620202）\n- **Huang Yongqing**：掌握，作業 3 次（機臺 620202）\n- **Chen Lixing**：瞭解，作業 2 次（機臺 610101）\n\n以上僅為技能矩陣中記錄的人員、掌握程度與作業次數。",
+     "tool_rejection": null,
+     "sources": [],
+     "checks": {
+      "intent": true,
+      "tool": true,
+      "skill_any": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 2877.2,
+   "model_calls": 2,
+   "ok": true
+  },
+  {
+   "id": "a4-01",
+   "category": "help_status",
+   "user": "sg-ops",
+   "thread_id": "83eaa9e73d8e4adebe6772fec4dea7cd",
+   "turns": [
+    {
+     "user": "我上次提的求助单现在什么状态",
+     "expect": {
+      "intent": "help_status",
+      "tool": "get_escalation_status"
+     },
+     "card": false,
+     "tools": [
+      "get_escalation_status"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "help_status",
+     "queries": [
+      "我上次提交的求助单现在是什么状态"
+     ],
+     "rewritten": "我上次提交的求助单现在是什么状态",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "您提交的转交/求助记录共有 4 条，当前状态如下：\n\n| 记录 | 内容 | 状态 |\n|---|---|---|\n| d6b450ea… | [评测夹具] circulation pump 异响（现场求助） | ASSIGNED |\n| e74c06dc… | 机台 630302，告警码 A-3105，chuck 高速段 wafer 偏移 | OPEN |\n| f1f2c8c6… | 机台 630301，circulation pump 有异 | OPEN |\n| b66fc0bc… | [评测夹具] circulation pump 异响（现场求助） | ASSIGNED |\n\n其中 b66fc0bc 的记录显示 [评测夹具]，与 d6b450ea 同为 circulation pump 异响；根据工具返回结果，这两条均为 ASSIGNED，另外两条仍为 OPEN。\n\n需要说明的是，这",
+     "tool_rejection": null,
+     "sources": [],
+     "checks": {
+      "intent": true,
+      "tool": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 4416.5,
+   "model_calls": 3,
+   "ok": true
+  },
+  {
+   "id": "a4-02",
+   "category": "help_status",
+   "user": "cn-ops",
+   "thread_id": "5f02b206217947e6993c43601ccc3c2a",
+   "turns": [
+    {
+     "user": "我的求助有人接了吗",
+     "expect": {
+      "intent": "help_status",
+      "tool": "get_escalation_status"
+     },
+     "card": false,
+     "tools": [
+      "get_escalation_status"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "help_status",
+     "queries": [
+      "我的求助有人接了吗（查询我提交的求助/转交是否已被受理"
+     ],
+     "rewritten": "我的求助有人接了吗（查询我提交的求助/转交是否已被受理",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "你的转交记录共有 3 条，状态如下：\n\n| 记录 | 内容 | 状态 |\n|---|---|---|\n| 96befaf4… | [评测夹具] chuck 高速段 wafer 偏移（现场求助） | IN_PROGRESS（处理中） |\n| 8731b0ce… | 现场求助单：机台号 610102，告警码 A-2207，nozzle 间歇漏液 | ASSIGNED（已分派） |\n| 340d0524… | [评测夹具] chuck 高速段 wafer 偏移（现场求助） | IN_PROGRESS（处理中） |\n\n其中机台 610102 / A-2207 nozzle 间歇漏液这一条已显示 ASSIGNED（已分派）；另外两条 chuck 高速段 wafer 偏移的记录仍在处理中。\n\n以上仅为工具返回的记录与状态，未包含受理人或预计响应时间的说明。",
+     "tool_rejection": null,
+     "sources": [],
+     "checks": {
+      "intent": true,
+      "tool": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 3685.4,
+   "model_calls": 3,
+   "ok": true
+  },
+  {
+   "id": "a5-01",
+   "category": "coreference",
+   "user": "sg-ops",
+   "thread_id": "ef34d53c26754617860173bab5b746fc",
+   "turns": [
+    {
+     "user": "WX-P spindle 更换要注意什么",
+     "expect": {
+      "intent": "case_sop",
+      "clarify": false,
+      "tool": "search_knowledge"
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "WX-P 机型 spindle 更换的注意事项"
+     ],
+     "rewritten": "WX-P 机型 spindle 更换的注意事项",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "WX-P 是双面机，其 spindle 更换注意事项依据资料如下：\n\n**关键注意事项**\n- 双面机上下各有一组 spindle，**必须先更换下组，再更换上组**，以避免碰撞上 chuck [S1][S3]。\n\n**操作要点**\n1. 拆除前先确认上下 chuck 均已回原点 [S1]。\n2. 上下两组 spindle 分别按**对角顺序**锁付固定螺丝，**扭矩 18 N·m** [S1][S3]。\n3. 完成后，上、下两组分别执行 **run-out 检查，要求 < 8 μm** [S1][S3]。\n\n提醒：不要套用单面机（WX-38）的参数，其扭矩为 12 N·m、run-out 要求 < 5 μm；资料明确说明，单面机的扭矩不要按双面机设置 [S2]。",
+     "tool_rejection": null,
+     "sources": [
+      "CASE-A68312A9A53E53C2 spindle 更换（双面机） > CASE-A68312A9A53E53C2 spindle 更换（双面机）",
+      "SOP-WCL-380120-002 Spindle 更换 > SOP-WCL-380120-002 Spindle 更换 > 3 WX-P 双面机",
+      "CASE-32B2296F5BAE56B3 spindle 更换（单面机） > CASE-32B2296F5BAE56B3 spindle 更换（单面机）"
+     ],
+     "checks": {
+      "intent": true,
+      "clarify": true,
+      "tool": true
+     }
+    },
+    {
+     "user": "那它的固定螺丝扭矩是多少",
+     "expect": {
+      "intent": "case_sop",
+      "clarify": false,
+      "tool": "search_knowledge",
+      "rewrite_any": [
+       "spindle"
+      ]
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "WX-P spindle 更换时固定螺丝的扭矩是多少"
+     ],
+     "rewritten": "WX-P spindle 更换时固定螺丝的扭矩是多少",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "WX-P（双面机）的 spindle 固定螺丝扭矩为 **18 N·m** [S1][S3]。\n\n补充要点：\n- 固定螺丝需**按对角顺序锁付**，并使用扭力扳手 [S1][S3][S4]。\n- 更换前需确认 chuck 已回原点，机台处于 Maintenance 模式 [S4]。\n- 完成后上下两组分别执行 run-out 检查，要求小于 8 μm [S1][S3]。\n- 不要套用单面机（WX-38）的 12 N·m，资料明确要求单面机扭矩不要按双面机设置 [S2]。",
+     "tool_rejection": null,
+     "sources": [
+      "SOP-WCL-380120-002 Spindle 更换 > SOP-WCL-380120-002 Spindle 更换 > 3 WX-P 双面机",
+      "CASE-A68312A9A53E53C2 spindle 更换（双面机） > CASE-A68312A9A53E53C2 spindle 更换（双面机）",
+      "SOP-WCL-380120-002 Spindle 更换 > SOP-WCL-380120-002 Spindle 更换 > 1 通用要求",
+      "CASE-32B2296F5BAE56B3 spindle 更换（单面机） > CASE-32B2296F5BAE56B3 spindle 更换（单面机）"
+     ],
+     "checks": {
+      "intent": true,
+      "clarify": true,
+      "tool": true,
+      "rewrite_any": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 5321.8,
+   "model_calls": 4,
+   "ok": true
+  },
+  {
+   "id": "a5-02",
+   "category": "coreference",
+   "user": "cn-ops",
+   "thread_id": "a8094c0d30ce40b899fc87a7bc4a44e1",
+   "turns": [
+    {
+     "user": "EMO 测试前要做什么",
+     "expect": {
+      "intent": "case_sop",
+      "tool": "search_knowledge"
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "EMO 测试前需要做哪些准备工作"
+     ],
+     "rewritten": "EMO 测试前需要做哪些准备工作",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "EMO 测试前的准备工作，资料里明确写到的只有一项：\n\n**测试前通知客户厂务，避免被误判为异常断电** [S1][S2][S3][S4][S5]\n\n（该要求在 SOP-SAF-900110-001 的“1 测试前”章节中给出 [S3]，ST-250、WX-P、WX-38 等机型的历史案例也都把它列为注意事项 [S2][S4][S5]。）\n\n资料中没有其他关于测试前准备的记录；检索到的剩余内容都是测试执行步骤（逐个按下 EMO 确认机台断电、复位后检查 alarm 记录、填写 EMO 测试表）[S1]。如果需要确认是否有其他前置检查项，建议联系 Ops 或安全职能团队核实。",
+     "tool_rejection": null,
+     "sources": [
+      "SOP-SAF-900110-001 EMO 测试 > SOP-SAF-900110-001 EMO 测试 > 2 测试",
+      "CASE-68FB68A58EAB8376 EMO 测试 > CASE-68FB68A58EAB8376 EMO 测试",
+      "SOP-SAF-900110-001 EMO 测试 > SOP-SAF-900110-001 EMO 测试 > 1 测试前",
+      "CASE-B84F3C9BF64EBF12 EMO 測試 > CASE-B84F3C9BF64EBF12 EMO 測試",
+      "CASE-1F9C7CA059229C4E EMO 测试 > CASE-1F9C7CA059229C4E EMO 测试"
+     ],
+     "checks": {
+      "intent": true,
+      "tool": true
+     }
+    },
+    {
+     "user": "测完以后要填什么表",
+     "expect": {
+      "intent": "case_sop",
+      "tool": "search_knowledge",
+      "rewrite_any": [
+       "EMO"
+      ]
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "EMO 测试完成后需要填写什么表格"
+     ],
+     "rewritten": "EMO 测试完成后需要填写什么表格",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "测完以后要填的是 **EMO 测试表** [S1][S2][S3][S4]。\n\n完整测试流程的最后一步即为“填写 EMO 测试表”，ST-250、WX-P、WX-38 等机型的历史案例处理记录中也是同一项 [S2][S3][S4]。\n\n资料中只提到了“EMO 测试表”这个名称，没有给出表格编号、字段内容或提交去处；这部分无法从资料确认，建议向 Ops 或安全职能团队核实。",
+     "tool_rejection": null,
+     "sources": [
+      "SOP-SAF-900110-001 EMO 测试 > SOP-SAF-900110-001 EMO 测试 > 2 测试",
+      "CASE-68FB68A58EAB8376 EMO 测试 > CASE-68FB68A58EAB8376 EMO 测试",
+      "CASE-B84F3C9BF64EBF12 EMO 測試 > CASE-B84F3C9BF64EBF12 EMO 測試",
+      "CASE-1F9C7CA059229C4E EMO 测试 > CASE-1F9C7CA059229C4E EMO 测试"
+     ],
+     "checks": {
+      "intent": true,
+      "tool": true,
+      "rewrite_any": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 5625.7,
+   "model_calls": 4,
+   "ok": true
+  },
+  {
+   "id": "a5-03",
+   "category": "coreference",
+   "user": "sg-ops",
+   "thread_id": "683fb4716d914f698b6f681b962d25f1",
+   "turns": [
+    {
+     "user": "A-1301 报警是什么意思",
+     "expect": {
+      "intent": "case_sop",
+      "tool": "search_knowledge"
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "A-1301 报警是什么意思"
+     ],
+     "rewritten": "A-1301 报警是什么意思",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "A-1301 表示 tank level sensor LS-2 信号丢失；一旦出现该报警，pump 会被 interlock 停止 [S3]。\n\n从历史案例看，常见原因是 LS-2 接头松动；重新插紧接头，并按 SOP-WCL-380110-001 第 4 节复位 interlock 后，pump 即可恢复运转 [S1][S2][S4]。\n\n处理时请注意：\n- 复位 interlock 前请先确认 tank 内无残液 [S1][S2]\n- LS-2 接头容易被管路拉扯，复装时建议用扎带固定 [S1][S2]\n\n复位步骤（SOP-WCL-380110-001 第 4 节）[S5]：\n1. 先排空 tank，确认 tank 内无残液\n2. 在软件 Maintenance 页面选择 Mix Tank\n3. 点击 Reset Interlock\n4. 确认 pump 恢复运转，观察 5 分钟无 ",
+     "tool_rejection": null,
+     "sources": [
+      "SOP-WCL-380110-001 Mix tank 液位报警与 interlock 复位 > SOP-WCL-380110-001 Mix tank 液位报警与 interlock 复位（WX 系列） > 2 常见报警",
+      "CASE-974089235ED77E95 Mix tank alarm A-1301 when switching tank, pump not running > CASE-974089235ED77E95 Mix tank alarm A-1301 when switching tank, pump not running",
+      "CASE-CBD3DCD0FE591540 mix tank 切换 tank 时报 alarm A-1301，pump 不转 trouble shooting > CASE-CBD3DCD0FE591540 mix tank 切换 tank 时报 alarm A-1301，pump 不转 trouble shooting",
+      "CASE-EF42C6BD491333C6 mix tank 切换报 A-1301 trouble shotting > CASE-EF42C6BD491333C6 mix tank 切换报 A-1301 trouble shotting",
+      "SOP-WCL-380110-001 Mix tank 液位报警与 interlock 复位 > SOP-WCL-380110-001 Mix tank 液位报警与 interlock 复位（WX 系列） > 4 interlock 复位"
+     ],
+     "checks": {
+      "intent": true,
+      "tool": true
+     }
+    },
+    {
+     "user": "那这个怎么复位",
+     "expect": {
+      "intent": "case_sop",
+      "tool": "search_knowledge",
+      "rewrite_any": [
+       "A-1301",
+       "interlock",
+       "mix tank"
+      ]
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "A-1301 报警（tank level sensor LS-2 信号丢失）如何复位 interlock"
+     ],
+     "rewritten": "A-1301 报警（tank level sensor LS-2 信号丢失）如何复位 interlock",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "复位前先处理报警根源：确认 LS-2（tank level sensor）接头是否松动，松动则重新插紧，否则复位后可能再次报警 [S1][S3][S4]。\n\n复位步骤（SOP-WCL-380110-001 第 4 节）[S5]：\n1. 先排空 tank，确认 tank 内无残液（v2 新增，避免复位后 pump 空转抽液）\n2. 在软件 Maintenance 页面选择 Mix Tank\n3. 点击 Reset Interlock\n4. 确认 pump 恢复运转，观察 5 分钟无 A-1301 再次出现\n\n注意事项：\n- 复位 interlock 前务必先确认 tank 内无残液 [S1][S3][S4]\n- LS-2 接头容易被管路拉扯，复装时加扎带固定 [S1][S3][S4]\n\n以上适用于 WX 系列（WX-38 / WX-P）[S1][S2][S3][S4]。如果复位后 5 分钟内",
+     "tool_rejection": null,
+     "sources": [
+      "CASE-CBD3DCD0FE591540 mix tank 切换 tank 时报 alarm A-1301，pump 不转 trouble shooting > CASE-CBD3DCD0FE591540 mix tank 切换 tank 时报 alarm A-1301，pump 不转 trouble shooting",
+      "CASE-EF42C6BD491333C6 mix tank 切换报 A-1301 trouble shotting > CASE-EF42C6BD491333C6 mix tank 切换报 A-1301 trouble shotting",
+      "CASE-974089235ED77E95 Mix tank alarm A-1301 when switching tank, pump not running > CASE-974089235ED77E95 Mix tank alarm A-1301 when switching tank, pump not running",
+      "SOP-WCL-380110-001 Mix tank 液位报警与 interlock 复位 > SOP-WCL-380110-001 Mix tank 液位报警与 interlock 复位（WX 系列） > 4 interlock 复位",
+      "SOP-WCL-380110-001 Mix tank 液位报警与 interlock 复位 > SOP-WCL-380110-001 Mix tank 液位报警与 interlock 复位（WX 系列） > 2 常见报警"
+     ],
+     "checks": {
+      "intent": true,
+      "tool": true,
+      "rewrite_any": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 7122.8,
+   "model_calls": 4,
+   "ok": true
+  },
+  {
+   "id": "a6-01",
+   "category": "help_slots",
+   "user": "sg-ops",
+   "thread_id": "60d5a698c16b401fa80a18b1a56221c0",
+   "turns": [
+    {
+     "user": "帮我提个求助单，circulation pump 有异响",
+     "expect": {
+      "tool": "request_help",
+      "missing": [
+       "machine_id",
+       "tried_steps"
+      ]
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge",
+      "request_help"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "help_status",
+     "queries": [
+      "帮我提一个求助单：circulation pump 有异响"
+     ],
+     "rewritten": "帮我提一个求助单：circulation pump 有异响",
+     "clarified": false,
+     "missing": [
+      "machine_id",
+      "tried_steps"
+     ],
+     "error_code": null,
+     "answer": "求助单草稿已经建好，故障现象记录为「circulation pump 有异响」。\n\n顺带说明：知识库里有 circulation pump 异响的相关案例，处理记录为拆检发现 bearing 有磨损痕迹，暂时降低 pump 转速运行、待更换 bearing 后复测，且降速期间需注意 tank 温度是否上升 [S1][S2][S3]；不过这些是历史案例，不是您这台机的处理步骤，我不会填进您的求助单。\n\n现在还需要补充一项：**机台号是多少？**",
+     "tool_rejection": null,
+     "sources": [
+      "CASE-BE82000959F3C3A8 circulation pump 异响 > CASE-BE82000959F3C3A8 circulation pump 异响",
+      "CASE-7AC62DDA1C9AF7C1 circulation pump 异响 > CASE-7AC62DDA1C9AF7C1 circulation pump 异响",
+      "CASE-48CACECFD12E78C0 circulation pump 異響 > CASE-48CACECFD12E78C0 circulation pump 異響"
+     ],
+     "checks": {
+      "tool": true,
+      "missing": true
+     }
+    },
+    {
+     "user": "机台 630301",
+     "expect": {
+      "tool": "request_help",
+      "missing": [
+       "tried_steps"
+      ]
+     },
+     "card": false,
+     "tools": [
+      "request_help"
+     ],
+     "skill_args": [],
+     "plan_status": "skipped",
+     "plan_reason": "help_draft",
+     "intent": null,
+     "queries": [],
+     "rewritten": null,
+     "clarified": false,
+     "missing": [
+      "tried_steps"
+     ],
+     "error_code": null,
+     "answer": "机台号已记为 630301。\n\n还差一项：**您已经尝试过哪些步骤？**（如果没有试过，也可以直接说“还没试过”）",
+     "tool_rejection": null,
+     "sources": [],
+     "checks": {
+      "tool": true,
+      "missing": true
+     }
+    },
+    {
+     "user": "拆检看到 bearing 有磨损，已经降速运行",
+     "expect": {
+      "tool": "request_help",
+      "card": true
+     },
+     "card": true,
+     "tools": [
+      "request_help"
+     ],
+     "skill_args": [],
+     "plan_status": "skipped",
+     "plan_reason": "help_draft",
+     "intent": null,
+     "queries": [],
+     "rewritten": null,
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "求助单已创建，请核对以下内容：\n\n- **机台号**：630301\n- **故障现象**：circulation pump 有异响\n- **已尝试步骤**：拆检看到 bearing 有磨损，已经降速运行\n- **状态**：OPEN（待处理）\n\n需要说明：这只是创建了一条待处理记录，不代表已通知、已受理或已分派到具体团队。\n\n另外提两点供参考（来自历史案例，非本机记录）：降速期间注意 tank 温度是否上升 。如需查询转交进度，随时告诉我。",
+     "tool_rejection": null,
+     "sources": [],
+     "checks": {
+      "tool": true,
+      "card": true
+     }
+    }
+   ],
+   "expected_records": 1,
+   "filings": 1,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 1,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 8449.9,
+   "model_calls": 7,
+   "card_slots": {
+    "symptom": "circulation pump 有异响",
+    "alarm_codes": [],
+    "machine_id": "630301",
+    "tried_steps": "拆检看到 bearing 有磨损，已经降速运行"
+   },
+   "slot_checks": {
+    "machine_id": true,
+    "symptom": true,
+    "tried_steps": true
+   },
+   "ok": true
+  },
+  {
+   "id": "a6-02",
+   "category": "help_slots",
+   "user": "cn-ops",
+   "thread_id": "4705f8dc2e5b42dc80f23b7187d7c291",
+   "turns": [
+    {
+     "user": "610102 nozzle 间歇漏液，A-2207 偶发，已经换过 O-ring，帮我提个求助单",
+     "expect": {
+      "tool": "request_help",
+      "card": true
+     },
+     "card": true,
+     "tools": [
+      "search_knowledge",
+      "request_help"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "610102 nozzle 间歇漏液，A-2207 偶发，已更换过 O-ring，需要提交求助单"
+     ],
+     "rewritten": "610102 nozzle 间歇漏液，A-2207 偶发，已更换过 O-ring，需要提交求助单",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "已按你说的情况创建求助单（状态 OPEN，单号 4775edd6e5e3c5e8039bb886a99307f2），摘要内容为：\n\n- 机台号：610102\n- 故障现象：nozzle 间歇漏液\n- 告警：A-2207 偶发\n- 已尝试步骤：已经换过 O-ring\n\n提示：该单目前只是待处理记录，不代表已通知或已分派到具体团队。\n\n另外，知识库中有一条同类历史案例可参考：CASE-31DC4EA676A88062 记录的处理情况是，更换 nozzle O-ring 后仍偶发 A-2207，怀疑是 suck-back valve 动作延迟，已反馈原厂待跟踪；注意事项提到复现条件不明，建议先记录每次报警时的 recipe 和步骤 [S1]。",
+     "tool_rejection": null,
+     "sources": [
+      "CASE-31DC4EA676A88062 nozzle 间歇漏液，alarm A-2207 偶发 > CASE-31DC4EA676A88062 nozzle 间歇漏液，alarm A-2207 偶发"
+     ],
+     "checks": {
+      "tool": true,
+      "card": true
+     }
+    }
+   ],
+   "expected_records": 1,
+   "filings": 1,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 1,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 4894.7,
+   "model_calls": 3,
+   "card_slots": {
+    "machine_id": "610102",
+    "symptom": "nozzle 间歇漏液",
+    "tried_steps": "已经换过 O-ring",
+    "alarm_codes": [
+     "A-2207"
+    ]
+   },
+   "slot_checks": {
+    "machine_id": true,
+    "alarm_codes": true,
+    "symptom": true,
+    "tried_steps": true
+   },
+   "ok": true
+  },
+  {
+   "id": "a6-03",
+   "category": "help_slots",
+   "user": "sg-ops",
+   "thread_id": "c26f023a10ee482b9b0e3b0fe0a41bba",
+   "turns": [
+    {
+     "user": "630302 chuck 高速段报 A-3105 wafer 偏移，要提求助单",
+     "expect": {
+      "tool": "request_help",
+      "missing": [
+       "tried_steps"
+      ]
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge",
+      "request_help"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "630302 chuck 在高速段报 A-3105 wafer 偏移，需要提交求助单的处理流程"
+     ],
+     "rewritten": "630302 chuck 在高速段报 A-3105 wafer 偏移，需要提交求助单的处理流程",
+     "clarified": false,
+     "missing": [
+      "tried_steps"
+     ],
+     "error_code": null,
+     "answer": "已按你提供的信息建好求助单草稿：机台号 630302、告警码 A-3105、故障现象为“chuck 高速段报 A-3105 wafer 偏移”。\n\n还缺一项：**已尝试的步骤**。你在这台机台上已经做过哪些处理？（例如清洁 chuck pin、降低 ramp 速率等；如果还没试过，直接说“还没试过”即可）\n\n另外先说明一下：知识库里有一条关于该机台同样现象的历史记录（CASE-91B7EE1D0D3DFDE0，适用机型 ST-250）：记录显示清洁 chuck pin 后仍复现、降低 ramp 速率后仍偶发、临时措施是把该 recipe 高速段转速降低 10%，最终状态为未解决（待跟踪原厂 firmware 修正）[S1]。这条记录中提到的处理步骤属于历史案例，不会自动填入你的求助单。",
+     "tool_rejection": null,
+     "sources": [
+      "CASE-91B7EE1D0D3DFDE0 chuck 高速段 wafer 偏移报警 A-3105 > CASE-91B7EE1D0D3DFDE0 chuck 高速段 wafer 偏移报警 A-3105"
+     ],
+     "checks": {
+      "tool": true,
+      "missing": true
+     }
+    },
+    {
+     "user": "清洁过 chuck pin，也降过 ramp 速率",
+     "expect": {
+      "tool": "request_help",
+      "card": true
+     },
+     "card": true,
+     "tools": [
+      "request_help"
+     ],
+     "skill_args": [],
+     "plan_status": "skipped",
+     "plan_reason": "help_draft",
+     "intent": null,
+     "queries": [],
+     "rewritten": null,
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "已根据你的确认创建求助单，单号 6600f9f010843ee78fd1007b2491866d，状态 OPEN。\n\n- 机台号：630302\n- 告警：A-3105\n- 现象：chuck 高速段报 A-3105 wafer 偏移\n- 已尝试：清洁过 chuck pin，也降过 ramp 速率\n\n说明：该记录目前只是待处理状态，不代表已通知或分派到特定团队，也无法承诺响应时间。\n\n供参考：知识库中该机台同现象的历史案例（CASE-91B7EE1D0D3DFDE0，适用机型 ST-250）记录的处理路径与你已尝试的步骤基本一致（清洁 chuck pin、降低 ramp 速率），临时措施为该 recipe 高速段转速降低 10%，最终未解决、待原厂 firmware 修正跟踪 。",
+     "tool_rejection": null,
+     "sources": [],
+     "checks": {
+      "tool": true,
+      "card": true
+     }
+    }
+   ],
+   "expected_records": 1,
+   "filings": 1,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 1,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 7436.1,
+   "model_calls": 5,
+   "card_slots": {
+    "machine_id": "630302",
+    "symptom": "chuck 高速段报 A-3105 wafer 偏移",
+    "alarm_codes": [
+     "A-3105"
+    ],
+    "tried_steps": "清洁过 chuck pin，也降过 ramp 速率"
+   },
+   "slot_checks": {
+    "machine_id": true,
+    "alarm_codes": true,
+    "symptom": true,
+    "tried_steps": true
+   },
+   "ok": true
+  },
+  {
+   "id": "a6-04",
+   "category": "help_slots",
+   "user": "cn-ops",
+   "thread_id": "6f17d67d022343cab9e7ba2751bf377d",
+   "turns": [
+    {
+     "user": "帮我提求助单，610101 切换 tank 报 A-1301",
+     "expect": {
+      "tool": "request_help",
+      "missing": [
+       "tried_steps"
+      ]
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge",
+      "request_help"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "610101 切换 tank 时报 A-1301，帮我提求助单"
+     ],
+     "rewritten": "610101 切换 tank 时报 A-1301，帮我提求助单",
+     "clarified": false,
+     "missing": [
+      "tried_steps"
+     ],
+     "error_code": null,
+     "answer": "已按您提供的信息填好求助单草稿：\n\n- 机台号：610101\n- 告警码：A-1301\n- 故障现象：切换 tank 时报 A-1301\n\n还差一项：**已尝试的步骤**。请问您在现场已经试过哪些处理？（如果还没试过，直接说“还没试过”也可以。）\n\n另外，知识库里有相同现象的历史案例可供参考：A-1301 表示 tank level sensor LS-2 信号丢失，pump 被 interlock 停止 [S5]；案例中检查发现 LS-2 接头松动，重新插紧后按 SOP-WCL-380110-001 第 4 节 reset interlock，pump 恢复运转 [S1][S2][S3]。reset interlock 前须先排空 tank、确认无残液 [S4]。",
+     "tool_rejection": null,
+     "sources": [
+      "SOP-WCL-380110-001 Mix tank 液位报警与 interlock 复位 > SOP-WCL-380110-001 Mix tank 液位报警与 interlock 复位（WX 系列） > 2 常见报警",
+      "CASE-CBD3DCD0FE591540 mix tank 切换 tank 时报 alarm A-1301，pump 不转 trouble shooting > CASE-CBD3DCD0FE591540 mix tank 切换 tank 时报 alarm A-1301，pump 不转 trouble shooting",
+      "CASE-EF42C6BD491333C6 mix tank 切换报 A-1301 trouble shotting > CASE-EF42C6BD491333C6 mix tank 切换报 A-1301 trouble shotting",
+      "CASE-974089235ED77E95 Mix tank alarm A-1301 when switching tank, pump not running > CASE-974089235ED77E95 Mix tank alarm A-1301 when switching tank, pump not running",
+      "SOP-WCL-380110-001 Mix tank 液位报警与 interlock 复位 > SOP-WCL-380110-001 Mix tank 液位报警与 interlock 复位（WX 系列） > 4 interlock 复位"
+     ],
+     "checks": {
+      "tool": true,
+      "missing": true
+     }
+    },
+    {
+     "user": "算了",
+     "expect": {
+      "tool": null,
+      "card": false
+     },
+     "card": false,
+     "tools": [],
+     "skill_args": [],
+     "plan_status": "skipped",
+     "plan_reason": "help_draft",
+     "intent": null,
+     "queries": [],
+     "rewritten": null,
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "已取消求助单草稿，没有创建求助单。",
+     "tool_rejection": null,
+     "sources": [],
+     "checks": {
+      "tool": true,
+      "card": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 4564.7,
+   "model_calls": 3,
+   "ok": true
+  },
+  {
+   "id": "a7-01",
+   "category": "routing",
+   "user": "sg-ops",
+   "thread_id": "b85071eb9c744500ac95fe12aaf3c876",
+   "turns": [
+    {
+     "user": "你好",
+     "expect": {
+      "intent": "chitchat",
+      "tool": null
+     },
+     "card": false,
+     "tools": [],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "chitchat",
+     "queries": [
+      "你好"
+     ],
+     "rewritten": "你好",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "你好！我是精密设备公司的内部知识助手，可以帮你查资料、找技能对应的工程师、提交现场求助单或查询转交进度。请问有什么需要？",
+     "tool_rejection": null,
+     "sources": [],
+     "checks": {
+      "intent": true,
+      "tool": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 2331.0,
+   "model_calls": 2,
+   "ok": true
+  },
+  {
+   "id": "a7-02",
+   "category": "routing",
+   "user": "hr",
+   "thread_id": "6bfd477d58b449a3a54c0ca5e6505a91",
+   "turns": [
+    {
+     "user": "入职满一年有几天年假",
+     "expect": {
+      "intent": "policy",
+      "tool": "search_knowledge"
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "policy",
+     "queries": [
+      "入职满一年有几天年假"
+     ],
+     "rewritten": "入职满一年有几天年假",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "入职满一年享有 **15 天**带薪年假，须提前 5 个工作日在 HR 系统申请 [S1]。",
+     "tool_rejection": null,
+     "sources": [
+      "休假制度 > 休假制度 > 年假"
+     ],
+     "checks": {
+      "intent": true,
+      "tool": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 2050.5,
+   "model_calls": 2,
+   "ok": true
+  },
+  {
+   "id": "a7-03",
+   "category": "routing",
+   "user": "sg-ops",
+   "thread_id": "718df197d6464faca30808068d2c1888",
+   "turns": [
+    {
+     "user": "VPN 连不上怎么办",
+     "expect": {
+      "intent": "it_guide",
+      "tool": "search_knowledge"
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "it_guide",
+     "queries": [
+      "VPN 连不上怎么办"
+     ],
+     "rewritten": "VPN 连不上怎么办",
+     "clarified": false,
+     "missing": null,
+     "error_code": "INSUFFICIENT_EVIDENCE",
+     "answer": "知识库中只有一条说明：远程办公须通过公司 VPN 接入内网，VPN 客户端可在 IT 门户下载 ；检索到的其他资料都是访客门禁与入职账号内容，并不涉及 VPN 连接失败的处理方法，因此我无法给出可靠的排查步骤，也不做猜测。\n\n建议联系 IT 团队（IT 服务台）协助排查。",
+     "tool_rejection": null,
+     "sources": [],
+     "checks": {
+      "intent": true,
+      "tool": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 2935.3,
+   "model_calls": 2,
+   "ok": true
+  },
+  {
+   "id": "a7-04",
+   "category": "routing",
+   "user": "sg-ops",
+   "thread_id": "65f253073797489c915c78015820073c",
+   "turns": [
+    {
+     "user": "E17-42 复位之后观察多久",
+     "expect": {
+      "intent": "case_sop",
+      "tool": "search_knowledge"
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "E17-42 报警复位之后需要观察多久"
+     ],
+     "rewritten": "E17-42 报警复位之后需要观察多久",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "按《E17 系列设备故障手册》的排查步骤，复位设备后需**观察 10 分钟** [S1]。\n\n若复位并观察后仍报 E17-42，手册建议联系 Ops 二线并附上日志 [S1]。另可先确认两件事：环境温度是否超过 35 摄氏度、冷却液液位是否低于刻度线（低于需补充）[S1]。",
+     "tool_rejection": null,
+     "sources": [
+      "E17 系列设备故障手册 > E17 系列设备故障手册 > 故障码 E17-42：主轴温度异常 > 排查步骤"
+     ],
+     "checks": {
+      "intent": true,
+      "tool": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 2730.0,
+   "model_calls": 2,
+   "ok": true
+  },
+  {
+   "id": "a7-05",
+   "category": "routing",
+   "user": "cn-ops",
+   "thread_id": "e1143dfd278641fea8219eb140108be0",
+   "turns": [
+    {
+     "user": "chamical flow 调试 DHF 设多少",
+     "expect": {
+      "intent": "case_sop",
+      "tool": "search_knowledge"
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "chemical flow 调试时 DHF 参数设置多少"
+     ],
+     "rewritten": "chemical flow 调试时 DHF 参数设置多少",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "Chemical flow 调试时，DHF 流量设为 **1.2 L/min**；偏差超过 5% 时调整 needle valve [S1][S2][S3]。\n\n配套步骤参考：\n- 逐路开启 valve，确认 flow 读值 [S1][S2]\n- SC1 流量设定 1.5 L/min [S1]\n- 开阀前确认排风正常；调试期间穿戴耐酸手套和面罩 [S2][S3]\n\n（以上依据 SOP-FAC-100110-001 Chemical flow 调试 及 WX-38、WX-P 机型记录；若你的机型不同，建议向 Ops 确认。）",
+     "tool_rejection": null,
+     "sources": [
+      "SOP-FAC-100110-001 Chemical flow 调试 > SOP-FAC-100110-001 Chemical flow 调试 > 2 调试",
+      "CASE-E8CAD35745FBD678 chamical flow 调试 > CASE-E8CAD35745FBD678 chamical flow 调试",
+      "CASE-0BE046B9DB50A9E8 chamical flow 調試 > CASE-0BE046B9DB50A9E8 chamical flow 調試"
+     ],
+     "checks": {
+      "intent": true,
+      "tool": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 3388.5,
+   "model_calls": 2,
+   "ok": true
+  }
+ ]
+}

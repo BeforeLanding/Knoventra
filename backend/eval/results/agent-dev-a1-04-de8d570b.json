@@ -1,0 +1,158 @@
+{
+ "date": "2026-11-24",
+ "split": "dev",
+ "cases_sha256": "dc0fd1b0ed7d8cfc3c7e781b414d982512dec1833f3d0fc9409f8816fc891fe2",
+ "n_cases": 1,
+ "config": {
+  "llm_model": "deepseek-flash",
+  "encoder": "bge-m3",
+  "rerank": "off",
+  "query_plan_min_confidence": 0.6,
+  "max_output_tokens": 1024,
+  "estimate": {
+   "cases": 1,
+   "turns": 1,
+   "expected_model_calls": 2,
+   "max_model_calls": 6
+  }
+ },
+ "summary": {
+  "cases": 1,
+  "turns": 1,
+  "cases_ok": 1,
+  "routing_accuracy": {
+   "n": 1,
+   "correct": 1,
+   "rate": 1.0
+  },
+  "clarification": {
+   "should_ask": 0,
+   "asked": 0,
+   "trigger_rate": null,
+   "should_not_ask": 1,
+   "asked_anyway": 0,
+   "false_trigger_rate": 0.0
+  },
+  "tool_accuracy": {
+   "n": 1,
+   "correct": 1,
+   "rate": 1.0
+  },
+  "multi_question_split": {
+   "min": {
+    "n": 0,
+    "correct": 0,
+    "rate": null
+   },
+   "single_stays_single": {
+    "n": 0,
+    "correct": 0,
+    "rate": null
+   }
+  },
+  "coreference_rewrite": {
+   "n": 0,
+   "correct": 0,
+   "rate": null
+  },
+  "skill_item": {
+   "n": 0,
+   "correct": 0,
+   "rate": null
+  },
+  "slot_prompt": {
+   "n": 0,
+   "correct": 0,
+   "rate": null
+  },
+  "card_reached_as_expected": {
+   "n": 0,
+   "correct": 0,
+   "rate": null
+  },
+  "slot_completeness": {
+   "cases": 0,
+   "expected_slots": 0,
+   "filled": 0,
+   "rate": null,
+   "cases_all_slots": 0
+  },
+  "filings": {
+   "expected": 0,
+   "actual": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "refresh_mismatches": 0,
+   "pending_after_reload": 0
+  },
+  "planner_fallbacks": 0,
+  "intent_confusion": {},
+  "by_category": {
+   "clarify_model": {
+    "n": 1,
+    "ok": 1
+   }
+  },
+  "model_calls": 2
+ },
+ "results": [
+  {
+   "id": "a1-04",
+   "category": "clarify_model",
+   "user": "tw-ops",
+   "thread_id": "a7cd94e0504d410a9662e15d1a9a9138",
+   "turns": [
+    {
+     "user": "WX-38 和 WX-P 的 spindle 扭矩有什么区别",
+     "expect": {
+      "intent": "case_sop",
+      "clarify": false,
+      "tool": "search_knowledge"
+     },
+     "card": false,
+     "tools": [
+      "search_knowledge",
+      "search_knowledge"
+     ],
+     "skill_args": [],
+     "plan_status": "ok",
+     "plan_reason": null,
+     "intent": "case_sop",
+     "queries": [
+      "WX-38 和 的 spindle 扭矩有什么区别",
+      "WX-P 和 的 spindle 扭矩有什么区别"
+     ],
+     "rewritten": "WX-38 和 WX-P 的 spindle 扭矩有什么区别",
+     "clarified": false,
+     "missing": null,
+     "error_code": null,
+     "answer": "**WX-38 与 WX-P 的 spindle 扭矩区别**\n\n| 项目 | WX-38（单面机） | WX-P（双面机） |\n|---|---|---|\n| spindle 组数 | 只有一组 [S2] | 上下各一组，先更换下组，再更换上组，以免碰撞上 chuck [S7] |\n| 固定螺丝扭矩 | **12 N·m** [S1][S2] | **18 N·m** [S6][S7] |\n| run-out 要求 | < 5 μm [S1][S2] | < 8 μm [S6][S7] |\n\n补充说明：\n- 锁付方式：两种机型都要按**对角顺序**锁付固定螺丝 [S1][S6]。\n- 拆除前：WX-38 需确认 chuck 已回原点 [S1]；WX-P 需确认上下两个 chuck 均已回原点 [S6]。\n- 资料特别提醒：单面机只有一组 spindle，**扭矩不要按双面机设置** [S",
+     "tool_rejection": null,
+     "sources": [
+      "SOP-WCL-380120-002 Spindle 更换 > SOP-WCL-380120-002 Spindle 更换 > 2 WX-38 单面机",
+      "SOP-WCL-380120-002 Spindle 更换 > SOP-WCL-380120-002 Spindle 更换 > 3 WX-P 双面机",
+      "CASE-32B2296F5BAE56B3 spindle 更换（单面机） > CASE-32B2296F5BAE56B3 spindle 更换（单面机）",
+      "CASE-A68312A9A53E53C2 spindle 更换（双面机） > CASE-A68312A9A53E53C2 spindle 更换（双面机）"
+     ],
+     "checks": {
+      "intent": true,
+      "clarify": true,
+      "tool": true
+     }
+    }
+   ],
+   "expected_records": 0,
+   "filings": 0,
+   "duplicate_filings": 0,
+   "missing_filings": 0,
+   "confirmations": 0,
+   "refresh_mismatch": false,
+   "pending_after_reload": false,
+   "unanswered_confirmations": 0,
+   "replay_errors": [],
+   "latency_ms": 4167.7,
+   "model_calls": 2,
+   "ok": true
+  }
+ ]
+}
