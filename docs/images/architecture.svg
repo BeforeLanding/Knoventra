@@ -1,0 +1,224 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000" role="img" aria-labelledby="title desc">
+<title id="title">Knoventra 架构与请求链路</title>
+<desc id="desc">Web 前端经 FastAPI 驱动 LangGraph 状态图：start_turn、recall、compact、query_plan、agent 与 tools 循环、clarify、prepare_escalation 与 execute_escalation 两阶段确认、cite_check、remember。工具由进程内或独立 MCP 服务执行，底层为 PostgreSQL 事实源及 Elasticsearch、Redis 可丢弃副本。</desc>
+<style>
+text{font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC",sans-serif;fill:#1f2328}
+.mono{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace}
+.b{font-weight:600}.m{fill:#59636e}.s12{font-size:12px}.s11{font-size:11px}.s10{font-size:10px}.s13{font-size:13px}.s14{font-size:14px}
+.bg{fill:#ffffff}
+.panel{fill:#f6f8fa;stroke:#d1d9e0;stroke-width:1}
+.box{fill:#ffffff;stroke:#8c959f;stroke-width:1.2}
+.n{fill:#eef6ff;stroke:#0969da;stroke-width:1.4}
+.hitl{fill:#fff8e1;stroke:#bf8700;stroke-width:1.4}
+.tool{fill:#edfbf0;stroke:#1a7f37;stroke-width:1.2}
+.src{fill:#ffffff;stroke:#0969da;stroke-width:1.6}
+.copy{fill:#ffffff;stroke:#8c959f;stroke-width:1.4;stroke-dasharray:5 4}
+.llm{fill:#f6f0ff;stroke:#8250df;stroke-width:1.2}
+.e{fill:none;stroke:#59636e;stroke-width:1.5}
+.call{fill:none;stroke:#1a7f37;stroke-width:1.6;stroke-dasharray:6 4}
+.ah{fill:#59636e}.ahg{fill:#1a7f37}
+.dot{fill:#1f2328}.ring{fill:none;stroke:#1f2328;stroke-width:1.5}
+.pg{fill:#0969da}.rd{fill:#cf222e}.lm{fill:#8250df}.am{fill:#bf8700}
+.pt{fill:#ffffff;font-size:10px;font-weight:600}
+@media (prefers-color-scheme: dark){
+text{fill:#e6edf3}.m{fill:#9198a1}.bg{fill:#0d1117}
+.panel{fill:#161b22;stroke:#3d444d}
+.box{fill:#0d1117;stroke:#656c76}
+.n{fill:#0c2440;stroke:#4493f8}
+.hitl{fill:#2e2410;stroke:#d29922}
+.tool{fill:#0f2a17;stroke:#3fb950}
+.src{fill:#0d1117;stroke:#4493f8}
+.copy{fill:#0d1117;stroke:#9198a1}
+.llm{fill:#221a38;stroke:#ab7df8}
+.e{stroke:#9198a1}.call{stroke:#3fb950}
+.ah{fill:#9198a1}.ahg{fill:#3fb950}
+.dot{fill:#e6edf3}.ring{stroke:#e6edf3}
+.pg{fill:#1f6feb}.rd{fill:#da3633}.lm{fill:#8957e5}.am{fill:#9e6a03}
+.pt{fill:#ffffff}
+}
+</style>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker><marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ahg"/></marker></defs>
+<rect x="0" y="0" width="1000" height="1000" rx="0" class="bg"/>
+<rect x="30" y="16" width="300" height="78" rx="8" class="box"/>
+<text x="180" y="40" class="b s14" text-anchor="middle">Web 前端 <tspan class="mono m s11">React · TypeScript · Vite</tspan></text>
+<text x="180" y="61" class="s12" text-anchor="middle">问答 · 来源卡 · 确认卡</text>
+<text x="180" y="80" class="s12" text-anchor="middle">我的求助单 · 专家工作台 · 文档管理</text>
+<path d="M330,55 L378,55" class="e" marker-end="url(#ah)"/>
+<text x="354" y="48" class="mono m s10" text-anchor="middle">HTTP</text>
+<rect x="380" y="16" width="590" height="78" rx="8" class="box"/>
+<text x="675" y="40" class="b s14" text-anchor="middle">FastAPI 服务</text>
+<text x="675" y="61" class="mono s11" text-anchor="middle">/chat   /chat/confirm   /chat/retry   /chat/recover   /memory   /help-requests   /admin/*</text>
+<text x="675" y="80" class="s12" text-anchor="middle">身份只来自服务端登录态 · 聊天与确认共用会话级互斥锁（409 CONVERSATION_BUSY）</text>
+<rect x="20" y="118" width="960" height="440" rx="10" class="panel"/>
+<text x="122" y="143" class="b s14" text-anchor="start">LangGraph 状态图 <tspan class="mono m s11">agent/graph.py</tspan><tspan class="m s12">　每轮从 start_turn 进入；状态由 PG Checkpoint 持久化，可中断、续跑</tspan></text>
+<path d="M400,94 L400,106 L102,106 L102,186" class="e" marker-end="url(#ah)"/>
+<circle cx="102" cy="195" r="7" class="dot"/>
+<rect x="146" y="160" width="160" height="70" rx="8" class="n"/>
+<text x="226" y="184" class="mono b s13" text-anchor="middle">start_turn</text>
+<text x="226" y="203" class="s12" text-anchor="middle">清空上一轮的追踪、</text>
+<text x="226" y="220" class="s12" text-anchor="middle">规划与澄清状态</text>
+<rect x="356" y="160" width="160" height="70" rx="8" class="n"/>
+<text x="436" y="184" class="mono b s13" text-anchor="middle">recall</text>
+<text x="436" y="203" class="s12" text-anchor="middle">召回情景记忆，</text>
+<text x="436" y="220" class="s12" text-anchor="middle">逐条重验后才使用</text>
+<rect x="488" y="152" width="20" height="16" rx="8" class="pg"/>
+<text x="498" y="164" class="pt" text-anchor="middle">PG</text>
+<rect x="566" y="160" width="160" height="70" rx="8" class="n"/>
+<text x="646" y="184" class="mono b s13" text-anchor="middle">compact</text>
+<text x="646" y="203" class="s12" text-anchor="middle">超预算时滚动摘要，</text>
+<text x="646" y="220" class="s12" text-anchor="middle">保留最近 3 轮原文</text>
+<rect x="679" y="152" width="39" height="16" rx="8" class="rd"/>
+<text x="698" y="164" class="pt" text-anchor="middle">Redis</text>
+<rect x="771" y="160" width="160" height="70" rx="8" class="n"/>
+<text x="851" y="184" class="mono b s13" text-anchor="middle">query_plan</text>
+<text x="851" y="203" class="s12" text-anchor="middle">改写 · 拆分 · 意图 · 机型</text>
+<text x="851" y="220" class="s12" text-anchor="middle">确定性纠偏，超时回退</text>
+<rect x="896" y="152" width="27" height="16" rx="8" class="lm"/>
+<text x="910" y="164" class="pt" text-anchor="middle">LLM</text>
+<path d="M109,195 L144,195" class="e" marker-end="url(#ah)"/>
+<path d="M306,195 L354,195" class="e" marker-end="url(#ah)"/>
+<path d="M516,195 L564,195" class="e" marker-end="url(#ah)"/>
+<path d="M726,195 L769,195" class="e" marker-end="url(#ah)"/>
+<path d="M900,230 L900,288" class="e" marker-end="url(#ah)"/>
+<text x="853" y="252" class="s11 m" text-anchor="middle">检索类意图：</text>
+<text x="853" y="268" class="s11 m" text-anchor="middle">直接调工具</text>
+<path d="M800,230 L800,258 L631,258 L631,288" class="e" marker-end="url(#ah)"/>
+<text x="716" y="251" class="s11 m" text-anchor="middle">其他意图 · 草稿中 · 规划失败</text>
+<circle cx="102" cy="325" r="10" class="ring"/><circle cx="102" cy="325" r="5.5" class="dot"/>
+<text x="102" y="352" class="s11 m" text-anchor="middle">回答与来源卡</text>
+<rect x="161" y="290" width="140" height="70" rx="8" class="n"/>
+<text x="231" y="314" class="mono b s13" text-anchor="middle">remember</text>
+<text x="231" y="333" class="s12" text-anchor="middle">写入情景记忆，</text>
+<text x="231" y="350" class="s12" text-anchor="middle">更新计数型画像</text>
+<rect x="273" y="282" width="20" height="16" rx="8" class="pg"/>
+<text x="283" y="294" class="pt" text-anchor="middle">PG</text>
+<rect x="346" y="290" width="160" height="70" rx="8" class="n"/>
+<text x="426" y="314" class="mono b s13" text-anchor="middle">cite_check</text>
+<text x="426" y="333" class="s12" text-anchor="middle">剥离伪造引用标记，</text>
+<text x="426" y="350" class="s12" text-anchor="middle">拒答识别 · 简繁转换</text>
+<rect x="551" y="290" width="160" height="70" rx="8" class="n"/>
+<text x="631" y="314" class="mono b s13" text-anchor="middle">agent</text>
+<text x="631" y="333" class="s12" text-anchor="middle">回答模型：直接作答</text>
+<text x="631" y="350" class="s12" text-anchor="middle">或发出工具调用</text>
+<rect x="676" y="282" width="27" height="16" rx="8" class="lm"/>
+<text x="690" y="294" class="pt" text-anchor="middle">LLM</text>
+<rect x="771" y="290" width="160" height="70" rx="8" class="n"/>
+<text x="851" y="314" class="mono b s13" text-anchor="middle">tools</text>
+<text x="851" y="333" class="s12" text-anchor="middle">执行工具调用，</text>
+<text x="851" y="350" class="s12" text-anchor="middle">登记证据 · 校验槽位</text>
+<path d="M711,315 L769,315" class="e" marker-end="url(#ah)"/>
+<path d="M771,337 L713,337" class="e" marker-end="url(#ah)"/>
+<text x="741" y="308" class="s10 m" text-anchor="middle">调用</text>
+<text x="741" y="352" class="s10 m" text-anchor="middle">结果</text>
+<path d="M551,325 L508,325" class="e" marker-end="url(#ah)"/>
+<text x="529" y="317" class="s10 m" text-anchor="middle">作答</text>
+<path d="M346,325 L303,325" class="e" marker-end="url(#ah)"/>
+<path d="M161,325 L114,325" class="e" marker-end="url(#ah)"/>
+<rect x="161" y="430" width="140" height="70" rx="8" class="n"/>
+<text x="231" y="454" class="mono b s13" text-anchor="middle">clarify</text>
+<text x="231" y="473" class="s12" text-anchor="middle">按机型分节的证据，</text>
+<text x="231" y="490" class="s12" text-anchor="middle">先追问机型，不调模型</text>
+<rect x="551" y="430" width="160" height="70" rx="8" class="hitl"/>
+<text x="631" y="454" class="mono b s13" text-anchor="middle">execute_escalation</text>
+<text x="631" y="473" class="s12" text-anchor="middle">批准：经工具服务提交</text>
+<text x="631" y="490" class="s12" text-anchor="middle">幂等建单；取消则不建</text>
+<rect x="771" y="430" width="160" height="70" rx="8" class="hitl"/>
+<text x="851" y="454" class="mono b s13" text-anchor="middle">prepare_escalation</text>
+<text x="851" y="473" class="s12" text-anchor="middle">推荐专家，生成确认卡</text>
+<text x="851" y="490" class="s12" text-anchor="middle">interrupt 等用户确认</text>
+<rect x="873" y="422" width="50" height="16" rx="8" class="am"/>
+<text x="898" y="434" class="pt" text-anchor="middle">人工确认</text>
+<path d="M851,360 L851,428" class="e" marker-end="url(#ah)"/>
+<text x="843" y="392" class="s11 m" text-anchor="end"><tspan class="mono">request_help</tspan> 槽位齐全</text>
+<text x="843" y="408" class="s11 m" text-anchor="end">或 <tspan class="mono">escalate_to_expert</tspan></text>
+<path d="M771,465 L713,465" class="e" marker-end="url(#ah)"/>
+<text x="741" y="457" class="s10 m" text-anchor="middle">批准/取消</text>
+<path d="M631,430 L631,362" class="e" marker-end="url(#ah)"/>
+<path d="M931,345 L956,345 L956,522 L231,522 L231,502" class="e" marker-end="url(#ah)"/>
+<text x="594" y="542" class="s11 m" text-anchor="middle">证据按机型分节，而用户没说机型</text>
+<path d="M231,430 L231,362" class="e" marker-end="url(#ah)"/>
+<path d="M500,558 L500,588" class="call" marker-end="url(#ahg)"/>
+<text x="512" y="578" class="s11 m" text-anchor="start">tools、prepare / execute_escalation 经此调用；每次运行签发短期 JWT</text>
+<rect x="20" y="590" width="960" height="182" rx="10" class="panel"/>
+<text x="40" y="614" class="b s14" text-anchor="start">工具服务 <tspan class="mono m s11">tools/service.py</tspan><tspan class="m s12">　进程内直接调用，或独立 MCP 服务（streamable HTTP，设置 KNV_MCP_URL）</tspan></text>
+<text x="40" y="634" class="s12 m" text-anchor="start">工具参数不含身份字段；执行端按受众隔离的短期 token 重新计算权限，写操作按 confirmation_id 二次鉴权</text>
+<rect x="35" y="646" width="176" height="54" rx="6" class="tool"/>
+<text x="123" y="668" class="mono b s12" text-anchor="middle">search_knowledge</text>
+<text x="123" y="689" class="s11" text-anchor="middle">四通道混合检索 + 编码门槛</text>
+<rect x="223" y="646" width="176" height="54" rx="6" class="tool"/>
+<text x="311" y="668" class="mono b s12" text-anchor="middle">lookup_skills</text>
+<text x="311" y="689" class="s11" text-anchor="middle">技能矩阵，仅 Ops 与管理员</text>
+<rect x="411" y="646" width="176" height="54" rx="6" class="tool"/>
+<text x="499" y="668" class="mono b s12" text-anchor="middle">get_escalation_status</text>
+<text x="499" y="689" class="s11" text-anchor="middle">本人的转交与求助单状态</text>
+<rect x="599" y="646" width="176" height="54" rx="6" class="tool"/>
+<text x="687" y="668" class="mono b s12" text-anchor="middle">prepare_help_request</text>
+<text x="687" y="689" class="s11" text-anchor="middle">推荐专家，存待确认载荷</text>
+<rect x="787" y="646" width="176" height="54" rx="6" class="tool"/>
+<text x="875" y="668" class="mono b s12" text-anchor="middle">submit_help_request</text>
+<text x="875" y="689" class="s11" text-anchor="middle">核对已批准的确认，幂等建单</text>
+<path d="M123,700 L123,716" class="e" marker-end="url(#ah)"/>
+<rect x="35" y="718" width="180" height="36" rx="6" class="box"/>
+<text x="125" y="741" class="s11" text-anchor="middle">召回 SQL 内权限预过滤</text>
+<path d="M215,736 L233,736" class="e" marker-end="url(#ah)"/>
+<rect x="235" y="718" width="80" height="36" rx="6" class="box"/>
+<text x="275" y="741" class="s11" text-anchor="middle">稠密 BGE-M3</text>
+<rect x="321" y="718" width="80" height="36" rx="6" class="box"/>
+<text x="361" y="741" class="s11" text-anchor="middle">稀疏 BGE-M3</text>
+<rect x="407" y="718" width="80" height="36" rx="6" class="box"/>
+<text x="447" y="741" class="s11" text-anchor="middle">编号列 GIN</text>
+<rect x="493" y="718" width="80" height="36" rx="6" class="copy"/>
+<text x="533" y="741" class="s11" text-anchor="middle">ES 关键词</text>
+<path d="M573,736 L591,736" class="e" marker-end="url(#ah)"/>
+<rect x="593" y="718" width="90" height="36" rx="6" class="box"/>
+<text x="638" y="741" class="s11" text-anchor="middle">加权 RRF</text>
+<path d="M683,736 L701,736" class="e" marker-end="url(#ah)"/>
+<rect x="703" y="718" width="120" height="36" rx="6" class="box"/>
+<text x="763" y="741" class="s11" text-anchor="middle">精确编码门槛</text>
+<path d="M823,736 L841,736" class="e" marker-end="url(#ah)"/>
+<rect x="843" y="718" width="120" height="36" rx="6" class="box"/>
+<text x="903" y="741" class="s11" text-anchor="middle">证据与来源卡</text>
+<path d="M330,772 L330,803" class="e" marker-end="url(#ah)"/>
+<text x="340" y="792" class="s11 m" text-anchor="start">检索、求助单读写</text>
+<path d="M555,772 L555,803" class="e" marker-end="url(#ah)"/>
+<text x="565" y="792" class="s11 m" text-anchor="start">关键词通道</text>
+<rect x="20" y="805" width="960" height="180" rx="10" class="panel"/>
+<text x="40" y="829" class="b s14" text-anchor="start">存储与模型<tspan class="m s12">　实线框 = 事实源；虚线框 = 可丢弃副本，不可用时降级或重建，不放宽权限</tspan></text>
+<rect x="35" y="842" width="155" height="128" rx="8" class="box"/>
+<text x="112" y="864" class="b s13" text-anchor="middle">入库与沉淀</text>
+<text x="112" y="882" class="s11 m" text-anchor="middle">管理员与后台任务</text>
+<text x="112" y="903" class="s12" text-anchor="middle">文档草稿→串行化发布</text>
+<text x="112" y="921" class="s12" text-anchor="middle">日志 / 技能表脱敏去重</text>
+<text x="112" y="939" class="s12" text-anchor="middle">求助单结案→脱敏案例</text>
+<text x="112" y="957" class="s12" text-anchor="middle">管理员发布后才可检索</text>
+<path d="M190,906 L208,906" class="e" marker-end="url(#ah)"/>
+<rect x="210" y="842" width="240" height="128" rx="8" class="src"/>
+<text x="330" y="864" class="mono b s13" text-anchor="middle">PostgreSQL + pgvector</text>
+<text x="330" y="882" class="s11 m" text-anchor="middle">唯一事实源</text>
+<text x="330" y="903" class="s12" text-anchor="middle">文档修订 · 分块 · 读权限</text>
+<text x="330" y="921" class="s12" text-anchor="middle">稠密 / 稀疏向量 · 编号列</text>
+<text x="330" y="939" class="s12" text-anchor="middle">求助单 · 只追加事件流水</text>
+<text x="330" y="957" class="s12" text-anchor="middle"><tspan class="mono s11">Checkpoint</tspan> · 情景记忆 · 画像</text>
+<path d="M450,906 L468,906" class="e" marker-end="url(#ah)"/>
+<rect x="470" y="842" width="170" height="128" rx="8" class="copy"/>
+<text x="555" y="864" class="mono b s13" text-anchor="middle">Elasticsearch 8.15</text>
+<text x="555" y="882" class="s11 m" text-anchor="middle">可丢弃副本</text>
+<text x="555" y="903" class="s12" text-anchor="middle">IK 分词 · 纠错 · 同义词</text>
+<text x="555" y="921" class="s12" text-anchor="middle">经 <tspan class="mono s11">outbox</tspan> 同步对账</text>
+<text x="555" y="939" class="s12" text-anchor="middle">命中回 PG 复查权限</text>
+<text x="555" y="957" class="s12" text-anchor="middle">不可用时降级为 PG</text>
+<rect x="652" y="842" width="170" height="128" rx="8" class="copy"/>
+<text x="737" y="864" class="mono b s13" text-anchor="middle">Redis</text>
+<text x="737" y="882" class="s11 m" text-anchor="middle">可丢弃副本</text>
+<text x="737" y="903" class="s12" text-anchor="middle">短期工作记忆</text>
+<text x="737" y="921" class="s12" text-anchor="middle"><tspan class="mono s10">knv:wm:{user}:{thread}</tspan></text>
+<text x="737" y="939" class="s12" text-anchor="middle">槽位草稿 · 滚动摘要</text>
+<text x="737" y="957" class="s12" text-anchor="middle">失效→从 <tspan class="mono s11">Checkpoint</tspan> 重建</text>
+<rect x="834" y="842" width="131" height="128" rx="8" class="llm"/>
+<text x="900" y="864" class="b s13" text-anchor="middle">模型</text>
+<text x="900" y="882" class="s11 m" text-anchor="middle">外部推理服务</text>
+<text x="900" y="903" class="s12" text-anchor="middle">回答 / 规划：</text>
+<text x="900" y="921" class="s12" text-anchor="middle">OpenAI 兼容接口</text>
+<text x="900" y="939" class="s12" text-anchor="middle">编码：BGE-M3</text>
+<text x="900" y="957" class="s12" text-anchor="middle">精排可选，默认关</text>
+</svg>

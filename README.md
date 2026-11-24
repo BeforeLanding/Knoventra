@@ -10,35 +10,9 @@
 
 ## 2. 架构与请求链路
 
-一次问答在 LangGraph 图里依次经过下列阶段。图的节点名（`start_turn`、`recall`、`compact`、`query_plan`、`agent`、`tools`、`prepare_escalation`、`execute_escalation`、`clarify`、`cite_check`、`remember`）与 `backend/src/knoventra/agent/graph.py` 一致。
+一次问答在 LangGraph 图里依次经过下列阶段，图中同时标出工具服务与存储层。图的节点名（`start_turn`、`recall`、`compact`、`query_plan`、`agent`、`tools`、`prepare_escalation`、`execute_escalation`、`clarify`、`cite_check`、`remember`）与 `backend/src/knoventra/agent/graph.py` 一致。
 
-```mermaid
-flowchart TD
-    U["用户问题"] --> R["recall：召回情景记忆，逐条重验后才使用"]
-    R --> C["compact：超预算时滚动摘要，保留最近几轮原文"]
-    C --> P["query_plan：改写、拆分、意图（含 request_help）、机型，确定性纠偏"]
-    P -->|"检索类意图，或高置信度 skill_lookup：直接发工具调用"| T
-    P -->|"其他意图（含 request_help）、草稿进行中、跳过、失败或超时"| A
-    A["agent：回答模型选择工具"] -->|"发出工具调用"| T
-    A -->|"无工具调用，最终回答"| V
-    T{"tools"} -->|"search_knowledge"| S["四通道混合检索与编码门槛，权限在召回 SQL 内预过滤"]
-    T -->|"lookup_skills"| K["结构化技能表查询，仅 Ops 与管理员"]
-    T -->|"get_escalation_status"| G["查询本人转交与求助单状态"]
-    T -->|"request_help"| H["槽位跨轮收集，校验用户原话"]
-    T -->|"escalate_to_expert"| E["转交摘要"]
-    S -->|"证据按机型分节且用户未说机型"| Q["clarify：追问机型，不调用回答模型"]
-    S --> A
-    K --> A
-    G --> A
-    H -->|"槽位未齐：回到 agent 追问"| A
-    H -->|"槽位齐全"| I
-    E --> I["prepare_escalation：interrupt 等待用户确认（阶段一）"]
-    I -->|"用户批准或取消"| X["execute_escalation（阶段二）：批准时经工具服务提交，执行端用短期 token 二次鉴权并幂等建单，取消则不建单"]
-    X --> A
-    V["cite_check：剥离伪造引用、拒答识别、简繁字形转换"] --> M["remember：写入情景记忆与计数型画像"]
-    Q --> M
-    M --> O["回答与来源卡"]
-```
+![Knoventra 架构与请求链路：Web 前端经 FastAPI 驱动 LangGraph 状态图，工具由进程内或独立 MCP 服务执行，PostgreSQL 为事实源，Elasticsearch 与 Redis 为可丢弃副本](docs/images/architecture.svg)
 
 - 身份与权限只来自服务端：工具参数里没有身份字段；工具在进程内或独立 MCP 服务中执行时，都由每次运行签发的短期 token 重新计算权限。
 - PostgreSQL 是唯一事实源。Elasticsearch（关键词通道）和 Redis（工作记忆）都是可丢弃的副本：不可用时降级或从 PG / Checkpoint 重建，不放宽权限。
