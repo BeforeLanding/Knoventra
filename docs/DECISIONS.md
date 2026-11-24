@@ -578,3 +578,20 @@
 - **与计划的差别**：计划把“本轮证据”放在最低优先级。本轮证据在工具结果里，截掉会让工具调用和结果对不上，引用标记也会失效；证据量已经由 `final_top_k` 限制，所以本轮不截断。
 - **评测**：评测图关闭长期记忆（`long_term_memory=False`）。评测用例共用演示账号，开着记忆，前面的用例会被召回到后面的用例里，也会改变回复字形。
 
+## 76. 工具由独立 MCP 服务执行，身份只来自每次运行签发的 token（v4 D13）
+
+- **决定**：
+  - 五个工具（`search_knowledge`、`lookup_skills`、`get_help_request`、`prepare_help_request`、`submit_help_request`）的实现集中在 `tools/service.py`，有两种传输：进程内（默认，测试、评测和单机部署用）和 MCP 服务（`python -m knoventra.mcp_server`，Python `mcp` SDK 2.3，streamable HTTP，无状态）。设置 `KNV_MCP_URL` 后，Agent 的工具调用全部走 MCP。
+  - API 每次运行（每个 HTTP 请求）签发一个短期 JWT，包含 `user_id`、会话 ID、运行 ID 和过期时间，受众为 `knoventra-mcp`，密钥与登录 token 分开，两种 token 互相不能冒用。MCP 服务用 SDK 的 bearer 中间件验签，token 缺失、伪造、过期或受众不对，都在进入工具之前返回 401。工具内重新读取用户行（已停用的用户被拒）并重算 AccessScope。工具参数里没有任何身份字段；确认单绑定的是 token 里的会话，不是参数。
+  - token 放在一个对象里通过 LangGraph config 传递。实测 LangGraph 会把 config 里的字符串值复制进 checkpoint 元数据，包在对象里就不会被写入；有测试检查 checkpoint 中不含 token。
+- **与计划的差别**：计划写的是用 `langchain-mcp-adapters` 加载工具。这里的工具调用由图节点按确定性规则执行（规划器直发检索、interrupt 确认、回表），不是把 MCP 工具直接绑给模型，所以用 SDK 的客户端按名调用即可，不需要适配层。
+- **替代**：模型直接调用 MCP 工具；身份作为工具参数传递；沿用登录 token。
+- **为什么不选**：身份放在参数里，模型或提示注入就能伪造；登录 token 有效期 8 小时，用途也不对，泄露到工具服务的代价更大。
+
+## 77. 写操作两段式：准备时把要提交的内容存进确认单，执行端再次鉴权（v4 D13）
+
+- **决定**：`prepare_help_request` 建立 PENDING 确认单，把要提交的全部内容（类型、槽位、证据引用、推荐专家）存进确认单的 `payload`（迁移 0015），按 operation_id 幂等。用户在 interrupt 确认卡上批准后，`POST /chat/confirm` 把确认单改为 APPROVED，然后恢复运行。`submit_help_request` 只接收 `confirmation_id`：执行端再查一次数据库，确认它属于 token 里的用户且状态是 APPROVED，然后按幂等键提交存好的内容。重复提交返回同一张单，不会重复派单或重复计数。别人的确认单一律返回 NOT_FOUND，不暴露是否存在。
+- **附带**：证据引用在准备时按当前权限过滤，求助单不会指向提问人看不到的分块。
+- **后果**：内容在批准和提交之间不能被改动。MCP 服务无状态，可以在准备和提交之间重启。评测运行器和测试在恢复运行前也要像 API 一样记录用户的决定，否则执行端会拒绝提交。
+- **验证**：未批准、已拒绝、已过期、他人的确认单都不能提交；重复提交只建一张单；服务重启后仍可提交；准备两次得到同一张确认单。
+

@@ -76,16 +76,16 @@ def ask(g, user, text, thread):
 
 def test_unstated_model_gets_a_question_then_the_answer_is_filtered(db, enc, users, monkeypatch):
     # Force the spindle SOP into the evidence so the test does not depend on hash-encoder ranking.
-    import knoventra.agent.graph as graph_module
+    import knoventra.tools.service as tool_service  # retrieval runs in the tool service (D13)
 
     spindle = _doc(db, "SOP-WCL-380120-002")
-    real = graph_module.retrieve
+    real = tool_service.retrieve
 
     def retrieve(db_, enc_, rr, user, query, **kw):
         out = real(db_, enc_, rr, user, "SOP-WCL-380120-002 " + query, **kw)
         assert all(e.document_id == spindle.id for e in out.evidence)
         return out
-    monkeypatch.setattr(graph_module, "retrieve", retrieve)
+    monkeypatch.setattr(tool_service, "retrieve", retrieve)
 
     calls = []
 
@@ -107,10 +107,10 @@ def test_unstated_model_gets_a_question_then_the_answer_is_filtered(db, enc, use
 
 
 def test_naming_two_models_is_a_comparison_not_a_question(db, enc, users, monkeypatch):
-    import knoventra.agent.graph as graph_module
+    import knoventra.tools.service as tool_service  # retrieval runs in the tool service (D13)
 
-    real = graph_module.retrieve
-    monkeypatch.setattr(graph_module, "retrieve",
+    real = tool_service.retrieve
+    monkeypatch.setattr(tool_service, "retrieve",
                         lambda db_, enc_, rr, user, query, **kw: real(db_, enc_, rr, user, "SOP-WCL-380120-002 " + query,
                                                                        **kw))
     out = ask(graph(db, enc, [plan()]), users["sg-ops"], "WX-38 和 WX-P 的 spindle 扭矩有什么区别", "t2")
@@ -148,7 +148,7 @@ def test_skill_intent_calls_the_tool_and_checks_department(db, enc, users, skill
 
 
 def test_low_ranked_sectioned_chunk_does_not_trigger_a_question(db, enc, users, monkeypatch):
-    import knoventra.agent.graph as graph_module
+    import knoventra.tools.service as tool_service  # retrieval runs in the tool service (D13)
     from knoventra.retrieval.pipeline import OK, Outcome
     from knoventra.retrieval.search import Evidence
 
@@ -160,7 +160,7 @@ def test_low_ranked_sectioned_chunk_does_not_trigger_a_question(db, enc, users, 
         return Evidence(c.id, doc.id, doc.title, 1, None, c.section_path, c.text, "zh-Hans", 0.1, dense_sim=0.9)
     top = ev("SOP-GEN-200410-001", "示教")
     filler = ev("SOP-WCL-380120-002", "WX-38")
-    monkeypatch.setattr(graph_module, "retrieve", lambda *a, **kw: Outcome(OK, [top, filler]))
+    monkeypatch.setattr(tool_service, "retrieve", lambda *a, **kw: Outcome(OK, [top, filler]))
     out = ask(graph(db, enc, [plan(rewritten="chamber teaching 速度")]), users["sg-ops"], "chamber teaching 速度", "t9")
     assert out["clarification"] is None and out["sources"]
 

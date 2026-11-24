@@ -26,6 +26,8 @@ from knoventra.db.models import Chunk, Confirmation, Conversation, Document, Esc
 from knoventra.db.session import SessionLocal
 from knoventra.ingestion.encoder import get_encoder
 from knoventra.memory.working import get_working_memory
+from knoventra.tools.backend import McpTools, ToolCredential
+from knoventra.auth.security import issue_tool_token
 from knoventra.retrieval.rerank import get_reranker
 
 router = APIRouter(prefix="/api/v1")
@@ -53,8 +55,10 @@ def get_graph():
     # a failure keeps the full history for that turn.
     summarizer = ChatOpenAI(**{**chat_model_kwargs(), "timeout": settings.summary_timeout_s}, max_retries=0)
     saver, _pool = make_checkpointer(settings.database_url)
+    # Tools run on the MCP server when one is configured, else in this process.
+    tools = McpTools(settings.mcp_url, settings.mcp_timeout_s) if settings.mcp_url else None
     return build_graph(AgentDeps(_session, get_encoder(), get_reranker(), llm, saver, planner,
-                                 memory=get_working_memory(), summarizer=summarizer))
+                                 memory=get_working_memory(), summarizer=summarizer, tools=tools))
 
 
 def sse(event: str, data) -> str:
@@ -114,8 +118,13 @@ def _deliver_answer(db: Session, conv: Conversation, snapshot) -> Iterator[str]:
 
 
 def _stream_run(graph, db: Session, conv: Conversation, user_id: str, inp, *, user_text: str | None) -> Iterator[str]:
+    run_id = uuid.uuid4().hex
     cfg = {"configurable": {"thread_id": conv.thread_id, "user_id": user_id}}
-    yield sse("meta", {"conversation_id": conv.id, "run_id": uuid.uuid4().hex})
+    if settings.mcp_url:
+        # One short-lived identity per run, bound to this user and conversation; an object,
+        # so LangGraph never copies the token into checkpoint metadata.
+        cfg["configurable"]["tool_credential"] = ToolCredential(issue_tool_token(user_id, conv.thread_id, run_id))
+    yield sse("meta", {"conversation_id": conv.id, "run_id": run_id})
     if user_text is not None:
         conv.active_turn_id = inp["messages"][0].id
         db.add(Message(id=conv.active_turn_id, conversation_id=conv.id, role="user", content=user_text))

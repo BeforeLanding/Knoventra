@@ -72,6 +72,14 @@ class Settings(BaseSettings):
     # Dense cosine floor. Not calibrated: no paid memory evaluation has been run yet.
     episode_min_score: float = Field(default=0.5, ge=0, le=1)
     episode_chars: int = Field(default=600, gt=0)
+    # Tool execution over MCP (D13). Empty URL runs tools in-process (tests, eval, single box).
+    mcp_url: str = ""
+    mcp_host: str = "127.0.0.1"
+    mcp_port: int = 58765
+    mcp_timeout_s: float = Field(default=30.0, gt=0)
+    # Per-run identity tokens for the MCP server: own secret, short life (one HTTP request).
+    tool_token_secret: str = "dev-only-tool-token-secret-change-me"
+    tool_token_ttl_s: int = Field(default=300, gt=0)
     confirm_ttl_minutes: int = 30
     llm_base_url: str = ""
     llm_api_key: str = ""

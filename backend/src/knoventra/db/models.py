@@ -135,6 +135,8 @@ class Confirmation(Base):
     summary: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(16), default="PENDING")  # PENDING|APPROVED|REJECTED|EXPIRED
     expires_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True))
+    # What submit files: kind, slots, evidence refs, recommendation (D13). NULL on older rows.
+    payload: Mapped[dict | None] = mapped_column(JSON)
 
 
 HELP_STATUSES = ("OPEN", "ASSIGNED", "IN_PROGRESS", "RESOLVED", "CLOSED", "CANCELLED")

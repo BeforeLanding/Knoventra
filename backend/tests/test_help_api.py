@@ -8,7 +8,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 from sqlalchemy import select
 
-from fakes import ScriptedModel, call, session_factory_for
+from fakes import ScriptedModel, call, session_factory_for, record_decision
 from knoventra.agent.graph import AgentDeps, build_graph
 from knoventra.api.deps import get_db
 from knoventra.auth.security import issue_token
@@ -76,6 +76,7 @@ def test_confirmed_card_shows_reason_and_auto_assigns(db, enc, users, skills):
     pending = graph.invoke({"messages": [HumanMessage("610101 校准偏差，帮我提求助单")], "evidence": {}, "sources": [],
                             "error_code": None}, cfg)
     assert "推荐专家：Zhou Lan" in pending["__interrupt__"][0].value["summary"]
+    record_decision(db, graph, cfg, True)
     graph.invoke(Command(resume={"approve": True}), cfg)
     req = db.scalar(select(HelpRequest).where(HelpRequest.user_id == users["cn-ops"].id,
                                               HelpRequest.kind == "field_help"))

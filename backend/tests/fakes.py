@@ -58,3 +58,17 @@ class DictWorkingMemory:
                 entry.pop(key, None)
             else:
                 entry[key] = value
+
+
+def record_decision(db, graph, cfg, approve: bool) -> None:
+    """Do what POST /chat/confirm does before resuming: store the user's decision on the
+    confirmation of the active interrupt. The tool side re-checks this row (D13)."""
+    from sqlalchemy import update
+
+    from knoventra.db.models import Confirmation
+
+    state = graph.get_state(cfg)
+    ids = [i.value["confirmation_id"] for task in state.tasks for i in task.interrupts]
+    db.execute(update(Confirmation).where(Confirmation.id.in_(ids), Confirmation.status == "PENDING")
+               .values(status="APPROVED" if approve else "REJECTED"))
+    db.flush()

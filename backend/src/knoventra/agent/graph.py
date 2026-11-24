@@ -5,7 +5,6 @@ inside tools on every call; neither lives in model-editable state.
 """
 from __future__ import annotations
 
-import datetime as dt
 import hashlib
 import logging
 import re
@@ -17,35 +16,31 @@ from dataclasses import dataclass
 from typing import Annotated, Any, TypedDict
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage, ToolMessage
+from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.types import interrupt
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from knoventra.config import settings
 from knoventra.agent.language import answer_script, format_answer
 from knoventra.agent.escalation_intent import direct_escalation_summary
-from knoventra.agent.model_variants import clarification_needed, clarification_text, stated_models
+from knoventra.agent.model_variants import clarification_text, stated_models
 from knoventra.agent.query_plan import RETRIEVAL_INTENTS, plan_query
 from knoventra.help import slots as help_slots
-from knoventra.help.recommend import recommend
-from knoventra.help.service import assign_by_system, create_request
-from knoventra.skills import can_view_skills, format_hits
-from knoventra.skills import lookup_skills as lookup_skills_in_db
-from knoventra.db.models import Confirmation, Escalation, User
+from knoventra.db.models import User
 from knoventra.ingestion.encoder import Encoder
-from knoventra.retrieval.pipeline import OK, retrieve
+from knoventra.retrieval.pipeline import OK
 from knoventra.retrieval.rerank import Reranker
 from knoventra.memory import drafts
 from knoventra.memory import episodes as episodic
 from knoventra.memory import profile as user_profile
 from knoventra.memory.assembler import assemble, memory_tokens
 from knoventra.memory.context import clean_summary, plan_window
+from knoventra.tools.backend import Caller, InProcessTools
 from knoventra.memory.working import RedisWorkingMemory, WorkingMemoryUnavailable
 
 log = logging.getLogger(__name__)
@@ -186,17 +181,13 @@ class AgentDeps:
     # Profile and episodic memory (D12). Off for evaluation runs: one case must not be
     # recalled into, or shift the reply script of, a later case for the same demo user.
     long_term_memory: bool = True
+    # Tool transport (D13): None runs tools in-process; McpTools sends them to the MCP server.
+    tools: Any = None
 
 
 _MARK = re.compile(r"\[S(\d+)\]")
 REFUSAL_MARK = "【无依据】"
 REFUSAL_MARKS = (REFUSAL_MARK, "【無依據】")
-
-
-def _card(e, alias: str) -> dict:
-    return {"alias": alias, "chunk_id": e.chunk_id, "document_id": e.document_id,
-            "document_title": e.document_title, "revision": e.revision, "page": e.page,
-            "section_path": e.section_path, "text": e.text, "lang": e.lang}
 
 
 def _turn_tool_count(messages) -> int:
@@ -210,6 +201,12 @@ def _turn_tool_count(messages) -> int:
 
 
 def build_graph(deps: AgentDeps):
+    backend = deps.tools or InProcessTools(deps.session_factory, deps.encoder, deps.reranker)
+
+    def caller(config: RunnableConfig) -> Caller:
+        cfg = config["configurable"]
+        return Caller(cfg["user_id"], cfg["thread_id"], cfg.get("tool_credential"))
+
     def wm_load(config: RunnableConfig) -> tuple[dict | None, str]:
         """Working-memory fields for this conversation, or None when Redis is off or down."""
         if deps.memory is None:
@@ -381,7 +378,7 @@ def build_graph(deps: AgentDeps):
         # Also guard tools-node retries/checkpoints created before agent-side validation existed.
         if not _valid_tool_batch(calls):
             return _invalid_tool_response(state["messages"][-1])
-        uid = config["configurable"]["user_id"]
+        who = caller(config)
         if _turn_tool_count(state["messages"]) + len(calls) > settings.max_tool_calls_per_turn:
             return {
                 "messages": [ToolMessage("已超过本轮工具调用上限", tool_call_id=c["id"]) for c in calls]
@@ -405,52 +402,42 @@ def build_graph(deps: AgentDeps):
         for c in calls:
             if c["name"] == "search_knowledge":
                 started = time.perf_counter()
-                with deps.session_factory() as db:
-                    # The planner's route applies to its own searches only; the answer model's
-                    # follow-up searches keep the user's full readable scope.
-                    route = state.get("route_kbs") if c["id"].startswith("plan-") else None
-                    res = retrieve(db, deps.encoder, deps.reranker, db.get(User, uid), c["args"].get("query", ""),
-                                   original_query=original_query, route_kbs=route, machine_model=model)
-                    if res.status == OK and clarification is None:
-                        # Only the best evidence decides: a low-ranked filler chunk must not trigger a question.
-                        clarification = clarification_needed(db, res.evidence[:1], stated)
+                # The planner's route applies to its own searches only; the answer model's
+                # follow-up searches keep the user's full readable scope.
+                route = state.get("route_kbs") if c["id"].startswith("plan-") else None
+                res = backend.search(who, query=c["args"].get("query", ""), original_query=original_query,
+                                     route_kbs=route, machine_model=model, stated_models=stated,
+                                     want_clarification=clarification is None)
+                if res["status"] == OK and clarification is None:
+                    clarification = res.get("clarification")
                 elapsed_ms = round((time.perf_counter() - started) * 1000, 3)
                 trace.append({"tool_call_id": c["id"], "query": c["args"].get("query", ""),
                               "latency_ms": elapsed_ms,
-                              "status": res.status, "reason": res.reason,
-                              "required_identifiers": res.required_identifiers,
-                              "missing_identifiers": res.missing_identifiers,
-                              "returned_chunk_ids": [e.chunk_id for e in res.evidence],
-                              "degraded": res.degraded, "route": res.route, "machine_model": model})
-                if res.status != OK:
+                              "status": res["status"], "reason": res["reason"],
+                              "required_identifiers": res["required_identifiers"],
+                              "missing_identifiers": res["missing_identifiers"],
+                              "returned_chunk_ids": [e["chunk_id"] for e in res["evidence"]],
+                              "degraded": res["degraded"], "route": res["route"], "machine_model": model})
+                if res["status"] != OK:
                     if not evidence:
-                        error = res.status
-                    out.append(ToolMessage(f"{res.status}: 没有可引用的资料。请拒答并建议联系对应职能团队。",
+                        error = res["status"]
+                    out.append(ToolMessage(f"{res['status']}: 没有可引用的资料。请拒答并建议联系对应职能团队。",
                                            tool_call_id=c["id"]))
                     continue
                 error = None
                 lines = []
-                for e in res.evidence:
-                    alias = next((a for a, v in evidence.items() if v["chunk_id"] == e.chunk_id), None)
+                for e in res["evidence"]:
+                    alias = next((a for a, v in evidence.items() if v["chunk_id"] == e["chunk_id"]), None)
                     if alias is None:
                         alias = f"S{len(evidence) + 1}"
-                        evidence[alias] = _card(e, alias)
-                    lines.append(f"[{alias}] 《{e.document_title}》修订{e.revision} 第{e.page}页 {e.section_path}\n{e.text}")
+                        evidence[alias] = {"alias": alias, **e}
+                    lines.append(f"[{alias}] 《{e['document_title']}》修订{e['revision']} 第{e['page']}页 "
+                                 f"{e['section_path']}\n{e['text']}")
                 out.append(ToolMessage("\n\n".join(lines), tool_call_id=c["id"]))
             elif c["name"] == "get_escalation_status":
-                with deps.session_factory() as db:
-                    rows = db.scalars(select(Escalation).where(Escalation.user_id == uid)
-                                      .order_by(Escalation.created_at.desc().nulls_last(), Escalation.id.desc()).limit(5)).all()
-                out.append(ToolMessage("\n".join(f"{r.id}: {r.status} - {r.summary[:60]}"
-                                                 + ("（现场求助）" if r.kind == "field_help" else "")
-                                                 for r in rows) or "暂无转交记录",
-                                       tool_call_id=c["id"]))
+                out.append(ToolMessage(backend.help_status(who), tool_call_id=c["id"]))
             elif c["name"] == "lookup_skills":
-                with deps.session_factory() as db:
-                    user = db.get(User, uid)
-                    text = (format_hits(lookup_skills_in_db(db, c["args"]["skill"])) if can_view_skills(user)
-                            else "NO_ACCESS: 技能表仅对 Ops 部门开放。")
-                out.append(ToolMessage(text, tool_call_id=c["id"]))
+                out.append(ToolMessage(backend.skills(who, c["args"]["skill"]), tool_call_id=c["id"]))
             elif c["name"] == "request_help" and pending is None:
                 draft = help_slots.merge(draft, c["args"], state["messages"])
                 need = help_slots.missing(draft)
@@ -465,14 +452,12 @@ def build_graph(deps: AgentDeps):
                                            id=anchor, artifact={drafts.ARTIFACT_KEY: draft}))
                     memory_trace.append(store_draft(config, anchor, draft))
                     continue
-                with deps.session_factory() as db:
-                    rec = recommend(db, db.get(User, uid), f"{draft['symptom']} {draft.get('tried_steps', '')}")
-                card = help_slots.card(draft) + (f"\n推荐专家：{rec.chosen.engineer}（{rec.reason}）" if rec.chosen
-                                                 else f"\n派单：{rec.reason}")
+                # The expert recommendation is added by prepare_help_request, on the tool side.
+                card = help_slots.card(draft)
                 turn_id = next(m.id for m in reversed(state["messages"]) if isinstance(m, HumanMessage))
                 op_id = hashlib.sha256(f"{config['configurable']['thread_id']}:{turn_id}:{c['id']}".encode()).hexdigest()[:32]
                 pending = {"tool_call_id": c["id"], "args": {"summary": card}, "operation_id": op_id,
-                           "kind": "field_help", "slots": draft, "recommendation": rec.as_dict()}
+                           "kind": "field_help", "slots": draft}
                 memory_trace.append(store_draft(config, f"card:{op_id}", draft))
             elif c["name"] == "escalate_to_expert" and pending is None:
                 turn_id = next(m.id for m in reversed(state["messages"]) if isinstance(m, HumanMessage))
@@ -503,45 +488,27 @@ def build_graph(deps: AgentDeps):
         # Older checkpoints predate turn-scoped IDs. Preserve their legacy
         # operation on resume rather than create a replacement confirmation.
         op_id = p.get("operation_id") or hashlib.sha256(f"{cfg['thread_id']}:{p['tool_call_id']}".encode()).hexdigest()[:32]
-        summary = str(p["args"].get("summary", ""))[:2000]
-        with deps.session_factory() as db:
-            conf = db.scalar(select(Confirmation).where(Confirmation.user_id == cfg["user_id"],
-                                                        Confirmation.operation_id == op_id))
-            if conf is None:  # get-or-create: this node re-runs from the top on resume
-                conf = Confirmation(
-                    user_id=cfg["user_id"], thread_id=cfg["thread_id"], operation_id=op_id, summary=summary,
-                    status="PENDING",
-                    expires_at=dt.datetime.now(dt.UTC) + dt.timedelta(minutes=settings.confirm_ttl_minutes))
-                db.add(conf)
-            db.commit()
-            conf_id = conf.id
+        # Phase 1 (tool side): store exactly what would be filed on a PENDING confirmation.
+        # Get-or-create by operation id: this node re-runs from the top on resume.
+        prepared = backend.prepare(caller(config), operation_id=op_id, kind=p.get("kind", "expert_escalation"),
+                                   summary=str(p["args"].get("summary", ""))[:2000], slots=p.get("slots"),
+                                   evidence_refs=[v["chunk_id"] for v in (state.get("evidence") or {}).values()])
+        summary, conf_id = prepared["summary"], prepared["confirmation_id"]
         decision = interrupt({"confirmation_id": conf_id, "summary": summary, "operation_id": op_id})
         return {"pending": {**p, "operation_id": op_id, "summary": summary, "confirmation_id": conf_id,
                             "approve": bool(decision.get("approve"))}}
 
     def execute_escalation(state: State, config: RunnableConfig):
         p = state["pending"]
-        uid = config["configurable"]["user_id"]
         if not p["approve"]:
             msg = ("用户已取消，未创建求助单。" if p.get("kind") == "field_help"
                    else "用户已取消转交，未创建转交记录。")
         else:
-            refs = [v["chunk_id"] for v in (state.get("evidence") or {}).values()]
-            eid = hashlib.sha256(f"{uid}:{p['operation_id']}".encode()).hexdigest()[:32]
-            kind = p.get("kind", "expert_escalation")
-            with deps.session_factory() as db:
-                esc = create_request(db, request_id=eid, requester_id=uid, operation_id=p["operation_id"],
-                                     kind=kind, summary=p["summary"], evidence_refs=refs, slots=p.get("slots"))
-                rec = p.get("recommendation") or {}
-                if rec.get("assignee_id"):
-                    esc = assign_by_system(db, esc.id, rec["assignee_id"], rec["reason"])
-                slots = p.get("slots") or {}
-                if kind == "field_help":
-                    user_profile.bump(db, uid, machines=[slots["machine_id"]] if slots.get("machine_id") else [],
-                                      models=[slots["machine_model"]] if slots.get("machine_model") else [])
-                db.commit()
-                label = "求助单" if kind == "field_help" else "转交记录"
-                msg = f"已创建{label} {esc.id}，状态 {esc.status}。"
+            # Phase 2 (tool side): only the confirmation id crosses; the tool re-checks that it is
+            # this caller's and APPROVED, then files the stored payload idempotently.
+            filed = backend.submit(caller(config), p["confirmation_id"])
+            label = "求助单" if filed["kind"] == "field_help" else "转交记录"
+            msg = f"已创建{label} {filed['request_id']}，状态 {filed['status']}。"
         if p.get("kind") != "field_help":
             return {"messages": [ToolMessage(msg, tool_call_id=p["tool_call_id"])], "pending": None}
         # Filed or declined: either way the draft is finished, in the checkpoint and in Redis.

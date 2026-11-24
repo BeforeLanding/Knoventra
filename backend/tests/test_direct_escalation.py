@@ -6,7 +6,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 from sqlalchemy import func, select
 
-from fakes import ScriptedModel, session_factory_for
+from fakes import ScriptedModel, session_factory_for, record_decision
 from knoventra.agent.escalation_intent import direct_escalation_summary
 from knoventra.agent.graph import AgentDeps, build_graph
 from knoventra.db.models import Escalation
@@ -68,6 +68,7 @@ def test_direct_confirmation_does_not_call_model_before_approval_and_survives_re
     assert snapshot.tasks[0].interrupts[0].value["summary"] == question
     assert calls == [] and db.scalar(select(func.count()).select_from(Escalation)) == 0
     restarted = build_graph(deps)
+    record_decision(db, restarted, cfg, approve)
     out = restarted.invoke(Command(resume={"approve": approve}), cfg)
     assert len(calls) == 1 and not restarted.get_state(cfg).next
     assert db.scalar(select(func.count()).select_from(Escalation)) == expected

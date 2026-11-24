@@ -1,6 +1,6 @@
 # Knoventra v4 扩展计划：现场经验沉淀、混合检索与分层记忆
 
-版本：v4.0 草案 · 2026-11-23 · 状态：开发中（第 2 周完成，第 3 周 D11–D12 完成） · 工期目标：3 周（15 个工作日）
+版本：v4.0 草案 · 2026-11-23 · 状态：开发中（第 2 周完成，第 3 周 D11–D13 完成） · 工期目标：3 周（15 个工作日）
 
 本计划在 v3 MVP（`main` c8c81956）的基础上扩展，不推翻已有实现。v3 已经做实、这里直接复用的能力：权限在召回 SQL 内生效、已发布版本过滤、编号精确门槛、来源卡片、interrupt 确认与幂等转交、Checkpoint 恢复。
 
@@ -159,7 +159,7 @@ v4 推翻了 [DECISIONS.md](DECISIONS.md) 中“无 Redis、Elasticsearch”和�
 ### 第 3 周：记忆、MCP 与交付
 - **D11**：Compose 加入 Redis，实现工作记忆、槽位迁移到 Redis 和丢失后重建、Token 预算与滚动压缩。✅ 2026-11-23：compose 服务 `redis`（7.4，固定 digest，端口 56379，不持久化，128 MB，按 TTL 淘汰）；`KNV_REDIS_URL` 为空时关闭，此时每次都从 Checkpoint 重建。`memory/working.py`：键 `knv:wm:{user_id}:{thread_id}`，hash，TTL 24 小时，读写都续期；Redis 出错按缺失处理。槽位草稿不再是图状态字段：`request_help` 的 ToolMessage `artifact` 和确认卡 `pending.slots` 是持久记录，Redis 副本带锚点，与 Checkpoint 不符就重建（`memory/drafts.py`，DECISIONS 第 71 条）。`compact` 节点（`memory/context.py`）按近似 Token 预算（默认 6000）保留最近 3 轮，更早的轮次滚动压缩成摘要存入 Redis；只压缩模型看到的内容，摘要不读工具输出和证据，失败时发送完整历史，压缩前后的 Token 数记在 `memory_trace`（DECISIONS 第 72 条）。与计划的差别：工作记忆里的“当前意图、最近机台和机型”D11 不写，D12 改由画像和当前消息覆盖（DECISIONS 第 74 条）；压缩后的关键槽位保留率属于付费评测，尚未测量。CI 的 Redis job 留到 D14，测试在 `localhost:56379` 不可达时跳过（`KNV_REQUIRE_REDIS=1` 时失败）。
 - **D12**：情景记忆写入与召回、复用前重验权限、用户画像、上下文组装器。✅ 2026-11-23：迁移 0014 新增 `knv_episode`（pgvector，按用户隔离）和 `knv_profile`。带引用的回答在本轮结束时由 `remember` 节点写入；已解决的求助单在 resolve 事务里写给提问人。`recall` 节点每轮召回最多 3 条，排除本会话；注入前重验每个引用分块仍为 PUBLISHED 且所在 KB 可读、求助单仍属本人且已解决，任一不满足就整条丢弃并记入轨迹（DECISIONS 第 73 条）。画像只计数字形、机型和提交过求助的机台，用于无字形信号时的回复字形和“常用机台”提示，不参与权限（第 74 条）。上下文组装器（`memory/assembler.py`）按优先级填预算、从低往高截断（第 75 条）。`GET /memory` 查看、`DELETE /memory/episodes/{id}` 和 `DELETE /memory` 删除，只能操作本人的数据。评测图关闭长期记忆。与计划的差别：画像不预填槽位，只提示后追问；本轮证据不截断；“最近机台和机型”由画像和当前消息覆盖，Redis 不单独存。尚未完成：记忆的前端页面（D14），召回质量和撤权后复用为 0 的付费评测。
-- **D13**：MCP 服务、身份 token、写操作两段式、客户端适配，以及安全测试。
+- **D13**：MCP 服务、身份 token、写操作两段式、客户端适配，以及安全测试。✅ 2026-11-24：工具实现集中在 `tools/service.py`，有进程内和 MCP 两种传输（`tools/backend.py`）。MCP 服务 `knoventra.mcp_server`（`mcp` SDK 2.3，streamable HTTP，无状态，默认端口 58765）。API 每次运行签发短期身份 JWT（独立密钥、受众 `knoventra-mcp`），SDK 的 bearer 中间件验签，工具内重读用户并重算权限，参数里没有身份字段，token 不进 checkpoint（DECISIONS 第 76 条）。迁移 0015 给确认单加 `payload`：准备时存好要提交的内容，执行端只认本人、已批准的 `confirmation_id`，幂等提交（第 77 条）。`test_mcp.py` 用真实服务覆盖：缺失、伪造、过期、登录 token、错误受众一律 401；停用用户被拒；HR 借路由也读不到 Ops；未批准、已拒绝、已过期、他人的确认单不能提交；重放只建一张单；准备和提交之间重启服务。与计划的差别：没有用 `langchain-mcp-adapters`，因为工具由图节点调用而不是绑给模型。尚未完成：Compose 和 CI 里的 MCP 服务（D14）；经 API 走 MCP 的完整 HTTP 端到端只在各段分别测试，没有单独的联调测试。
 - **D14**：前端联调，CI 加入 ES、Redis 和 MCP 服务的 job，容器演示入口更新。
 - **D15**：评测报告、README、DECISIONS、本计划状态同步；演示脚本和录屏清单。
 

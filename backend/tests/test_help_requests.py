@@ -8,7 +8,7 @@ from langgraph.types import Command
 from sqlalchemy import func, select, text
 from sqlalchemy.exc import DBAPIError
 
-from fakes import DictWorkingMemory, ScriptedModel, call, session_factory_for
+from fakes import DictWorkingMemory, ScriptedModel, call, record_decision, session_factory_for
 from knoventra.agent.graph import AgentDeps, build_graph
 from knoventra.memory.drafts import checkpoint_draft
 from knoventra.db.models import HelpEvent, HelpRequest
@@ -100,6 +100,8 @@ def run_turns(db, enc, user, turns, agent, memory=None):
     cfg = {"configurable": {"thread_id": uuid.uuid4().hex, "user_id": user.id}}
     out = None
     for t in turns:
+        if isinstance(t, dict):
+            record_decision(db, graph, cfg, t["approve"])
         inp = Command(resume=t) if isinstance(t, dict) else {"messages": [HumanMessage(t)], "evidence": {},
                                                               "sources": [], "error_code": None}
         out = graph.invoke(inp, cfg)

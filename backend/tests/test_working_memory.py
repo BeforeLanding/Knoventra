@@ -9,7 +9,7 @@ from langgraph.types import Command
 from pydantic import ValidationError
 from sqlalchemy import select
 
-from fakes import DictWorkingMemory, ScriptedModel, call, session_factory_for
+from fakes import DictWorkingMemory, ScriptedModel, call, record_decision, session_factory_for
 from knoventra.agent.graph import AgentDeps, build_graph
 from knoventra.config import Settings, settings
 from knoventra.db.models import HelpRequest
@@ -98,8 +98,11 @@ class Turns:
                                            InMemorySaver(), memory=memory, summarizer=summarizer))
         self.cfg = {"configurable": {"thread_id": uuid.uuid4().hex, "user_id": user.id}}
         self.key = f"{user.id}:{self.cfg['configurable']['thread_id']}"
+        self.db = db
 
     def say(self, text):
+        if isinstance(text, dict):
+            record_decision(self.db, self.graph, self.cfg, text["approve"])
         inp = Command(resume=text) if isinstance(text, dict) else {
             "messages": [HumanMessage(text, id=uuid.uuid4().hex)], "evidence": {}, "sources": [], "error_code": None}
         return self.graph.invoke(inp, self.cfg)

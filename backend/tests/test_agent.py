@@ -7,7 +7,7 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langgraph.types import Command
 from sqlalchemy import func, select
 
-from fakes import ScriptedModel, call, session_factory_for
+from fakes import ScriptedModel, call, session_factory_for, record_decision
 from knoventra.agent.checkpoint import make_checkpointer
 from knoventra.agent.graph import AgentDeps, build_graph
 from knoventra.config import settings
@@ -140,6 +140,7 @@ def test_mixed_search_and_confirmed_escalation_acknowledgement_needs_no_citation
     graph = make_graph(db, enc, saver, script)
     out, cfg = run(graph, users["sg-ops"], "E17-42 排查并转人工")
     assert out["evidence"] and graph.get_state(cfg).next
+    record_decision(db, graph, cfg, True)
     out = graph.invoke(Command(resume={"approve": True}), cfg)
     assert out["error_code"] is None and out["sources"] == []
     assert esc_count(db, users["sg-ops"]) == 1
@@ -199,6 +200,7 @@ def test_truncated_acknowledgement_does_not_repeat_or_undo_confirmed_escalation(
     graph = make_graph(db, enc, saver, script)
     _, cfg = run(graph, users["sg-ops"], "转人工")
     assert esc_count(db, users["sg-ops"]) == 0
+    record_decision(db, graph, cfg, True)
     out = graph.invoke(Command(resume={"approve": True}), cfg)
     assert out["error_code"] == "MODEL_OUTPUT_TRUNCATED" and out["sources"] == []
     assert not graph.get_state(cfg).next and len(invocations) == 1  # Initial direct confirmation needs no model call.
@@ -226,6 +228,7 @@ def test_escalation_interrupt_approve_is_idempotent_across_restart(db, enc, save
     # process "restart": a brand-new graph object over the same checkpointer
     g2 = make_graph(db, enc, saver, esc_script)
     assert g2.get_state(cfg).next
+    record_decision(db, g2, cfg, True)
     out2 = g2.invoke(Command(resume={"approve": True}), cfg)
     assert out2["retrieval_trace"] == out["retrieval_trace"] == []
     assert out2["model_declared_refusal"] is False
@@ -243,6 +246,7 @@ def test_escalation_rejected_creates_nothing(db, enc, saver, users):
     user = users["sg-ops"]
     g = make_graph(db, enc, saver, esc_script)
     _, cfg = run(g, user, "转人工")
+    record_decision(db, g, cfg, False)
     out = g.invoke(Command(resume={"approve": False}), cfg)
     assert esc_count(db, user) == 0 and "已取消" in out["messages"][-2].content
 
@@ -262,6 +266,7 @@ def test_legacy_pending_checkpoint_preserves_operation_on_restart(db, enc, saver
     expected_op = hashlib.sha256(f"{thread}:legacy-tool".encode()).hexdigest()[:32]
     assert db.get(Confirmation, conf_id).operation_id == expected_op
     restarted = make_graph(db, enc, saver, esc_script)
+    record_decision(db, restarted, cfg, True)
     restarted.invoke(Command(resume={"approve": True}), cfg)
     rows = db.scalars(select(Confirmation).where(Confirmation.thread_id == thread)).all()
     assert [r.id for r in rows] == [conf_id] and esc_count(db, user) == 1

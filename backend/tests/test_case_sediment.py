@@ -8,7 +8,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 from sqlalchemy import select
 
-from fakes import ScriptedModel, call, session_factory_for
+from fakes import ScriptedModel, call, session_factory_for, record_decision
 from knoventra.access.scope import compute_scope
 from knoventra.agent.graph import AgentDeps, build_graph
 from knoventra.api.deps import get_db
@@ -54,6 +54,7 @@ def file_request(db, enc, user):
     cfg = {"configurable": {"thread_id": uuid.uuid4().hex, "user_id": user.id}}
     graph.invoke({"messages": [HumanMessage("630301 传感器漂移，帮我提求助单")], "evidence": {}, "sources": [],
                   "error_code": None}, cfg)
+    record_decision(db, graph, cfg, True)
     graph.invoke(Command(resume={"approve": True}), cfg)
     return db.scalar(select(HelpRequest).where(HelpRequest.user_id == user.id, HelpRequest.kind == "field_help"))
 

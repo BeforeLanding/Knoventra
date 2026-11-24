@@ -158,6 +158,20 @@ def latency_summary(values) -> dict:
             "p95": samples[math.ceil(len(samples) * 0.95) - 1], "max": samples[-1]}
 
 
+def _record_decision(db, snapshot, approve: bool) -> None:
+    """What POST /chat/confirm does before it resumes: store the decision on the confirmation.
+    The tool side files only APPROVED confirmations (D13), so the runner must record it too."""
+    from sqlalchemy import update
+
+    from knoventra.db.models import Confirmation
+
+    ids = [i.value["confirmation_id"] for task in snapshot.tasks for i in task.interrupts
+           if isinstance(i.value, dict) and i.value.get("confirmation_id")]
+    db.execute(update(Confirmation).where(Confirmation.id.in_(ids), Confirmation.status == "PENDING")
+               .values(status="APPROVED" if approve else "REJECTED"))
+    db.commit()
+
+
 def eval_agent(graph, db, users, cases, *, on_start=None, on_complete=None) -> list[dict]:
     """End-to-end per case. Escalation cases drive interrupt/resume with the listed decisions."""
     from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
@@ -184,6 +198,7 @@ def eval_agent(graph, db, users, cases, *, on_start=None, on_complete=None) -> l
             asked = any(task.interrupts for task in snapshot.tasks)
             for approve in exp["decisions"]:
                 if any(task.interrupts for task in snapshot.tasks):
+                    _record_decision(db, snapshot, approve)
                     st = graph.invoke(Command(resume={"approve": approve}), cfg)
                     snapshot = graph.get_state(cfg)
                     asked = asked or any(task.interrupts for task in snapshot.tasks)
