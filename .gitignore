@@ -1,54 +1,28 @@
-target/
-temp
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# Repository-wide ignores. backend/.gitignore and web/.gitignore cover their own outputs.
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-!.idea/dictionaries/
-!.idea/inspectionProfiles/
-!.idea/scopes/
-!.idea/icon.png
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
-scripts/logs/
+### Python / uv ###
+__pycache__/
+*.py[cod]
+.venv/
+.uv-cache/
+.pytest_cache/
 
 ### Frontend ###
 node_modules/
 dist/
 .vite/
 .env.local
-resources/docker/graphrag/.env
+
+### Secrets ###
+.env
+
+### Editors / OS ###
+.idea/
+.vscode/
+*.iml
+.DS_Store
 
 ### Tmp Out ###
 .output/
 docs/temp
 .claude/
-
-### Regression artifacts ###
-# Local reports, credentials, logs, snapshots and compiled CLI classes.
-/resources/regression/*/artifacts/

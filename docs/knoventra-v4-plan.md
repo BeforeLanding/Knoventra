@@ -63,7 +63,7 @@ v4 推翻了 [DECISIONS.md](DECISIONS.md) 中“无 Redis、Elasticsearch”和�
 - **行级记录**：每行是一条记录，元数据包括机台号、机型、日期、技术员 ID、公司、区域。机型用字典抽取，抽不到就标为 `unknown`，不猜。
 - **去重**：精确重复按归一化文本的哈希判定；近似重复用 SimHash 加阈值判定，合并成一条并保留所有日期。重复入库是幂等的。
 - **脱敏**：在入库链路上按规则替换口令、电话等敏感串，替换前后的计数写入审计，原文不落库。规则命中的样例写成测试。
-- **案例字段**：从排障类记录中抽取现象、告警、原因、解决方法、是否解决。默认用规则加关键词；LLM 抽取作为可选开关，开启前需单独授权付费调用。
+- **案例字段**：从排障类记录中抽取现象、告警、原因、解决方法、是否解决。默认用规则加关键词；LLM 抽取作为可选开关，开启前需单独授权付费调用。（未实现：按可砍清单第 1 项砍掉，只有规则抽取，代码里没有 LLM 抽取开关。）
 - **技能表**：进入结构化表 `knv_skill`，不切块、不向量化。
 
 ### 3.2 Elasticsearch 通道（G2）
@@ -105,7 +105,7 @@ v4 推翻了 [DECISIONS.md](DECISIONS.md) 中“无 Redis、Elasticsearch”和�
 
 ### 3.6 MCP（G5）
 
-- **服务**：新进程 `backend/src/knoventra/mcp_server/`，用 Python `mcp` SDK 和 streamable HTTP，提供 `search_knowledge`、`lookup_skills`、`get_help_request`、`prepare_help_request`、`submit_help_request` 五个工具。仓库根目录的 Java `mcp-server/` 是上游参考代码，保持不动。
+- **服务**：新进程 `backend/src/knoventra/mcp_server/`，用 Python `mcp` SDK 和 streamable HTTP，提供 `search_knowledge`、`lookup_skills`、`get_help_request`、`prepare_help_request`、`submit_help_request` 五个工具。仓库根目录的 Java `mcp-server/` 是上游参考代码，保持不动（2026-11-24 起上游 Java 代码已从目录树移除，只留在提交历史中）。
 - **客户端**：Agent 端用 `langchain-mcp-adapters` 加载工具。测试中保留进程内替身，保证 CI 不依赖外部服务。
 - **身份**：每次运行由 API 签发一个短期 JWT（受众是 MCP 服务，内容包括 `user_id`、运行 ID、过期时间），通过 HTTP 头传递。MCP 服务验签后重新计算 AccessScope。工具参数里没有任何身份字段，模型无法伪造。
 - **写操作两段式**：确认发生在 LangGraph 的 interrupt 里；`submit_help_request` 必须带上已批准的 `confirmation_id`，MCP 服务在执行端再查一次数据库确认它属于本人、已批准、未过期，然后按幂等键建单。也就是说，执行端会做第二次鉴权。
@@ -164,7 +164,8 @@ v4 推翻了 [DECISIONS.md](DECISIONS.md) 中“无 Redis、Elasticsearch”和�
 - **D15**：评测报告、README、DECISIONS、本计划状态同步；演示脚本和录屏清单。✅ 2026-11-24：评测报告第 26 节列出已测和未测；README、开发方案第 12 节、容器演示说明同步到 v4；新增 [v4 演示脚本与录屏清单](demo-v4-script.md)。为了让七个故事都能离线演示：容器演示启动时导入虚构日志（技能矩阵和案例），登录页加入两名现场工程师账号，固定回答脚本按关键词选择技能查询、求助单和记忆工具；`check_demo.py` 按演示脚本的原话逐个核对七个故事（含撤回后记忆不再复用），普通模式和 `--mcp` 模式都通过。顺带修复：确认卡对求助单显示“求助单确认 / 确认提交求助单”，不再用转交的措辞；回到会话的更新提示对已解决的单显示解决方案。另：D12 起远端 CI 的迁移结构检查一直失败（迁移 0014 的时间戳可空性与 ORM 不一致），本地没有跑这项检查所以没发现；迁移 0016 已修正，本地 `check_migrations.py` 通过。
 
 ### 可砍清单（按顺序）
-1. LLM 案例字段抽取（保留规则抽取）
+1. LLM 案例字段抽取（保留规则抽取）——**已砍**（2026-11-24 确认）
+   第 2–5 项都已实现，没有砍。
 2. 专家工作台页面（只保留 API 和测试）
 3. 近似去重（保留精确去重）
 4. 用户画像中的常用机型（保留语言偏好）
@@ -188,7 +189,7 @@ v4 推翻了 [DECISIONS.md](DECISIONS.md) 中“无 Redis、Elasticsearch”和�
 
 ## 8. 完成定义
 
-> 2026-11-24 核对：第 1 条满足，六个服务一条命令启动，七个故事在前端走通，并由 `check_demo.py` 自动核对（离线固定回答）；第 2 条的三个“为 0”由确定性测试覆盖；第 3 条检索层有实测，Agent 层付费评测未运行；第 4 条见本次同步。
+> 2026-11-24 核对：第 1 条满足，六个服务一条命令启动，七个故事在前端走通，并由 `check_demo.py` 自动核对（离线固定回答）。例外是故事 7 的前半句“长对话自动压缩”：默认 6000 token 的预算在演示里很难触发，所以没有放进演示脚本，只由 `test_working_memory.py` 的压缩测试覆盖；第 2 条的三个“为 0”由确定性测试覆盖；第 3 条检索层有实测，Agent 层付费评测未运行；第 4 条见本次同步。
 
 - `docker compose`（PG、ES、Redis、API、MCP、Web）一条命令启动，第 2.1 节的 7 个故事都能在前端复现。
 - 第 3 节所列测试全部通过；越权泄露、重复建单、撤权后记忆复用均为 0。

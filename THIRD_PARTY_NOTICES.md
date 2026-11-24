@@ -26,3 +26,7 @@ Any copied or modified upstream code remains subject to its applicable license a
 ## Python implementation (2026-11-01)
 
 The Python backend (`backend/`) and the new frontend (`web/`, scaffolded from the Vite React-TypeScript template) were written independently for Knoventra; no source code from the imported Ragent tree was copied or ported into them. They follow design ideas from Ragent (layering, citation and retrieval flow), which is acknowledged here as a reference. The imported Java sources, `frontend/` and upstream notices are unchanged. New runtime dependencies (FastAPI, SQLAlchemy, LangGraph, pgvector, PyMuPDF, OpenCC, FlagEmbedding / BGE-M3 weights, React, Vite, etc.) remain under their own licenses; the BGE-M3 model weights are downloaded from Hugging Face at runtime and are not redistributed in this repository.
+
+## Removal of the upstream sources (2026-11-24)
+
+The imported upstream sources are no longer in the working tree: the Java/Maven modules (`agent/`, `bootstrap/`, `framework/`, `infra-ai/`, `mcp-server/`, `rag/`, `system/`), `resources/`, the upstream `frontend/`, `scripts/`, `assets/`, the Maven wrapper and build files, IDE settings, and `README.upstream.md`. They remain available in this repository's git history and in the upstream repository at the commit recorded above. The Python backend (`backend/`) and the web frontend (`web/`) were written independently and do not copy upstream code. This attribution and the root [LICENSE](LICENSE) are kept.

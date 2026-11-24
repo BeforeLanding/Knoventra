@@ -127,6 +127,6 @@ uv run python eval/run_eval.py --split dev --mode agent --case-id ops-01 --dry-r
 
 ## 上游基线与来源
 
-- 源项目：[nageoffer/ragent](https://github.com/nageoffer/ragent)，基线提交 [`c3b6157`](https://github.com/nageoffer/ragent/commit/c3b6157730ac1f66a312bcd286c47d3ee6aaac42)，许可证 [Apache-2.0](LICENSE)。原项目介绍保存在 [README.upstream.md](README.upstream.md)。
-- 仓库保留了上游的 Java 源码与提交历史（Maven 模块、`frontend/`、数据库脚本等），仅作设计参考；**Python 后端（`backend/`）与前端（`web/`）为独立编写，未复制上游代码**。
+- 源项目：[nageoffer/ragent](https://github.com/nageoffer/ragent)，基线提交 [`c3b6157`](https://github.com/nageoffer/ragent/commit/c3b6157730ac1f66a312bcd286c47d3ee6aaac42)，许可证 [Apache-2.0](LICENSE)。
+- 上游的 Java 源码、`frontend/`、数据库脚本和原项目介绍曾作为设计参考保留在仓库中，2026-11-24 已从当前目录树移除，仍可在提交历史中查到（基线导入提交之后、移除提交之前的任一版本）。**Python 后端（`backend/`）与前端（`web/`）为独立编写，未复制上游代码**。
 - 详细来源说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
