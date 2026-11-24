@@ -1,692 +1,227 @@
-# Knoventra backend (MVP)
+# Knoventra 后端
 
-Implemented: permission-aware hybrid retrieval, transactional revision publishing, LangGraph agent, citation validation, SSE chat, confirmed/idempotent escalation, evidence preview, and exact fault-code / part-number checks. The React frontend lives in `../web`. Real BGE-M3, LLM and local `bge-reranker-base` / `bge-reranker-v2-m3` retrieval measurements are recorded in [the evaluation report](../docs/evaluation-report.md); automated tests use an offline hash encoder and a scripted model. The v2-m3 comparison did not improve target ranks and added two gate refusals at the uncalibrated 0.60 threshold; Rerank stays off by default.
+Python 3.12 / FastAPI / LangGraph / PostgreSQL + pgvector；可选 Elasticsearch 关键词通道、Redis 工作记忆和独立的 MCP 工具服务。React 前端在 [`../web`](../web/README.md)，整体介绍见[根目录 README](../README.md)。
 
-Model responses with `finish_reason: length` end with `MODEL_OUTPUT_TRUNCATED`; responses containing
-`invalid_tool_calls` end with `MODEL_TOOL_CALL_INVALID`. Neither executes tool calls from that response,
-even if some sibling calls parsed successfully. The final answer is a clear failure message with no
-source cards, and the error persists in chat history. Evidence/search traces already obtained remain
-available to evaluation diagnostics; `model_finish_reason` records the last model response's reason.
-There is no automatic retry. Previously confirmed and committed escalations remain valid if the later
-model acknowledgement fails; check the escalation list before making another request. A new question
-starts a new turn. Streamed text may appear before the provider reports the finish reason; the final
-`done` answer replaces that preview. Detection depends on the adapter supplying the metadata or parsed
-invalid-call information; it does not detect unmarked truncation or prove semantic answer completeness.
+自动化测试使用离线 Hash 编码器和脚本化模型；真实 BGE-M3、LLM 与本地精排的测量记录在[评测报告](../docs/evaluation-report.md)。演示账号与虚构资料见 `../data/demo/manifest.json`（密码均为虚构的演示值）。
 
-Parsed JSON tool calls are also validated against the advertised schemas before **any** call in the
-response executes. Arguments use strict types and reject extra fields: search requires a nonblank string
-of at most 4,000 characters, escalation requires a nonblank summary of at most 2,000 characters, and
-status lookup accepts no arguments. Unknown tool names, blank/missing/duplicate call IDs and multiple
-escalations in one response fail the entire batch with `MODEL_TOOL_CALL_INVALID`. Server identity cannot
-be supplied as a tool argument. Whitespace is checked without rewriting accepted text. A second check
-in the tools node also guards retries of older checkpoints. Existing pending confirmation checkpoints
-retain their original operation identity; their summaries are not retroactively revalidated.
+## 模块职责总览
 
-Retrieval replies now require at least one registered citation. When the most recent tool-call batch
-in this user turn contains only `search_knowledge`, an otherwise successful final answer without a valid
-`[S1]`-style reference ends with `MODEL_CITATION_MISSING`, a fixed error answer and no source cards.
-Previously captured evidence remains in diagnostics. If that retrieval has no evidence and a
-`NO_ACCESS`/`INSUFFICIENT_EVIDENCE` code, its final answer is a fixed refusal, even if the model ignores
-the refusal instruction. Workflow replies (status/escalation, including mixed batches) and conversation
-without a search batch are exempt. Explicit model refusals with retrieved evidence retain the existing
-refusal/review flow. This is a citation-presence check, not claim-level support verification; a valid
-reference does not prove the answer is correct. Streamed previews may precede the final checked answer.
+`src/knoventra/` 下的包：
+
+| 包 / 模块 | 职责 |
+|---|---|
+| `main.py`、`api/` | FastAPI 应用与路由：`routes.py`（登录、`/me`、管理员资料、`/debug/search`）、`chat.py`（聊天、确认、续跑、补存、会话与来源预览、转交记录）、`help.py`（求助单）、`memory.py`（记忆）；`run_lock.py` 为会话级互斥锁，`deps.py` 为依赖注入 |
+| `auth/` | 登录 JWT；MCP 工具服务使用的受众隔离短期 token（`tool_token_secret`） |
+| `access/` | 区域 / 部门 / 角色的可读范围计算 |
+| `db/` | ORM 模型、会话、演示种子（`python -m knoventra.db.seed`） |
+| `ingestion/` | 上传解析、分块、编码校验、修订草稿与发布；现场日志导入（`journal.py`）、去重与案例生成（`cases.py`、`case_docs.py`） |
+| `retrieval/` | 四通道召回、加权 RRF、编号规范化与门槛（`identifiers.py`）、可选精排 |
+| `search_es/` | ES 索引、查询、纠错表 / 同义词、outbox 同步与对账（`python -m knoventra.search_es.sync`） |
+| `agent/` | LangGraph 图（`graph.py`）、`query_plan.py`、明确转交意图（`escalation_intent.py`）、回答字形转换（`language.py`）、检查点辅助 |
+| `tools/` | 5 个工具的共享服务（`service.py`）与进程内 / MCP 两种调用后端（`backend.py`） |
+| `mcp_server/` | 独立 MCP 工具服务（`python -m knoventra.mcp_server`） |
+| `help/` | 求助单槽位、状态机与服务（`service.py`）、专家推荐、结案案例草稿（`sediment.py`） |
+| `memory/` | Redis 工作记忆、槽位草稿、滚动摘要与上下文组装、情景记忆、用户画像 |
+| `skills.py` | 技能矩阵查询 |
+
+数据库迁移链为 `alembic/versions/` 下的 `0001`–`0016`，主要节点：`0004` 文档 / 修订约束，`0005` 回答送达追踪，`0006` 转交时间，`0007` 技能矩阵，`0008` 日志案例，`0009` ES outbox，`0010` 分块编号列，`0011` 求助单，`0014` 情景记忆与画像，`0015` 确认载荷，`0016` 记忆列非空约束。升级已有实例时先执行 `uv run alembic upgrade head`；迁移不会替你合并冲突的历史重复数据，也不会伪造历史时间或补全缺失的历史元数据。
+
+## 环境与配置项速查
+
+所有配置项读取环境变量或 `backend/.env`，前缀为 `KNV_`；定义在 `src/knoventra/config.py`，示例见 `.env.example`。修改模型相关配置后需重启进程（图与编码器在进程内缓存）。
+
+**基础**
+
+| 变量 | 默认 | 说明 |
+|---|---|---|
+| `KNV_DATABASE_URL` | `postgresql+psycopg://knoventra:knoventra@localhost:55432/knoventra` | 应用库 |
+| `KNV_JWT_SECRET`、`KNV_JWT_TTL_MINUTES` | 开发占位值、480 | 登录 token；生产必须更换 |
+| `KNV_ENV` | `dev` | 环境名 |
+
+**编码器与精排**
+
+| 变量 | 默认 | 说明 |
+|---|---|---|
+| `KNV_ENCODER` | `hash` | 仅接受 `hash`（离线、确定性）或 `bge-m3`（需 `uv sync --extra ml`）；区分大小写 |
+| `KNV_DENSE_DIM`、`KNV_SPARSE_DIM` | 1024、250002 | 必须为正，且与数据库物理列和编码器输出一致；本检查不迁移数据库 |
+| `KNV_RERANK` | `off` | 仅接受 `off` 或 `bge`；`bge` 要求 `KNV_RERANK_MODEL` 非空 |
+| `KNV_RERANK_MODEL`、`KNV_RERANK_CANDIDATES`、`KNV_RERANK_THRESHOLD` | `BAAI/bge-reranker-v2-m3`、10、0.60 | 精排阈值独立于 `KNV_GATE_THRESHOLD`，不是已标定的生产阈值 |
+| `KNV_GATE_THRESHOLD`、`KNV_GATE_SPARSE_THRESHOLD` | 0.60、0.03 | 证据闸门（稠密余弦 / 稀疏内积），在 dev 集上调得 |
+| `KNV_RECALL_TOP_K`、`KNV_FINAL_TOP_K`、`KNV_RRF_K` | 20、5、60 | 召回与融合 |
+| `KNV_RRF_WEIGHTING` | `weighted` | `weighted` 或 `equal`（对照）；权重为 `KNV_RRF_WEIGHTS_IDENTIFIER`、`KNV_RRF_WEIGHTS_NATURAL`（JSON） |
+
+**Elasticsearch**：`KNV_ES_URL`（默认空 = 关闭，仅用 PG 通道）、`KNV_ES_INDEX`（`knv_chunks`）、`KNV_ES_TIMEOUT_S`（2.0）。本地 `deploy/compose.yaml` 把 ES 映射到 `localhost:59200`。
+
+**Redis**：`KNV_REDIS_URL`（默认空 = 关闭）、`KNV_REDIS_TIMEOUT_S`（0.5）、`KNV_WORKING_MEMORY_TTL_S`（24 小时，每次访问续期）。本地映射到 `localhost:56379`。上下文预算：`KNV_CONTEXT_BUDGET_TOKENS`（6000）、`KNV_CONTEXT_KEEP_TURNS`（3，不小于 2）、`KNV_SUMMARY_TIMEOUT_S`（20）、`KNV_SUMMARY_MAX_CHARS`（1500）。
+
+**情景记忆**：`KNV_EPISODIC_MEMORY`（`true`）、`KNV_EPISODE_RECALL_K`（3）、`KNV_EPISODE_MIN_SCORE`（0.5，稠密余弦下限，未标定）、`KNV_EPISODE_CHARS`（600）。
+
+**查询规划**：`KNV_QUERY_PLAN`（`llm` 或 `off`）、`KNV_QUERY_PLAN_TIMEOUT_S`（8）、`KNV_QUERY_PLAN_MIN_CONFIDENCE`（0.6）、`KNV_INTENT_KBS`（意图到知识库的映射，JSON）、`KNV_MAX_TOOL_CALLS_PER_TURN`（4）。
+
+**MCP 与双密钥**：`KNV_MCP_URL`（默认空 = 工具在 API 进程内执行）、`KNV_MCP_HOST`（`127.0.0.1`）、`KNV_MCP_PORT`（58765）、`KNV_MCP_ALLOWED_HOSTS`（Host 头白名单，JSON 列表；容器内如 `["mcp:*"]`）、`KNV_MCP_TIMEOUT_S`（30）、`KNV_TOOL_TOKEN_SECRET`、`KNV_TOOL_TOKEN_TTL_S`（300）。**登录 JWT 与工具 token 使用两把不同的密钥**：`KNV_TOOL_TOKEN_SECRET` 必须与 `KNV_JWT_SECRET` 不同，工具 token 带专用受众，登录 token 无法用于 MCP，反之亦然。
+
+**上传与输入上限**：`KNV_UPLOAD_MAX_BYTES`（20 MiB，正整数）、`KNV_CHAT_MAX_CHARS`（4000 个 Unicode 码点，经 `GET /me` 的 `chat_max_chars` 告知前端）、`KNV_CONFIRM_TTL_MINUTES`（30）。
+
+### LLM 与 thinking 模式
+
+`KNV_LLM_BASE_URL`、`KNV_LLM_API_KEY`、`KNV_LLM_MODEL`（OpenAI 兼容接口）、`KNV_LLM_TIMEOUT_S`（60）。`KNV_LLM_THINKING` 只接受 `provider-default`（默认）或 `disabled`：
+
+- `provider-default` 不发送任何供应商的思考扩展——它**不等于**关闭思考。
+- `disabled` 向共享的模型构造器添加 `extra_body={"thinking": {"type": "disabled"}}`，只应用于接受该扩展的服务，如 DeepSeek；其他兼容服务保持默认。
+- DeepSeek 默认开启思考，并要求后续工具调用回传推理历史（[官方说明](https://api-docs.deepseek.com/guides/thinking_mode/)）。当前使用的通用 `ChatOpenAI` 适配器不保留 `reasoning_content`，因此 DeepSeek 的工具流程必须设置 `KNV_LLM_THINKING=disabled`；在实现并测试专用适配器之前不提供开启选项。
+- 该开关不过滤或改写响应，也不会在被拒绝后自动换模式重试。Web 路径保留一次供应商重试；评测路径零重试并显式限制输出。评测进程读取同一设置并写入预检与最终报告。
+
+### 可选依赖
+
+可选 `ml` 依赖组（`torch`、`FlagEmbedding`）仅在加载 BGE-M3 / 精排时需要；CI 与离线测试用 `uv sync --locked --group dev`，不下载模型。
+
+## 本地启动与数据导入
 
 ```bash
-docker compose -f deploy/compose.yaml up -d  # run from repository root
-cd backend && uv sync
+docker compose -f deploy/compose.yaml up -d --wait   # 在仓库根目录：PostgreSQL、ES、Redis
+cd backend
+uv sync --extra ml                                    # 仅离线测试可用 uv sync
 uv run alembic upgrade head
-uv run python -m knoventra.db.seed     # KNV_ENCODER=bge-m3 needs `uv sync --extra ml`
+KNV_ENCODER=bge-m3 uv run python -m knoventra.db.seed # 默认种子：虚构资料、PDF 与现场 SOP；可重复执行
+cp .env.example .env                                  # 填入 KNV_LLM_*
 uv run uvicorn knoventra.main:app
-uv run pytest                          # uses a throwaway `knoventra_test` database and an offline hash encoder
 ```
 
-Demo accounts and fictional documents: `data/demo/manifest.json` (all demo passwords are fictional).
+**现场日志导入**（模板按表头定位列，日志行与技能行可混排；入库前脱敏并去重）：
 
-## Document parse failures
+```bash
+uv run python -m knoventra.ingestion.journal ../data/demo/journals/*.xlsx --registry ../data/demo/journals/machines.json --publish-kb field-cases
+```
 
-Recognized malformed sources raise `DocumentParseError` and upload returns HTTP 422 with
-`detail.code: DOCUMENT_PARSE_INVALID`: unreadable/empty PDFs, password-protected PDFs,
-non-UTF-8 Markdown, unsupported direct-ingestion extensions, and NUL in extracted text.
-PDF input is opened explicitly as PDF. Valid `.MD` / `.PDF` suffixes remain case-insensitive.
-Responses use fixed explanations without exposing local source paths. These rejections
-happen before encoding and document/revision writes; the upload route may already have
-initialized the encoder factory before parsing. The existing empty-body validation remains.
+`--registry` 提供序列号到机型的资产表；`--publish-kb` 把每个去重后的案例直接发布到指定知识库；`--skip-if-imported` 在内容未变时跳过（容器演示启动时使用）。
 
-PDFs are read into a byte stream before native parsing, avoiding retained path handles
-on malformed-file opens that can prevent temporary-directory cleanup on Windows. This
-adds an in-memory source copy; HTTP uploads retain the existing byte limit, while direct
-ingestion has no new size cap. This does not bound decompressed PDF memory, page count or
-parsing time, add OCR, or prove all damaged PDFs are detected. Read errors and unclassified
-parser exceptions are not wrapped as `DocumentParseError`; existing API error handling
-otherwise stays unchanged. Successful extraction still does not establish source quality.
+**ES 同步**（需设置 `KNV_ES_URL`）：
 
-## Admin catalog reads
+```bash
+uv run python -m knoventra.search_es.sync rebuild     # 首次或重建索引
+uv run python -m knoventra.search_es.sync drain       # 消费 outbox
+uv run python -m knoventra.search_es.sync reconcile   # 与 PG 对账补齐
+```
 
-`GET /api/v1/admin/documents` keeps its existing response shape and administrator-only
-access. Catalog assembly uses two reads regardless of document count: ordered KB names
-and a single left join of documents with revision summaries. Documents without revisions
-retain an empty list, empty KBs remain selectable, and revisions stay in ascending version
-order. The projection excludes chunk text/vectors, revision hashes and KB descriptions.
-Authentication may issue its own user lookup outside these two catalog reads.
+**MCP 工具服务**：`uv run python -m knoventra.mcp_server`，监听 `KNV_MCP_HOST:KNV_MCP_PORT`，在 API 的 `.env` 中设置 `KNV_MCP_URL=http://127.0.0.1:58765/mcp` 和 `KNV_TOOL_TOKEN_SECRET` 后，5 个工具（`search_knowledge`、`lookup_skills`、`get_help_request`、`prepare_help_request`、`submit_help_request`）由该服务执行。
 
-This removes per-document database round trips, but the endpoint still returns the full
-catalog and its payload/memory use grows with catalog size. It is not pagination, a frozen
-cross-query snapshot or a measured production latency improvement. No schema or client
-upgrade is required for this change.
+**界面检查**（不需要 LLM 密钥）：`KNV_ENCODER=hash KNV_GATE_THRESHOLD=0.6 uv run python dev/mock_server.py` 运行真实应用加脚本化假模型；回答是固定的，只演示界面与流程，不代表回答质量。
 
-## Model selection and loading
+## 关键工程契约
 
-`KNV_ENCODER` accepts exactly `hash` or `bge-m3`; `KNV_RERANK` accepts exactly `off`
-or `bge` (case-sensitive). Unknown modes fail settings validation instead of silently
-selecting the offline encoder or disabling reranking. Active `bge` reranking requires
-a nonblank model name. Dense/sparse dimensions must be positive and must still match
-the physical schema and encoder output; these checks do not migrate the database.
+以下是各子系统保证的行为与明确不保证的边界。
 
-Successful encoder loads are cached with their mode/dimensions. Programmatically
-changing these settings after loading raises `ModelConfigurationError` rather than
-returning an instance from a different configuration. Apply model configuration changes
-by restarting the process; existing settings and compiled graphs do not hot reload.
-Failed constructors propagate and are not cached or replaced by another model.
+### 模型输出与工具调用校验
 
-First construction is serialized per process for the encoder and reranker, preventing
-concurrent cold requests from constructing the same cached model twice. Inference is
-not serialized by these locks, and separate worker processes still load separate models.
-Explicit `hash` remains available for offline use; `off` does not load a reranker.
+- `finish_reason: length` 的响应以 `MODEL_OUTPUT_TRUNCATED` 结束，含 `invalid_tool_calls` 的响应以 `MODEL_TOOL_CALL_INVALID` 结束；这两种响应里的工具调用都**不执行**（包括同批已解析成功的调用）。最终答案是明确的失败消息，没有来源卡，错误保存在历史里；已取得的检索痕迹保留给评测诊断，`model_finish_reason` 记录最后一次响应的原因。没有自动重试；已确认并提交的转交在之后的模型确认失败时仍有效。
+- 能解析的工具调用在**任何一个**执行前，先按公布的 schema 严格校验（类型严格、禁止多余字段）：检索要求非空字符串且不超过 4000 字符，转交摘要非空且不超过 2000 字符，状态查询不接受参数；`lookup_skills` 的 `skill` 非空且不超过 200 字符；`request_help` 有 4 个可选槽位（机台不超过 64、告警不超过 200、现象与已尝试步骤各不超过 500 字符），纯空白字符串在校验前归一为 `None`（视为“未提供”）。未知工具名、空白 / 缺失 / 重复的调用 ID、同一响应里多个转交都会使整批失败。身份不能作为工具参数传入。工具节点再校验一次以防重放旧检查点；已有待确认检查点保留原始操作身份，不追溯重验摘要。
+- 检索类回答必须至少含一个已登记的引用：当本轮最近一批工具调用只含 `search_knowledge` 时，没有有效 `[S1]` 式引用的成功回答以 `MODEL_CITATION_MISSING` 结束；该次检索无证据且返回 `NO_ACCESS` / `INSUFFICIENT_EVIDENCE` 时，最终回答为固定拒答，即使模型无视了拒答指令。流式预览可能早于最终校验后的答案出现，`done` 事件里的答案为准。这是引用存在性检查，不是逐句支持度核验。
 
-## Query encoding batches
+### 引用与拒答
 
-Each authorized search makes one checked encoding call for its distinct required texts.
-Dense recall uses the identifier-normalized original script. Sparse recall uses its
-OpenCC-simplified form when enabled: identical text reuses the same output pair, while
-different scripts form a two-item batch in original/simplified order. Dense-only searches
-skip OpenCC and the unused second input. Access checks still precede conversion/encoding,
-and the entire response batch is validated before any candidate/session SQL.
+- 证据注册表记录每次检索的来源，`cite_check` 剥离未登记的引用标记；简体 `【无依据】` 与繁体 `【無依據】` 的开头拒答声明都被识别：去掉标记与引用、输出 `INSUFFICIENT_EVIDENCE`、没有来源卡。
+- `unambiguous-question-opencc-v1`：回答正文按**当前问题**的字形转换——OpenCC 信号能唯一判定为繁体 / 简体时，才转为相应字形；共用字符、非中文或混合输入保持模型原文。引用别名、故障码、行内 / 围栏代码和 HTTP URL 保持不变；证据、来源卡文本和已存文档保持原字形。每轮只看本轮问题，不从历史推断偏好。这是字形转换，不是翻译。
 
-New evaluation reports record `config.query_encoding_policy: distinct-batch-v1`.
-There is no cross-request cache, query-text retention or change to ingestion, stored
-vectors, thresholds or source text. Offline vectors match the previous separate-call
-policy; real model batching may have numerical differences and has not been measured
-in this iteration. Historical measurements do not establish the new policy's quality
-or latency. This removes duplicate input work without claiming a measured speedup.
+### 精确编码与机型过滤
 
-## Query vector numerical policy
+- `E17-42`、`SEAL-9X` 这类含数字的显式连字符编号，会按大小写、全角、常见 Unicode 横线规范化后用于查询编码和匹配，原文不改写。召回与 RRF 之后、Top-K 与可选精排之前，候选必须在正文或继承的章节路径中含至少一个所需编号（文档标题不算）；最终证据须**共同覆盖全部**所需编号，且每个都过闸门，否则返回 `INSUFFICIENT_EVIDENCE`（内部原因 `IDENTIFIER_MISMATCH` 或 `LOW_SCORE`）且无证据。
+- 带标签的分写形式（如 `E17 设备报代码 42`、`p03故障码11`）会合并为显式编号：型号为 1–8 个 ASCII 字母加 1–4 位数字，标签后恰有两位数字；裸数字、远距离引用、缺型号、小数 / 范围 / 多选和带单位的形式不合并。报告记录策略 `explicit-and-split-v2`。这是有边界的语法，不是通用的自然语言编码解析；资料中出现某编号不证明它支持所问的内容；多编号问题偏保守（一次检索须覆盖本轮用户消息里的全部编号）。
+- 机型名（如 `WX-38`）不是必须字面出现的编号：不会把只写相关机型族章节的片段过滤掉（见 DECISIONS 第 78 条）；会话里说明机型后，召回时去掉其他机型的分节。
+- 智能体把本轮用户原话与模型生成的检索词一并传给检索，两者的编号集合取并集，重试时同样；`/debug/search` 暴露 `identifiers.required`、`identifiers.missing` 和候选阶段（`fused`、`identifier_match`、`selected`）。
 
-New searches serialize query vectors at float32 round-trip precision with pgvector's adapter instead
-of rounding dense coordinates to six decimal places. Sparse query weights are likewise canonicalized
-to float32 and zero entries removed, without rewriting encoder output objects. A dense query that is
-all zero after conversion does not run the undefined cosine channel; a nonempty usable sparse channel
-can still recall authorized evidence. If neither channel has signal, no candidate/session SQL is issued.
-The permission-scope check still precedes encoding.
+### 会话锁、续跑与补存
 
-NULL or nonfinite candidate distances are excluded from their channel before RRF. Another valid channel can
-still contribute the same chunk. `/debug/search` and retrieval reports expose authorized rejected IDs
-under `dense_unscorable` / `sparse_unscorable` when present; rejected text is not passed as evidence.
-This can reduce the returned candidate count and does not issue extra recall requests to refill it.
-New reports mark `config.query_vector_policy: float32-finite-v1`. No thresholds, stored vectors or
-historical results are rewritten; past model measurements are not proof of the new policy's quality.
+- `POST /chat`、`/chat/confirm`、`/chat/retry`、`/chat/recover` 对同一已属主会话获取同一个非阻塞 PostgreSQL 会话级咨询锁，冲突返回 409 `CONVERSATION_BUSY`，发生在 SSE 与消息写入之前；他人会话仍是 404。锁占用一条专用连接直到流结束、断连或取消，清理时先关闭迭代器再解锁；获取 / 释放失败会丢弃该连接。需要直连 PostgreSQL 或会话级连接池（事务级连接池代理无法保持咨询锁），每个活动的 SSE 响应多占一条连接。浏览器断连不保证立刻取消已在线程里执行的模型调用。
+- **确认身份**：确认请求在会话锁下与检查点上的实际 interrupt 比对，之后才保存决定；旧确认不能恢复同一线程上的新 interrupt，没有对应 interrupt 的待确认行不能被批准，均返回 409 `CONFIRMATION_NOT_ACTIVE`。已保存的决定优先于不同的重试请求体。操作 ID 含线程 ID、用户消息 ID 和工具调用 ID，并在中断前存入待执行状态，重启后保持一致。
+- **续跑 `/chat/retry`**：`GET /conversations/{id}/state` 对“有待执行节点且无 interrupt”的检查点返回 `retry_checkpoint_id`（只读，不跑模型）。`/chat/retry` 接收 `{conversation_id, checkpoint_id}`，校验归属和当前检查点后以 `None` 输入继续图：不新增用户消息、不重置工具状态、不产生新批准。已完成或处于 interrupt 返回 `RUN_NOT_RETRYABLE`，检查点已变化返回 `CHECKPOINT_CHANGED`；对未完成且无 interrupt 的运行发新问题返回 `RUN_INCOMPLETE`。唯一的写工具使用既有操作 ID 与唯一约束，所以“提交成功后节点失败”的重试不会产生第二条记录。用户显式续跑可能再次产生模型费用。
+- **补存 `/chat/recover`**：新请求会把服务端生成的用户消息 ID 与用户消息一起保存（迁移 `0005`）；若检查点已完成而该轮最终消息未保存，状态返回 `recover_checkpoint_id`，新问题返回 `ANSWER_NOT_SAVED`。`/chat/recover` 在同一会话锁下核对检查点身份，**不调用图、模型或工具**，直接写入已捕获的最终回答、公开来源卡和错误 / 拒答码，由 `(conversation_id, completion_turn_id)` 唯一约束防止重复；保存失败发出 `ANSWER_SAVE_FAILED`，检查点仍可再次补存。检查点已变化返回 `CHECKPOINT_CHANGED`，已送达、未跟踪的历史轮次或未完成的图返回 `RUN_NOT_RECOVERABLE`。只修复新跟踪的、完整的检查点输出，不重建历史证据。
+- 新增有副作用的工具之前，必须自带重试与幂等保证。
 
-## Encoder output validation
+### 两阶段确认与幂等提交
 
-Both ingestion batches and query encoding use `encode_checked` before document insertion/locking or
-candidate SQL. It checks result count and dense/sparse pair shape, configured dense dimension, finite
-numeric values within float32 magnitude, and sparse integer indices in `[0, sparse_dim)` with finite
-nonnegative weights. Boolean/string vector values and boolean/non-integer indices are rejected. Empty
-sparse maps and zero dense vectors retain existing encoder compatibility; no normalization or fallback
-encoder is applied. Validation checks the response contract, not semantic quality or every DB constraint.
+- 阶段一：`interrupt` 把确认载荷（槽位、推荐理由等）存入检查点与确认单；用户批准的只是当前正在等待的那一个操作。
+- 阶段二：执行端（进程内或 MCP）只接受本人已批准的 `confirmation_id`，用每次运行签发的 token 重新计算权限，按操作 ID 与数据库唯一约束幂等建单；重复提交、刷新或进程重启后恢复都只产生一条记录。取消不产生记录。
+- 明确的短中文转交请求（如“这个问题我想转人工”）走确定性路径（`unambiguous-chinese-request-v1`），不先调用模型；摘要保留当前请求与此前的用户陈述，且须在 2000 字符内，超出则回到模型摘要路径；否定、条件、引用、咨询类或含糊的请求仍走模型。评测指标 `escalation_metric_policy=observed-interrupt-and-records-v2` 以检查点上实际观察到的 interrupt 为准：取消用例没有出现确认卡不算通过。
 
-BGE's adapter also checks dense and lexical result counts independently before conversion, so missing
-or extra members cannot be silently discarded by `zip`. An empty batch avoids calling the model.
-Malformed adapter output raises `EncoderOutputError`. Ingestion validates each entire batch before
-creating a document, revision or chunk; upload reports this service fault as 503 / `ENCODER_OUTPUT_INVALID`
-instead of blaming document validation. Query faults stop before candidate SQL and surface through the
-existing operational-error/recovery path rather than a no-evidence refusal. Existing vectors and reports
-are not rewritten; dimension settings still need to match the physical database schema.
+### 文档并发与修订完整性
 
-## Document metadata preflight
+- 迁移 `0004`：文档身份 `(kb_id, title)` 唯一，并有部分唯一索引保证每个文档至多一个 `PUBLISHED` 修订。已有冲突的历史重复会使迁移失败，不会自动合并。
+- 入库先解析、编码，再加锁；拒绝没有可提取文本的文档和结果数与分块数不符的编码输出。同一知识库同名文档的并发上传共享一个文档，修订号在文档行锁下分配；新修订须与原文档语言一致。
+- 发布锁定同一文档，等待后刷新修订状态，拒绝已退役或空的草稿；重复发布当前生效修订不改时间戳；发布较旧的已退役修订被拒绝；不同的有效草稿按取得锁的顺序发布（不强制版本号递增）。所有写入在调用方事务内，失败时旧的已提交修订保持生效。`tests/test_revision_integrity.py` 用独立提交的会话和真实 PG 锁等待验证这些行为。
 
-Upload titles must contain non-whitespace text, contain no NUL and fit the existing 255-character
-database column. Accepted title text is preserved exactly: there is no trimming, case conversion or
-Unicode normalization that could merge document identities. Supported declared languages are
-`zh-Hans`, `zh-Hant` and `en`; an existing document's next revision must use its original language.
-The upload route checks metadata before copying the file or loading the encoder, and `add_revision`
-repeats the shared check before parsing/encoding for non-HTTP callers. A read-only preflight does not
-autoflush pending work. The original document lock and language check after encoding remain necessary
-for competing first uploads that both initially saw no document.
+### 输入、上传与解析边界
 
-Metadata failures return 422 with `detail.code: INVALID_DOCUMENT_METADATA`; missing required form
-fields still use FastAPI's validation response. `GET /admin/documents` advertises the title
-limit and ordered language choices through `upload_rules`. This validates declared metadata, not the document's actual language
-or factual content. Existing records are not rewritten, and no database migration is required.
+- **文档解析失败**：空 / 无法读取 / 加密的 PDF、非 UTF-8 Markdown、不支持的扩展名、提取文本含 NUL，均抛出 `DocumentParseError`，上传返回 422 `DOCUMENT_PARSE_INVALID`，说明为固定文案、不暴露本地路径，发生在编码与任何文档 / 修订写入之前。PDF 先读入字节流再解析（避免 Windows 上畸形文件遗留句柄）；不限制解压后内存、页数或解析时间，不做 OCR。
+- **元数据预检**：标题须含非空白字符、无 NUL、不超过 255 个字符，原样保存（不 trim、不转大小写、不做 Unicode 归一）；语言限 `zh-Hans`、`zh-Hant`、`en`，已有文档的新修订必须沿用原语言。失败返回 422 `INVALID_DOCUMENT_METADATA`；`GET /admin/documents` 通过 `upload_rules` 公布标题上限与语言。这只校验声明的元数据，不校验文档真实语言。
+- **上传大小**：按 64 KiB 分块复制，至多多读一个字节以判断超限；恰好等于上限可通过，超限返回 413 `UPLOAD_TOO_LARGE`（含 `max_bytes`），空文件 422，均发生在加载编码器与创建修订之前。这是单文件上限，不是总请求体、解压后文本、页数或 CPU 时间的上限。
+- **聊天问题上限**：新问题须为非空白、无 NUL、不超过 `KNV_CHAT_MAX_CHARS` 个码点，不合法返回 422，发生在创建会话、写消息或推进检查点之前；原样保留（含空白）。上限只约束单个新问题，不是历史、Token 或费用预算；续跑、确认与补存不受影响。
+- **文档分块**：分块文本不超过 700 个字符（Python 字符数，不是 Token）；句子边界优先，没有标点的超长段落也会被强制切分，短 ASCII / 全角词和连字符编号在硬边界处整体移入下一块（单个词超过 700 时才会被切开）。页码和章节元数据保留在每块上。只作用于新入库的修订，既有分块与向量不迁移。
+- **管理员目录**：`GET /api/v1/admin/documents` 只做两次读取（有序的 KB 名称和文档左连修订摘要，不随文档数增加）；无修订的文档保留空列表，空 KB 仍可选，修订按版本升序，不含分块文本 / 向量 / 修订哈希。它返回完整目录，不是分页；`upload_max_bytes` 与 `upload_rules` 一并返回。
+- **会话分页**：`GET /api/v1/conversations/page` 返回 `{items, next_cursor}`，按创建时间与 ID 倒序，`limit` 默认 20（1–100），`before` 为上一页最后的游标，他人或不存在的游标返回 404；`q` 为标题的大小写不敏感字面包含（去首尾空白，最长 128，禁 NUL，`%`、`_` 和转义符 `/` 视为字面字符），游标须属于当前筛选结果。只匹配标题，不查消息内容，不涉及模型。旧的 `GET /conversations` 数组接口保留。
+- **转交记录**：`GET /api/v1/escalations?limit=20&before=<id>` 仅返回本人记录，按 `created_at DESC NULLS LAST, id DESC` 的键集分页；迁移 `0006` 为历史行保留“时间未知”，新行用 `clock_timestamp()`。
 
-## Chat question limit
+### 检索输入与向量数值策略
 
-`KNV_CHAT_MAX_CHARS` is a positive integer (default 4,000), exposed to authenticated clients through
-`GET /me` as `chat_max_chars`. A new `POST /chat` question must be a nonblank string without NUL and
-fit the configured number of Unicode code points. Invalid inputs fail request validation with 422
-before the route creates a conversation, inserts messages or advances a checkpoint. Valid API input is
-preserved, including its whitespace; the count includes all characters actually submitted. Restart the
-backend after changing the limit. FastAPI dependency initialization order is unchanged by this check.
+- **编码器输出校验**：入库批次与查询编码都经 `encode_checked`：核对结果数、稠密 / 稀疏成对形状、稠密维度、有限且在 float32 范围内的数值、稀疏整数索引在 `[0, sparse_dim)` 且权重有限非负；拒绝布尔 / 字符串向量值。BGE 适配器独立核对稠密与词法结果数，防止 `zip` 静默丢弃。畸形输出抛 `EncoderOutputError`：入库在创建任何文档 / 修订 / 分块之前整批校验，上传报 503 `ENCODER_OUTPUT_INVALID`；查询在候选 SQL 之前终止，走运行错误路径而不是“无证据拒答”。
+- **查询编码批次**（`distinct-batch-v1`）：每次授权检索对去重后的所需文本只做一次带校验的编码调用——稠密用编号规范化后的原字形，稀疏在启用 OpenCC 时用简体化文本；两者相同则复用，不同则按“原文、简体”两项成批；只有稠密时跳过 OpenCC。权限检查始终先于转换与编码，没有跨请求缓存。
+- **查询向量数值**（`float32-finite-v1`）：向量以 float32 往返精度序列化；稀疏权重规范到 float32 并去除零项；稠密向量转换后全零时不跑余弦通道，非空的稀疏通道仍可召回；两条通道都无信号则不发候选 SQL。NULL 或非有限的距离在 RRF 之前被排除，`/debug/search` 与检索报告在 `dense_unscorable` / `sparse_unscorable` 中给出被拒绝的已授权 ID；不为补足数量而追加召回。
+- **模型加载**：首次构造按进程对编码器和精排器串行化，避免并发冷请求重复构造；推理不串行；进程间仍各自加载。加载后程序化改变配置会抛 `ModelConfigurationError`，需重启；构造失败不缓存、不换用别的模型。
 
-The limit applies to a single new user question, not total history, model input/output tokens, retries,
-confirmation or save-only recovery; it is not a spending/context budget. Existing history remains intact.
-The browser uses the advertised limit, counts its trimmed outgoing question and never silently truncates
-it. After a server validation rejection the question is restored for editing unless a newer draft exists;
-there is no automatic resubmission. Older identity responses without the field use a 4,000-character UI
-fallback, while the backend always remains authoritative.
+## 测试与验收命令
 
-## Conversation list pages
+在 `backend/` 下执行。需要 PostgreSQL（本地 `deploy/compose.yaml`）；ES / Redis 相关测试在 `localhost:59200` / `localhost:56379` 不可达时跳过，`KNV_REQUIRE_ES=1`、`KNV_REQUIRE_REDIS=1` 使其改为失败（CI 如此运行）。
 
-`GET /api/v1/conversations/page` returns `{items, next_cursor}` for the authenticated user's sessions,
-ordered by creation time descending and ID descending. `limit` defaults to 20 and accepts 1–100;
-pass the last returned cursor as `before` for the next page. Missing or another user's cursor returns
-404 with the same visibility rule. Items contain ID, title and creation time; listing does not load a
-checkpoint, messages, encoder or model. Refresh from the first page to see newer sessions. Cursor pages
-are a live ordered listing, not a frozen database snapshot; they avoid offset shifts when newer rows
-are inserted. The legacy `GET /conversations` array response remains available for compatibility.
-The web sidebar uses the new endpoint, so frontend/backend should be updated together. No schema migration.
+| 命令 | 作用 |
+|---|---|
+| `uv run pytest` | 全部后端测试，使用每次会话重建的独立 `knoventra_test` 库、Hash 编码器和脚本模型，不需要模型和 LLM；需要 `KNV_TEST_ADMIN_URL`（带建 / 删库权限的管理连接，不要指向生产实例） |
+| `uv run --no-sync python dev/check_migrations.py` | 在随机命名的临时库上验证：升到 head、ORM 差异检查、降到 base、再升级、种子重放两次，最后删库；使用 `KNV_TEST_ADMIN_URL`，不碰应用库 |
+| `uv run --no-sync python dev/check_demo.py` | 临时库 + 真实 HTTP 子进程 + 两次进程重启，验证权限、来源、版本发布和确认的持久化恢复，不调用真实模型 |
+| `uv run --no-sync python dev/check_demo.py --mcp` | 同一套验收，所有工具调用改经独立 MCP 子进程，并与 API 一起重启 |
+| `uv run --no-sync python dev/check_compose_demo.py` | 构建并验收六服务容器演示（需要 Docker），范围见[容器演示说明](../docs/container-demo.md) |
 
-The page endpoint also accepts `q` for case-insensitive literal title containment, with surrounding
-whitespace removed. Blank means unfiltered; the input is limited to 128 characters and rejects NUL.
-`%`, `_` and the escape character `/` are literal text, not user-provided SQL wildcards. Scope remains
-the current user. A `before` anchor must belong to that user's current filtered set or returns 404;
-clients must reset pagination when changing filters. This searches titles only (normally the first
-30 characters of the initial question), not message contents or knowledge-base text. No full-text
-index, semantic retrieval, glyph normalization or model call is involved.
+范围与限制见[自动化验收](../docs/ci.md)。
 
-## Long paragraphs
+## 评测工具链
 
-New Markdown/PDF ingestion enforces the existing 700-character chunk-text maximum even for paragraphs
-without sentence punctuation. Sentence boundaries remain preferred. Short ASCII/fullwidth words and
-hyphenated codes (including horizontal spaces around the hyphen) crossing a hard boundary move intact
-to the next chunk when they fit within 700 characters. An individual token longer than that limit must
-be split. Page and section metadata remain attached to each chunk; source files and content hashes are
-unchanged. As before, whitespace at chunk edges may be stripped. The limit counts Python characters,
-not model tokens, bytes or Unicode grapheme clusters; heading-path length is outside the text limit.
+所有脚本在 `backend/` 下运行，默认不覆盖已有输出文件。留出集（holdout / final 类 split）必须显式 `--confirm-final`，且只能各配置运行一次。含付费模型调用的运行都需要显式授权标志，费用估算是场景估计、不是账单上限。
 
-This applies only to newly ingested revisions. Existing chunks/vectors and historical measurements
-are not migrated or regenerated. Re-upload creates a new draft for explicit review/publication. A
-better size bound is not a measured retrieval improvement. PDF parsing now uses the supported
-`pymupdf` import of the already locked dependency, without changing dependency versions.
+**检索层 `eval/run_eval.py`**（不调用 LLM）：评测集 `eval/cases.jsonl`（60 例，`build_cases.py` 生成：dev 20 / 留出 40）及 `cases_v2`–`cases_v5` 的回归集；`--split dev|holdout|all|val2|val3|val4|val5`，消融开关 `--no-sparse`、`--no-opencc`、`--rerank`、`--rerank-model`（须与 `--rerank` 同用）、`--threshold`（仅检索模式）。指标取实际 Top-5 在可选精排之后、分数闸门之前；val5 的正例还要求目标分块含字面的 `expect.support_text`。
 
-## Upload size
+```bash
+KNV_ENCODER=bge-m3 uv run python eval/run_eval.py --split dev
+```
 
-`KNV_UPLOAD_MAX_BYTES` sets the per-file limit (positive integer; default 20 MiB / 20,971,520 bytes).
-The upload handler copies the parsed multipart file in chunks of at most 64 KiB, reading at most one
-byte beyond the limit to detect excess. Exactly-at-limit files are accepted; oversized files return
-HTTP 413 with `detail.code: UPLOAD_TOO_LARGE` and `detail.max_bytes`. Empty files return 422. Both fail
-before loading the encoder, parsing documents or creating a revision, and the temporary copy is removed.
-The currently published revision remains unchanged. Restart the backend after changing configuration.
+**现场检索 `eval/setup_field_eval.py` / `eval/run_field_eval.py`**（v4，不调用 LLM）：`setup_field_eval.py` 删除并重建独立库 `knoventra_eval_v4`、导入虚构日志、发布案例与原始行（供多样性对比）、重建 ES 别名 `knv_eval_v4`；`run_field_eval.py --split dev|holdout [--configs pg es_equal es_weighted] [--confirm-final]` 对 `eval/cases_field_v1.jsonl` 比较三种配置。
 
-`GET /admin/documents` includes `upload_max_bytes` so the UI can display and precheck the current limit;
-the server always checks actual file bytes regardless of client metadata. Multipart parsing/spooling
-occurs before this application guard. This is a per-file input limit, not a total HTTP-body,
-decompressed-text, page-count or CPU-time limit. Browser cancellation does not undo committed uploads.
+**Agent 层 `eval/run_agent_eval.py`**（v4，真实图 + 真实模型）：评测集 `eval/cases_agent_v1.jsonl`（42 例，dev 24 / 冻结留出 18）。`--dry-run` 只打印用例数与模型调用上界，不连接数据库和模型；真实运行必须带 `--allow-llm`，需要 `KNV_LLM_*`，每批付费运行单独获批；留出集需 `--confirm-final`。
 
-## Evaluation
-`eval/cases.jsonl` (60 cases, regenerate with `eval/build_cases.py`): 20 dev (tuning) / 40 holdout (final only).
-`uv run python eval/run_eval.py --split dev` runs retrieval metrics without an LLM; ablation flags
-`--no-sparse --no-opencc --rerank`. Holdout needs `--confirm-final`.
+```bash
+uv run python eval/run_agent_eval.py --split dev --dry-run
+```
 
-Agent evaluation requires `KNV_LLM_*`, explicit `--allow-llm`, and both input/output prices per
-million tokens in the same currency. Inspect the selected cases before enabling calls:
+**旧版 Agent 评测 `run_eval.py --mode agent`**：需要 `KNV_LLM_*`、`--allow-llm` 以及同一币种的 `--input-price-per-million` / `--output-price-per-million`（`--currency`），`--case-id`（可重复）选择用例，`--max-output-tokens`（默认 1024）、`--assumed-input-tokens`（默认 4000，只是估算假设）。拒绝 `--no-sparse`、`--no-opencc`、`--threshold`（Agent 图没有实现这些消融）。使用专用且已播种的评测库：检查点与已提交的转交记录会留在其中。真实运行先写追加式进度日志（默认 `<report>.progress.jsonl`，逐事件 fsync，不可覆盖），失败不发布汇总指标，没有自动续跑。
 
 ```bash
 uv run python eval/run_eval.py --split dev --mode agent --case-id ops-01 --dry-run --out eval/results/agent-plan.json
 ```
 
-Repeat `--case-id` to select more cases; unknown IDs fail and repeated IDs are deduplicated in dataset
-order. Dry-run loads neither database nor models. It reports case IDs/digest, categories, model name,
-graph model-call bound, requested output-token bound, and `confirmation_decision_cases` (whose scripted
-decisions may create escalation records in a real run). Use a dedicated, seeded evaluation database;
-checkpoint state and committed escalation records persist there. Retrieval mode does not call the LLM.
+**离线检查与审核**（不调用模型或数据库，拒绝覆盖已有文件）：
 
-After checking current provider prices and obtaining authorization for paid calls, use the same flags
-with your prices. These shell variables must contain your actual prices, not example defaults:
+- `eval/inspect_progress.py <progress.jsonl> --out <inspection.json> [--report <report.json>] [--allow-truncated-tail]`：校验进度日志的事件顺序、线程身份与捕获快照，区分已完成 / 进行中 / 未开始的用例，可与成功报告核对；不续跑、不能作为完整评测报告。
+- `eval/review_answers.py prepare|summarize`：从含 `review_snapshot` 的报告生成审核包并汇总；人工与模型审核分别统计，未审核内容不计为支持；`eval/render_review_html.py` 生成离线真人审核页。流程、判定口径、抽样与局限见[审核说明](eval/REVIEW.md)。
+- `eval/analyze_refusals.py <report> --out <triage.json>`：把拒答分为检索闸门失败、检索后模型拒答和运行错误，筛出证据里含目标原文却仍拒答的“复核候选”（不自动认定为过度拒答）。
 
-```bash
-KNV_ENCODER=bge-m3 uv run python eval/run_eval.py --split dev --mode agent --case-id ops-01 --allow-llm --input-price-per-million "$INPUT_PRICE" --output-price-per-million "$OUTPUT_PRICE" --currency "$PRICE_CURRENCY" --max-output-tokens 1024 --assumed-input-tokens 4000 --out eval/results/new-agent-run.json
-```
-
-Add the price/token flags to dry-run to preview the same estimate. The estimate assumes 4,000 input
-tokens per call by default; this is **not an input limit or billing cap**. It multiplies the graph's
-tool-budget-derived call bound by the assumed input and maximum requested output cost. Provider token
-semantics, reasoning/cache charges and failed requests can differ. Each evaluation request sets
-`max_tokens` (default 1,024) and disables automatic provider retries; output limiting depends on the
-provider honoring that parameter. The web application's model settings are unaffected. An interrupted
-run may incur charges without producing a complete report. Dry-run uses `mode: preflight`, so it cannot
-be mistaken for an answer-review report. Existing output paths are rejected; use separate plan/report
-paths. Final reporting splits still require `--confirm-final`, including in dry-run.
-
-Real Agent runs create an append-only progress log before loading models or opening the evaluation
-database. The default path is `<report-path>.progress.jsonl`; override with `--progress-out`. Existing
-logs are never overwritten, and report/log paths must differ. Every event is flushed and fsynced:
-`run_started`, `corpus_captured`, `case_started` (with checkpoint thread ID), `case_completed` (the full
-answer, captured evidence and diagnostics), followed by `run_completed` after the final report is saved.
-An exception or Ctrl+C records `run_failed` with its class only, then propagates the original error.
-The log contains the same source text as the report; apply the same file access policy.
-
-Completed cases survive later model/database failures. A failed run does not publish aggregate metrics;
-the JSONL log is diagnostic evidence, not a complete Agent report or direct answer-review input. There
-is no automatic resume/retry: re-running with new paths may call completed cases again. An in-flight
-case may already have incurred costs or committed an escalation. A process kill/power loss can leave
-no terminal event or a truncated final line; inspect the last complete records and checkpoint IDs rather
-than assuming success. Disk/write failure stops the run; a failure while saving the final report may
-leave an incomplete report file, which must not be treated as a completed result. Dry-run creates no log.
-
-Inspect logs offline with `uv run python eval/inspect_progress.py <progress.jsonl> --out <inspection.json>`.
-It distinguishes completed, in-flight and unstarted cases and validates event order, thread identity and
-captured snapshots. `--report <report.json>` additionally checks selection/preflight, corpus, results and
-recomputed metrics against a successful run; unlogged config is outside that check. Stored paths are
-never followed automatically. Use `--allow-truncated-tail` explicitly to discard an unterminated final
-line from a stopped run; corrupt middle lines remain errors. Inspection neither resumes a run nor calls
-models/DBs, and its output cannot serve as a complete evaluation or answer-review report. See
-[the review guide](eval/REVIEW.md) for status and integrity limits.
-
-`--split val4 --confirm-final` runs the new 28-case exact-identifier regression set. The stored
-`eval/results/val4-retrieval-exact-v1.json` is retrieval-only: it makes no LLM calls. It includes corpus
-counts, a digest of the selected cases, identifier policy version and per-case rejection reasons.
-Older result files remain historical measurements under their original policies; the new Recall@5 is
-measured after identifier matching and before the score gate, so it is not a direct before/after comparison.
-
-## Optional reranking
-
-An isolated real-model comparison runner creates/seeds a fresh temporary database, runs val5 once
-with reranking off and once with the selected model, checks paired corpus/case fingerprints, and
-drops that database in cleanup. It requires cached model weights and never calls an LLM:
-
-```bash
-uv run python eval/run_rerank_pair.py --confirm-final --out-dir eval/results/new-v2m3-comparison
-```
-
-`KNV_TEST_ADMIN_URL` supplies a test admin connection with CREATE/DROP DATABASE privileges; the app
-database is not used. Each subprocess releases GPU memory before the next configuration. Existing
-output directories and result files are rejected. New reports record dependency versions,
-published-text/grant fingerprints and model names. Adapter commit fields are null when the loaded
-wrapper does not expose a revision; observed cache snapshots for Nov 7 are separately recorded in
-`eval/results/val5-v2m3-pair-20261107/cache-provenance.json`, not fabricated as adapter metadata.
-Text fingerprints exclude random IDs and vectors; grants have a separate digest.
-
-Configure `KNV_RERANK=bge`, `KNV_RERANK_MODEL` (default `BAAI/bge-reranker-v2-m3`), and
-`KNV_RERANK_THRESHOLD` (default `0.60`). The latter is independent of `KNV_GATE_THRESHOLD` and is not
-established as a production threshold. Restart the API after changing model configuration. The `ml` extra and locally
-available model weights are required for offline execution; keep `KNV_RERANK=off` for the normal default.
-
-The reranker scores `section_path + text`, so a fault code inherited from a heading remains available.
-Queries use the same identifier-format normalization as recall. Scores must be finite numbers in `[0, 1]`,
-with exactly one score per candidate; invalid output fails the retrieval rather than falling back to dense
-similarity. Final candidates still undergo exact-identifier and score gates. Source text is preserved.
-
-For the paired val5 comparison, use the same frozen 28 cases with each configuration once:
+**精排对照与阈值标定**：`eval/run_rerank_pair.py --confirm-final --out-dir <新目录>` 在临时库上用同一 28 例各跑一次关 / 开精排，比较配对指纹，需要缓存的模型权重、`KNV_TEST_ADMIN_URL`，不调用 LLM；`eval/calibrate_rerank.py --out <文件>` 在 `eval/cases_threshold_v1.jsonl`（12 标定 + 12 验证）上只用标定半部分选阈值并报告验证误差，不修改服务配置。
 
 ```bash
 KNV_ENCODER=bge-m3 KNV_RERANK=off HF_HUB_OFFLINE=1 uv run python eval/run_eval.py --split val5 --confirm-final --out eval/results/val5-reproduction-off.json
-KNV_ENCODER=bge-m3 KNV_RERANK=off HF_HUB_OFFLINE=1 uv run python eval/run_eval.py --split val5 --confirm-final --rerank --rerank-model BAAI/bge-reranker-base --out eval/results/val5-reproduction-base.json
+uv run python eval/run_rerank_pair.py --confirm-final --out-dir eval/results/new-v2m3-comparison
 ```
 
-The stored `val5-retrieval-rerank-{off,base}.json` results share the same case digest and corpus counts.
-Metrics now use the pipeline's actual Top-5 **after** optional reranking and before the score gate;
-per-case diagnostics preserve that ordering and scores even on refusal, while the agent receives no
-refused evidence. Val5's positive examples also require a literal `expect.support_text` in the target chunk,
-so another section on the same document/page is not counted as a hit. This checks retrieval relevance,
-not whether an LLM answer is supported. Old case files remain unchanged.
+### 可选精排
 
-For a separate, score-only threshold check, `eval/cases_threshold_v1.jsonl` freezes 12 calibration and
-12 validation cases. On an isolated seeded database with cached local models, run:
+`KNV_RERANK=bge` 启用 `KNV_RERANK_MODEL`（默认 `BAAI/bge-reranker-v2-m3`）与 `KNV_RERANK_THRESHOLD`（默认 0.60，独立于证据闸门，**不是**已标定的生产阈值）；需要 `ml` 依赖和本地模型权重，改后重启 API。精排对 `section_path + text` 打分，使继承自标题的故障码仍可见；查询与召回使用相同的编号规范化；分数须为 `[0, 1]` 内的有限值且与候选一一对应，输出非法则检索失败，而不是回退到稠密相似度；最终候选仍要经过编号与分数闸门。现有测量（单次、小语料）没有得到稳定的净收益，因此默认保持 `off`。结果与局限见[评测报告](../docs/evaluation-report.md)第 13、18 节。
 
-```bash
-KNV_ENCODER=bge-m3 KNV_RERANK=bge HF_HUB_OFFLINE=1 uv run python eval/calibrate_rerank.py --out eval/results/new-threshold-check.json
-```
+### Agent 层计时指标
 
-The script measures Top-5 target presence and normalized reranker scores, selects a threshold using only
-the calibration half, and reports validation errors without changing server settings or calling an LLM.
-The stored result and its small-sample limits are in [the evaluation report](../docs/evaluation-report.md)
-section 18. Score alone did not separate every answerable detail from unsupported specifics; Rerank stays
-off by default.
-
-`--rerank-model` requires `--rerank`. `--threshold` overrides the active score gate in retrieval mode.
-The runner rejects `--no-sparse`, `--no-opencc` and `--threshold` in agent mode because those per-run
-ablation options are not implemented by the agent graph; it no longer silently reports unused settings.
-
-## Answer support review
-
-New agent evaluation reports capture a checksummed `review_snapshot` for each case: original question,
-final answer, full evidence registry, actually displayed sources, revision/page/section/text and error code.
-Standard agent reports also record the system-prompt hash; each case records its thread ID. Refusals keep
-an explicit empty displayed-source list while preserving retrieved evidence for over-refusal diagnosis.
-
-Use the offline CLI to create a review packet, edit annotations, then validate and summarize against the
-original report. It never calls a model or database, and refuses to overwrite existing files:
-
-```bash
-uv run python eval/review_answers.py prepare eval/results/new-agent-run.json --out eval/results/new-agent-review.json
-uv run python eval/review_answers.py summarize eval/results/new-agent-review.json --report eval/results/new-agent-run.json --out eval/results/new-agent-review-summary.json
-```
-
-Supported annotations require named reviewers, a rationale, and exact quotations from captured sources.
-Human and agent judgements remain separate; unreviewed units are visible and have no support-rate score.
-Legacy reports without source snapshots are rejected rather than reconstructed from today's database.
-See [the review guide](eval/REVIEW.md) for verdicts, sampling, attribution, denominators and limits.
-The workflow is tested with scripted models; it does not constitute a human audit of real LLM answers.
-
-The agent now recognises both Simplified `【无依据】` and Traditional `【無依據】` leading refusal markers,
-strips the marker and citations, and emits `INSUFFICIENT_EVIDENCE` without final source cards in either case.
-
-## Conversation replay migrations
-
-Run `uv run alembic upgrade head` on existing instances. Migration `0002` persists message error codes;
-`0003` uses PostgreSQL insertion time (`clock_timestamp()`) for messages instead of transaction-start
-time, avoiding random UUID ordering for messages inserted in the same transaction. Existing timestamps
-and missing historical error codes are not reconstructed. The web client restores owned checkpoint
-state, pending confirmation expiry and persisted refusal states; see [the demo guide](../docs/demo-guide.md).
-
-## Agent latency measurements
-
-### Explicit provider thinking mode
-
-`KNV_LLM_THINKING` accepts exactly `provider-default` (the default) or `disabled`.
-`provider-default` omits any vendor thinking extension; it does not mean thinking is disabled.
-`disabled` adds `extra_body={"thinking": {"type": "disabled"}}` to the shared web/evaluation
-model constructor. Only choose it for providers accepting that extension, such as DeepSeek;
-other compatible endpoints keep `provider-default`. Unsupported values fail configuration validation.
-
-DeepSeek currently enables thinking by default and requires reasoning history on subsequent tool
-requests ([official guide](https://api-docs.deepseek.com/guides/thinking_mode/)). This project's installed
-generic `ChatOpenAI` adapter does not retain provider-specific `reasoning_content`, so configure
-`KNV_LLM_THINKING=disabled` for this DeepSeek tool workflow. Enabling thinking is not offered until a
-provider-specific adapter and its history contract are implemented and tested. The switch does not
-filter or edit responses and does not automatically retry a rejected request in another mode.
-
-Changing the environment requires a backend process restart; the web graph caches its model instance.
-The evaluation process reads the same setting, includes it with streaming mode in the offline preflight
-and final report, and the progress inspector checks logged options against the report. Historical
-reports without these fields remain valid and their actual thinking mode is not inferred. Web retry
-policy remains one provider retry; evaluation still has zero retries and its explicit output cap.
-
-### Wall and retrieval time
-
-New Agent evaluation reports include `diagnostics.retrieval_trace[*].latency_ms` for each completed
-search, including searches rejected by access or evidence gates. The monotonic wall clock covers
-opening the tool's database session, retrieval (encoding, recall, optional reranking and gating),
-and closing that session. Exceptions that abort a search do not produce a completed trace.
-
-Agent `metrics.latency_ms` summarizes the existing per-case wall time, including graph invocation,
-scripted confirmation/resume and result assembly. `metrics.retrieval_latency_ms` summarizes individual
-completed searches, so a case with multiple searches contributes multiple samples. Both include
-`n`, `p50`, `p95`, and `max`; percentiles use nearest rank (`ceil(p*n)`, one-based). Retrieval also
-reports `completed_calls`, making missing timings in legacy traces visible. Missing or invalid samples
-are excluded, never converted to zero; empty distributions have null percentiles and maximum.
-
-New Agent reports identify this definition as `config.latency_policy=agent-wall-and-completed-search-v1`.
-The offline progress inspector verifies these timing aggregates for that policy, preserves the original
-metric contract for legacy reports, and rejects unknown timing policies.
-Existing report files and retrieval-mode summaries are unchanged. This is server/evaluator wall time,
-not browser latency. It does not measure a person's confirmation delay,
-and scripted/Hash-encoder regression timings are not real model performance results.
-
-### First streamed answer content
-
-Agent evaluation now configures `ChatOpenAI(streaming=True)` while preserving the output token cap and
-zero automatic provider retries. A per-case callback records `first_answer_chunk_ms`, measured from
-the beginning of that case to the first nonempty string content chunk of the **last completed model
-response without tool calls**. Reasoning-only chunks and tool parameters are excluded. Content emitted
-before a tool call is discarded when that response finishes; the answer after retrieval or scripted
-confirmation/resume uses the original case start. This includes earlier model calls and retrieval time.
-
-The field is null if the provider/model supplies no streamed content, the response is empty, truncated,
-contains invalid calls, or the final graph state reports an operational error (including missing
-citations). Ordinary answers and evidence/access refusals can contribute samples. The corresponding
-`metrics.first_answer_chunk_ms` reports `n`, `p50`, `p95`, and `max`, using the same nearest-rank convention.
-
-This is an observable approximation of time to first answer token: a provider chunk may contain more
-than one token. It is measured at the model callback, before citation/refusal processing, which can
-replace the raw response; it does not claim time to first validated answer or browser-visible text.
-The callback retains only run IDs and times, never prompt, answer or reasoning text. Each new case gets
-its own timer; real human confirmation waiting is not simulated by the evaluator.
-
-Reports declare `config.answer_timing_policy=last-model-content-chunk-v1` and `config.llm_streaming=true`.
-The offline inspector validates the added aggregate only for the declared policy, preserves both older
-report formats (without timing and with wall/search timing alone), and rejects unknown policies.
-New streaming evaluation timings should not be compared directly with old non-streaming runs as a
-performance improvement. No historical reports are modified and no real LLM measurement is implied by
-the scripted-model tests.
-
-## Final answer script
-
-The graph's citation-check stage now formats final Chinese answer prose using the **current user
-question**, with policy `unambiguous-question-opencc-v1`. OpenCC signals must identify one script
-unambiguously: Traditional questions receive Traditional final prose, Simplified questions receive
-Simplified prose. Shared characters, non-Chinese and mixed/ambiguous inputs leave model output unchanged.
-This is script conversion, not language translation or a region-based preference.
-
-Citation aliases, fault codes, inline/fenced code and HTTP URLs remain intact. The evidence registry,
-source-card text, section paths and stored documents retain their original spelling; only answer prose
-is formatted. Refusal-marker detection and citation validation run first, and refusal/error semantics
-are preserved. Each new turn uses its own question rather than inferring a preference from history.
-The web stream may show raw model text until `done`; history and final evaluation snapshots contain
-the formatted answer. This final formatting is after the first-chunk timing observation.
-
-The 2026-11-09 real dev report predates this formatting change. Its separate script-replay artifact
-applies the formatter to captured answers without making another model call, and does not fix semantic
-over-refusal or count as a new quality run. The revised completeness instruction likewise has no new
-real-model measurement; see evaluation report sections 20–22.
-
-## Direct escalation requests and observed confirmations
-
-The Agent now routes short, clear Chinese requests such as `这个问题我想转人工` through the existing
-escalation tool and confirmation workflow before calling a model. The confirmation summary preserves
-the user's current request and any earlier user statements, rather than treating prior model prose as
-facts. It must fit the tool's existing 2,000-character contract; if the request or combined context is
-longer, the model summarization route is retained rather than silently dropping details. A first-turn
-request is preserved verbatim except edge whitespace. It does not invent issue details or route to a
-specific expert team.
-
-Recognition uses a bounded grammar, not general intent understanding. Negated, conditional, quoted,
-informational, ambiguous and unrecognized requests retain the model path. Matching is only performed
-when the latest message is a new user message; tool returns and interrupt resumes do not start another
-direct operation. The normal tool validation, call limit, owned confirmation, expiry, conversation lock
-and operation-id uniqueness rules still apply. No escalation record is written until approval.
-New reports record `escalation_routing_policy=unambiguous-chinese-request-v1`.
-
-Evaluation now records `asked_confirmation` from actual checkpoint interrupts. A cancellation case
-cannot pass merely because it created zero records if it never showed the expected confirmation.
-An unexpected or unresolved confirmation also fails; `record_count_ok` separately preserves the pure
-record-count check.
-`escalation_metric_policy=observed-interrupt-and-records-v2` identifies the new metric. Older reports
-used the nonempty expected-decision list for that boolean and cannot prove a card was observed from
-that field alone. Their files are not rewritten; the failed follow-up case has a separate checkpoint
-audit. The direct route was implemented after that real run and validated offline, not by an additional
-paid rerun.
-
-## Refusal diagnostics
-
-New agent reports preserve per-search status/reason, returned chunk IDs, target expectations and a
-separate model-declared-refusal flag. Run offline triage before reviewing suspected over-refusals:
-
-```bash
-uv run python eval/analyze_refusals.py eval/results/new-agent-run.json --out eval/results/new-agent-triage.json
-```
-
-The tool separates retrieval gate failures, model refusals after retrieval, and operational errors.
-It identifies cases whose captured evidence contains the target source span as review candidates,
-not proven over-refusals. Legacy reports without captured diagnostics are rejected; output files are
-never overwritten. No LLM or database is used. See [the review guide](eval/REVIEW.md) for denominators,
-classification rules, unmarked prose refusals and the distinction between a lexical hit and support.
-
-## Concurrent ingestion and publication
-
-Migration `0004` adds unique document identity `(kb_id, title)` and a partial unique index allowing
-at most one `PUBLISHED` revision per document. Run `uv run alembic upgrade head` before running the new
-ingestion service. Conflicting legacy duplicates cause migration failure; the migration does not
-merge documents, retire revisions or discard data automatically.
-
-Ingestion parses and encodes before locking, rejects documents with no extractable text and encoder
-result counts that do not match the parsed chunks. Concurrent uploads to the same title/KB share one
-document and allocate revision numbers under a document row lock. A revision must retain the document's
-language; upload validation failures return HTTP 422. Creating drafts remains synchronous.
-
-Publication locks that same document, refreshes revision status after any wait, and rejects retired
-or empty drafts before retiring the current revision. Repeating publication of the active revision
-is a no-op that preserves its timestamp. Publishing an older retired revision is rejected even if
-the caller cached it before waiting. Different valid drafts are published in lock-acquisition order;
-publication does not enforce ascending version numbers. All writes remain in the caller's transaction,
-so failures preserve the previous committed revision.
-
-`tests/test_revision_integrity.py` uses independently committed sessions and observes real PostgreSQL
-lock waits to verify concurrent publication, stale-state rejection, simultaneous first/repeated uploads,
-database constraints, empty/truncated input and migration roundtrips/conflicts.
-
-## Conversation execution locks
-
-`POST /chat` and `POST /chat/confirm` acquire the same nonblocking PostgreSQL advisory lock for an
-owned conversation before reading runnable checkpoint state or saving a confirmation decision.
-Concurrent mutation attempts return HTTP 409 with `detail: CONVERSATION_BUSY`, before SSE or message
-writes. Ownership checks still return 404 for other users. Different conversations can execute independently.
-
-The lease holds a dedicated SQLAlchemy connection for the whole streaming response, across business
-transaction commits. Response cleanup closes the iterator before unlocking on completion, send failure
-or cancellation, including disconnects before iteration starts. Lock acquisition/release failures discard
-the connection rather than returning a possibly locked DB session to the pool. PostgreSQL releases session
-locks when the DB session ends; a browser disconnect does not guarantee immediate cancellation of a
-model call already executing in a worker thread.
-
-This requires direct PostgreSQL connections or session pooling; transaction-pooling proxies cannot
-preserve the session advisory-lock contract. Each active SSE response consumes one extra DB connection,
-so size the connection pool for the intended concurrency. No schema migration is introduced this round.
-The lock covers these web mutation endpoints; direct graph invocations by the offline evaluator are
-outside it and use separate thread IDs. Read-only history/state requests remain unlocked snapshots.
-
-The frontend distinguishes busy conversations from unresolved confirmations and retains the conflict
-notice after reloading server state. Reopen the conversation once the other request finishes before
-retrying. Tests cover independent PG pools, independent concurrent HTTP requests using the real graph,
-duplicate confirmations, ownership, iterator cleanup, cancellation and discarded connection failures.
-
-## Confirmation identity across turns
-
-Confirmation requests are matched against the actual checkpoint interrupt **under the conversation lock**
-before saving any decision. A previous confirmation cannot resume a later interrupt on the same thread;
-a pending row with no matching interrupt cannot be approved. These conflicts return HTTP 409 with
-`detail: CONFIRMATION_NOT_ACTIVE`, and the frontend restores the current card and shows a specific notice.
-Completed confirmations can still be replayed as no-ops after the thread finishes. An already saved
-decision on the active interrupt wins over a different retry request body.
-
-New escalation operation IDs include thread ID, user-message ID and tool-call ID, keeping separate turns
-independent even when a model reuses a tool-call ID. The operation ID is stored in the pending tool state
-before interruption, so a process restart uses the same ID. Pre-existing checkpoints without that field
-retain the legacy thread/tool-call derivation on resume. No migration or historical-row rewriting is needed.
-Resuming failed graph nodes without a matching interrupt is outside this confirmation endpoint's contract.
-
-## Recovering incomplete runs
-
-`GET /conversations/{id}/state` now returns `retry_checkpoint_id` for a checkpoint that has pending
-nodes and no interrupt. It remains a read: it never runs a model or retries a tool. The web client shows
-an explicit continuation button and keeps new-question submission blocked. New questions against an
-incomplete non-interrupted run return HTTP 409 / `RUN_INCOMPLETE`, rather than a misleading confirmation error.
-
-`POST /chat/retry` accepts `{conversation_id, checkpoint_id}`. After ownership verification it acquires
-the same conversation lease as chat/confirm, checks the current checkpoint ID and rejects completed
-runs or interrupts with `RUN_NOT_RETRYABLE`. Stale IDs return `CHECKPOINT_CHANGED`; active requests
-return `CONVERSATION_BUSY`. Errors are HTTP 409 before streaming or new message writes. A stale retry
-can never execute a later incomplete turn, and pending confirmations must still use `/chat/confirm`.
-
-Recovery streams the graph with `None` input: no new user message, no reset of the existing tool state,
-and no new approval decision. Pending nodes may execute again. The only write tool uses the existing
-operation ID and database uniqueness constraint, so a committed escalation followed by a node failure
-can be retried without creating a second record. A fresh compiled graph over the same checkpointer
-can recover after process restart. Existing error messages stay in history, followed by a successful
-answer on recovery. A replay after completion is rejected rather than appending a duplicate answer.
-
-Scope: only saved incomplete graph checkpoints are recovered. A completed checkpoint whose final
-message failed to reach the history table is not reconstructed here. DB/checkpointer outages still
-require service restoration. Model calls may incur costs again when a user explicitly continues a run;
-the tests use scripted models only. No automatic retries or schema migration are introduced. New tools
-with side effects must provide their own retry/idempotency guarantees before being added to this graph.
-
-## Saving completed checkpoint answers
-
-Migration `0005` adds nullable `knv_conversation.active_turn_id` and `knv_message.completion_turn_id`,
-plus unique `(conversation_id, completion_turn_id)` for final messages. Upgrade with
-`uv run alembic upgrade head` before starting the new service. It preserves legacy rows without
-inventing missing delivery metadata or inferring whether old answers were saved.
-
-New web turns persist a server-generated user-message ID with the user message before starting the
-graph. Final answer inserts use that turn ID and an idempotent database insert. If a completed
-checkpoint's latest user message matches the tracked turn and there is no final message for it,
-state returns `recover_checkpoint_id`, keeps the composer blocked, and offers save-only recovery.
-New questions return `ANSWER_NOT_SAVED` until the previous final answer has been saved.
-
-`POST /chat/recover` accepts `{conversation_id, checkpoint_id}`. Under the same owned conversation
-lease it checks checkpoint identity, requires completion and an unsaved tracked turn, then inserts
-the captured final answer, public source cards and error/refusal code. It never invokes the graph,
-model or tools. Stale IDs return HTTP 409 / `CHECKPOINT_CHANGED`; completed delivery, untracked legacy
-turns or unfinished graphs return `RUN_NOT_RECOVERABLE`. Other users still receive 404, and concurrent
-mutations receive `CONVERSATION_BUSY`. A successful repeated request is rejected without another row.
-
-Final-answer save failures now emit `ANSWER_SAVE_FAILED`, distinct from graph execution failures.
-If save-only recovery fails again, the checkpoint remains available for another explicit attempt;
-the frontend retains the error notice after state refresh. Earlier error-history rows remain visible.
-The final-message uniqueness constraint also protects against repeated delivery across restarts.
-
-Scope: this repairs exact, newly tracked checkpoint output, not missing historical evidence. It does
-not read earlier checkpoint versions or regenerate missing answers. Legacy in-flight checkpoints can
-still finish normally but are not inferred as candidates for save-only repair without a tracked turn.
-The existing `/chat/retry` continues incomplete graphs; `/chat/recover` only persists completed results.
-
-## Owned escalation history
-
-`GET /api/v1/escalations?limit=20&before=<id>` returns `{items, next_cursor}` for the authenticated user
-only. Limits are bounded to 1–100. Records are ordered by `created_at DESC NULLS LAST, id DESC`;
-the optional cursor must itself belong to the caller (foreign/missing IDs return 404). Keyset pagination
-handles equal timestamps and unknown legacy dates, and newly inserted records do not shift older pages.
-Refresh starts again at the newest page. The existing single-record endpoint now also returns `created_at`.
-
-Migration `0006` adds the nullable creation timestamp and an ordered user index. It sets a server-side
-`clock_timestamp()` default for **new** rows after adding the column, so legacy rows keep unknown dates
-rather than receiving a fabricated migration time. Run `uv run alembic upgrade head` before starting
-the new code. Idempotent escalation retries retain the original row and timestamp. The model's status
-tool also uses time ordering for its latest five records instead of sorting random UUIDs.
-
-The web navigation exposes a read-only “转交记录” page, with current status, summary, creation time,
-unknown-history labels, refresh, incremental loading and retryable fetch errors. Leaving the page aborts
-the active initial/pagination request. Creation still starts as OPEN; this page provides no status editor.
-The API and UI use no LLM calls for listing, and administrators see their own records under the same rule.
-
-## CI and migration verification
-
-The repository workflow runs the locked base/test dependency environment on Linux with a disposable
-pgvector service, scripted models and no LLM secrets. `dev/check_migrations.py` creates its own randomly
-named test database, checks upgrade/downgrade/metadata parity, repeats the demo seed and drops that
-database in cleanup. It uses `KNV_TEST_ADMIN_URL`, not the application database URL. Full pytest uses
-the separate `knoventra_test` database. See [the CI guide](../docs/ci.md) for commands and scope.
-
-## Exact identifiers
-
-`E17-42`, `SEAL-9X` and similar explicit hyphenated identifiers containing a digit are canonicalised
-(case, full-width characters, common Unicode dashes) for query encoding and matching. Original source
-text is preserved. After permission-filtered recall and RRF, candidates must contain at least one
-requested identifier in their text or inherited section path; a document title alone is insufficient.
-Filtering happens before Top-K and optional reranking. The final evidence must collectively cover
-**every** requested identifier, each with a score above the existing gate. Failure returns
-`INSUFFICIENT_EVIDENCE` with internal reason `IDENTIFIER_MISMATCH` or `LOW_SCORE` and no evidence.
-
-The agent passes the latest user's original message alongside each model-generated search query;
-their identifier sets are combined, including on retries. `/debug/search` exposes `identifiers.required`,
-`identifiers.missing`, and candidate stages `fused`, `identifier_match` (when applicable), `selected`.
-It remains a permission-filtered candidate diagnostic, not a statement that the score gate passed.
-
-Queries additionally join bounded labelled forms such as `E17 设备报代码 42`, `p03故障码11` and
-`S5設備報錯誤碼19` into explicit identifiers before dense/sparse recall and reranking. Models must be
-1–8 ASCII letters followed by 1–4 digits; the labelled suffix must contain exactly two digits. Optional
-device wording, 报/報, horizontal whitespace and a colon are accepted. Both original user text and model
-search text contribute constraints. Source matching still uses explicit codes only and never rewrites
-stored source text or derives a code from a document title alone.
-
-Bare numbers, distant references, missing model names, decimal/range/alternative numbers and unit-bearing
-forms are not joined. The query policy is recorded as `explicit-and-split-v2` in new evaluation reports.
-Historical `exact-v1` reports and case files stay unchanged; no real BGE/LLM evaluation is added this round.
-
-Limits: this is a bounded grammar, not general natural-language code resolution; no guarantee that a source
-mentioning a code supports the requested claim. Multi-code questions remain conservative: each individual
-search must cover all codes from the current user message, so separately searching one code at a time
-can be refused. No extra exact-match SQL recall is added; matches outside the existing recall budget
-can still be missed.
+新的 Agent 评测报告包含：`diagnostics.retrieval_trace[*].latency_ms`（每次完成的检索，含被访问 / 证据闸门拒绝的，覆盖打开数据库会话、检索与关闭）；`metrics.latency_ms`（单例整轮墙钟，含图调用、脚本化确认 / 续跑与结果装配）；`metrics.retrieval_latency_ms`（逐次检索，一个用例可贡献多个样本）；`metrics.first_answer_chunk_ms`（评测使用 `ChatOpenAI(streaming=True)`，从用例开始到**最后一次不含工具调用的模型响应**的首个非空文本分片，在模型回调处测得，早于引用 / 拒答处理）。各项给出 `n`、`p50`、`p95`、`max`（最近秩，`ceil(p*n)`）；缺失或无效样本不补零，空分布的分位数为 null。报告声明 `config.latency_policy=agent-wall-and-completed-search-v1`、`config.answer_timing_policy=last-model-content-chunk-v1`、`config.llm_streaming=true`；进度检查器只对声明的策略校验，并兼容旧报告。这是服务端 / 评测器时间，不是浏览器延迟，也不含真人确认的等待；脚本模型或 Hash 编码器的耗时不代表真实模型性能，流式新数据不能直接与旧的非流式运行比较。

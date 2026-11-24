@@ -1,133 +1,251 @@
 # Knoventra · 知域
 
-权限感知的企业知识问答助手：员工向自己有权看到的公司资料提问，得到能定位到文档版本和页码的回答；找不到可靠依据时拒答，并可在确认后转交专家。
+## 1. 项目简介
 
-参考 [Ragent](https://github.com/nageoffer/ragent) 的工程设计，以 **Python + FastAPI + LangGraph + PostgreSQL / pgvector** 重新实现后端，前端为新建的 Vite + React 精简页面。演示使用完全虚构的企业与自编资料，不含任何企业代码、文档、账号或配置。
+权限感知的企业知识问答与现场求助助手：员工只能检索自己有权读的资料，回答带有可核验到文档版本和页码的引用；找不到可靠依据时拒答；现场问题可在确认后转为求助单、派给合适的专家，解决后的经验以脱敏案例回流知识库。
 
-## 已完成
+技术栈：Python 3.12 / FastAPI / LangGraph / PostgreSQL + pgvector / Elasticsearch 8.15 / Redis / MCP（streamable HTTP）/ React（Vite + TypeScript）。
 
-- **权限感知检索**：区域 / 部门 / 角色授权；权限过滤在召回 SQL 内，权限为空或查询失败时不检索。
-- **混合检索**：BGE-M3 稠密 + 稀疏（`sparsevec`）、RRF 融合、OpenCC 简繁归一化（仅用于稀疏侧）；已完成本地 `bge-reranker-base` 和 `v2-m3` 检索对照。v2-m3 在当前小语料未改善目标排名，0.60 闸门还新增 2 例误拒，因此精排默认关闭。
-- **精确编码校验**：显式故障码 / 型号，以及“E17 设备报代码 42”等紧邻、带明确标签的两位分写故障码，必须出现在已授权候选的正文或章节中；支持大小写、全角与常见横线归一化，模型改写查询也不能丢掉本轮用户的编码约束。
-- **版本管理**：新修订草稿 → 事务内发布，只检索生效版本；同文档并发上传分配独立版本号，并发发布串行化，数据库保证至多一个生效修订；空文档或编码结果缺失时拒绝入库，发布失败时旧版继续生效。
-- **Agent**：LangGraph 图，`search_knowledge`、`get_escalation_status`、需确认的 `escalate_to_expert`；每轮最多 4 次工具调用。
-- **可核验的引用**：证据注册表 + `cite_check`，伪造的引用标记不渲染；来源预览每次重新鉴权。
-- **回答审核流程**：新 Agent 评测保存当轮完整证据快照，可离线逐句标注并验证原文引句；人工与模型审核分别统计，未审核内容不计为支持。
-- **拒答诊断**：保存逐次检索结果与模型拒答标记，离线区分编码 / 分数闸门、模型拒答和运行错误，筛出命中目标原文仍拒答的复核候选；不自动认定语义上的过度拒答。
-- **延迟统计**：Agent 评测汇总整轮、逐次检索及最终纯文本模型回复的首个内容分片耗时，输出样本数与 P50 / P95 / 最大值；缺失数据不补零，兼容旧评测报告。首分片在模型回调处测量，不等于浏览器延迟或已核验答案到达时间。
-- **拒答**：证据闸门 + 模型按【无依据】或【無依據】声明拒答，识别后清空来源卡并标记拒答状态。
-- **转交专家**：`interrupt` 人工确认；确认仅驱动当前等待的操作，不同用户轮次独立，旧确认无法恢复新转交；重复提交、刷新、进程重启后恢复只产生一条记录。
-- **会话并发保护**：聊天与确认共用 PostgreSQL 会话锁，同一会话的并发请求返回 409，避免多标签页或多个 API worker 同时推进检查点；流结束、断连或取消后清理锁。
-- **失败请求恢复**：模型或工具失败后可显式继续未完成检查点，无需重发用户问题；重试绑定当前检查点，保留已存确认决定及转交幂等身份，不绕过待确认操作。
-- **完成回答补存**：新请求的检查点已完成但最终消息未保存时，可直接恢复原答案、来源和拒答状态，不再次调用模型；数据库约束避免重复保存。
-- **接口**：登录、SSE 聊天、确认、会话回放、来源预览、转交记录、管理员上传与发布、开发环境检索调试。
-- **前端**：登录（演示账号切换）、聊天（流式、来源卡与预览、确认卡、拒答态、会话回放）、转交记录（本人列表、分页、刷新）、管理页（上传、修订、发布）。
-- **评测**：60 例评测集 + 四组各 28 例的验证 / 回归集、可复现的评测运行器；val5 对照直接度量精排后的候选，目标片段另有原文依据标注。结果见 [评测报告](docs/evaluation-report.md)。
+参考 [Ragent](https://github.com/nageoffer/ragent) 的工程设计，后端与前端均为独立重写（来源见第 7 节）。**演示使用的企业、人员、设备、日志和资料全部虚构**，不含任何真实企业的代码、文档、账号、配置或客户信息。
 
-### v4 扩展（计划见 [v4 计划](docs/knoventra-v4-plan.md)，演示见 [v4 演示脚本](docs/demo-v4-script.md)）
+## 2. 架构与请求链路
 
-- **现场技术日志**：虚构的三地工程师日志与技能矩阵（`data/demo/generate_journals.py` 确定性生成）。模板按表头定位列，日志行和技能行可以混排在同一张表；入库前先脱敏（口令、电话、邮箱），再做精确去重和 SimHash + Jaccard 近似去重（只在同机型内合并），按规则抽取故障字段。去重后的案例可以发布到 `field-cases` 知识库，每个案例一个分块。
-- **Elasticsearch 关键词通道**：ES 8.15.3 + IK 分词，拼写纠错表和中英同义词；事务性 outbox 同步，并提供 `drain / reconcile / rebuild` 命令。ES 的每个命中都会回 PG 复查发布状态和读权限；ES 不可用时降级，不放宽权限。
-- **编号精确召回**：分块上的 `identifiers` 加 GIN 索引，按编号直接召回，不依赖向量 Top-K。
-- **加权 RRF**：按“是否含编号”使用两套权重，`rrf_weighting=equal` 为对照。现有评测集上加权和等权分不出差别，见 [DECISIONS](docs/DECISIONS.md) 第 66–70 条和评测报告第 25 节。
-- **查询规划**：`query_plan` 节点用 function calling 产出改写、最多 3 个子查询、意图、置信度和机型，再由确定性代码把关：按纠错表修拼写、补回改写丢掉的编号、丢弃对话里没提到的机型。检索范围收窄到“可读 KB ∩ 意图 KB”，交集为空时不收窄，所以路由只能缩小范围、不会扩大权限；置信度低于 0.6 时检索全部可读 KB。规划失败或超时（8 秒）时回到 v3 的 agent 路径，轨迹记录原因。
-- **机型澄清**：证据来自按机型分节的文档、而用户没说机型时，结束本轮并追问，不调用回答模型；因为要先检索才能判断，所以是“检索后、作答前”追问。用户说明机型后，召回时去掉其他机型的分节。
-- **技能查询**：`lookup_skills` 查结构化技能表，不走 RAG，仅 Ops 和管理员可用；复用 ES 的纠错表和同义词，只列出“了解”和“掌握”的人。
-- **求助单**：旧转交表原地迁移为 `knv_help_request`，原有转交接口不变。状态机由服务端按动作和角色校验，事件流水由数据库触发器保证只追加。槽位跨轮收集（工作副本在 Redis，持久记录在 Checkpoint，见下文“短期工作记忆”），说“算了”会清空草稿；确认卡列出全部槽位，确认后幂等建单。
-- **专家推荐与工作台**：只推荐技能为“掌握”的工程师，按同区域、未结单少、作业次数多排序，推荐理由显示在确认卡上；没有合适人选就进入待派单队列。前端新增“我的求助单”和“专家工作台”两个页面。
-- **结案沉淀**：现场求助单解决时，在同一事务里为 `field-cases` 生成脱敏后的案例草稿，由管理员在资料管理页预览后发布；发布后才能被检索。端到端测试覆盖“建单 → 派单 → 解决 → 发布 → 可检索”。
-- **短期工作记忆**：Redis（`knv:wm:{user_id}:{thread_id}`，TTL 24 小时）保存求助单槽位草稿和滚动摘要。Redis 只是缓存：草稿的持久记录在 Checkpoint 里（`request_help` 结果的 artifact 和确认卡），Redis 副本带锚点，与 Checkpoint 不符、丢失或 Redis 不可用时都会重建。历史超过 Token 预算（默认 6000，近似计数）时，保留最近 3 轮，更早的轮次压缩成摘要；只压缩发给模型的内容，Checkpoint 保留全文，摘要不读工具输出和证据。见 [DECISIONS](docs/DECISIONS.md) 第 71–72 条。
-- **长期记忆**：带引用的回答和已解决的求助单写入按用户隔离的情景记忆（pgvector）。每轮召回最多 3 条，使用前逐条重验：引用的资料必须仍已发布、当前可读，求助单必须仍是本人的且已解决，否则整条丢弃。用户画像只记字形、机型和提交过求助的机台，用于回复字形和“常用机台”提示，不参与权限。上下文组装器按优先级填预算，超出时先丢旧轮次，本轮工具结果不截断。本人可经 `GET /memory`、`DELETE /memory` 查看和删除。评测时关闭长期记忆。见 [DECISIONS](docs/DECISIONS.md) 第 73–75 条。
-- **MCP 工具服务**：检索、技能查询、求助单查询、准备和提交求助单五个工具可由独立 MCP 服务执行（`python -m knoventra.mcp_server`，设置 `KNV_MCP_URL` 后启用，不设置时在 API 进程内执行）。身份只来自 API 每次运行签发的短期 token，工具参数里没有身份字段，服务端重算权限；提交只接受本人已批准的确认单，执行端再次鉴权、幂等建单。见 [DECISIONS](docs/DECISIONS.md) 第 76–77 条。
-- **前端与交付**：“我的记忆”页可查看和删除自己的记忆；回到原会话时，专家或管理员更新过的求助单会在顶部提示。容器演示（`deploy/compose.demo.yaml`）包含 PG、ES、Redis、MCP、API、Web 六个服务，自动验收会核对 ES、Redis、MCP 确实在用；CI 在 ES、Redis 必须可达的条件下跑后端测试，并让整套 HTTP 验收再经 MCP 跑一遍。
-- **Agent 层评测**：42 例虚构用例（dev 24 / 冻结留出 18），驱动真实图、用真实模型（`deepseek-flash`）运行。dev 首轮 22/24 暴露的三个问题修复后复测 24/24；冻结留出集只跑一次，**16/18**，路由 17/18，澄清 1/1、误触发 0/5，重复建单 0，漏建 1（只说“提个求助单”时没有进入求助流程）。过程、指标和失败归因见[评测报告](docs/evaluation-report.md)第 26 节。
-- **尚未测量**：查询改写开/关对检索层的对比、滚动摘要质量、情景记忆召回质量；样本小，结论只适用于这批虚构用例。
+一次问答在 LangGraph 图里依次经过下列阶段。图的节点名（`start_turn`、`recall`、`compact`、`query_plan`、`agent`、`tools`、`prepare_escalation`、`execute_escalation`、`clarify`、`cite_check`、`remember`）与 `backend/src/knoventra/agent/graph.py` 一致。
 
-## 未完成与已知问题
+```mermaid
+flowchart TD
+    U["用户问题"] --> R["recall：召回情景记忆，逐条重验后才使用"]
+    R --> C["compact：超预算时滚动摘要，保留最近几轮原文"]
+    C --> P["query_plan：改写、拆分、意图、机型，确定性纠偏"]
+    P -->|"检索类意图，或高置信度 skill_lookup：直接发工具调用"| T
+    P -->|"其他意图、草稿进行中、跳过、失败或超时"| A
+    A["agent：回答模型选择工具"] -->|"发出工具调用"| T
+    A -->|"无工具调用，最终回答"| V
+    T{"tools"} -->|"search_knowledge"| S["四通道混合检索与编码门槛，权限在召回 SQL 内预过滤"]
+    T -->|"lookup_skills"| K["结构化技能表查询，仅 Ops 与管理员"]
+    T -->|"get_escalation_status"| G["查询本人转交与求助单状态"]
+    T -->|"request_help"| H["槽位跨轮收集，校验用户原话"]
+    T -->|"escalate_to_expert"| E["转交摘要"]
+    S -->|"证据按机型分节且用户未说机型"| Q["clarify：追问机型，不调用回答模型"]
+    S --> A
+    K --> A
+    G --> A
+    H -->|"槽位未齐：回到 agent 追问"| A
+    H -->|"槽位齐全"| I
+    E --> I["prepare_escalation：interrupt 等待用户确认（阶段一）"]
+    I -->|"用户批准或取消"| X["execute_escalation（阶段二）：批准时经工具服务提交，执行端用短期 token 二次鉴权并幂等建单，取消则不建单"]
+    X --> A
+    V["cite_check：剥离伪造引用、拒答识别、简繁字形转换"] --> M["remember：写入情景记忆与计数型画像"]
+    Q --> M
+    M --> O["回答与来源卡"]
+```
 
-- 评测规模很小：早期真实 LLM 报告使用 12 份虚构资料、21 个生效块；2026-11-09 已在当前 13 份资料、23 个生效块上完成一次真实 dev 20 例及留出集三组本地检索消融。评测集为 60 + 112 例，结果只说明对应语料与用例，不代表通用效果；Recall@5 在小语料下仍饱和。
-- 新一次真实 LLM dev 20 例已保存当轮来源快照，来源位置指标 9/10、无依据 3/3 拒答、转交 2/2；Codex 审核全部 10 个可答例，49 个事实单元中 43 个完全支持、3 个部分支持、3 个不支持。**真人审核数仍为 0，不能把 agent 审核率当成人工支持率**。审核流程见[说明](backend/eval/REVIEW.md)，原始报告和边界见[评测报告](docs/evaluation-report.md)第 20 节。
-- 编码校验覆盖显式 ASCII 编码和有限的带标签两位分写语法；无标签数字、跨句关联、省略型号、范围 / 多选表达不自动推断，编码存在也不证明资料支持所问内容。首轮dev仍误拒“日常检查”并未跟随字形；修订后4例定向验证的三个可答例命中3/3、该误拒例这次回答正确，但转交例追问而未创建确认。其后新增明确短中文请求的确定性确认路径与真实interrupt评测标记，尚无额外付费验证，不能把小样本写成全面修复；详见评测报告第23、24节。
-- Rerank 各配置只做单次小语料对照；另行冻结的 24 例阈值校准 / 验证没有得到可稳定采用的新阈值，仍需更大、外部独立的数据。`base` 与 `v2-m3` 属于不同日期 / 策略的测量，不能直接比较其净效果。OCR、数据驻留、异步入库的原因与扩展方向见[开发方案](docs/knoventra-development-plan.md)第 12 节；长期记忆和 MCP 已在 v4 实现，见上文。
-- 端到端只用单个 LLM（deepseek-flash），各报告均为单次运行，没有估计波动。
+- 身份与权限只来自服务端：工具参数里没有身份字段；工具在进程内或独立 MCP 服务中执行时，都由每次运行签发的短期 token 重新计算权限。
+- PostgreSQL 是唯一事实源。Elasticsearch（关键词通道）和 Redis（工作记忆）都是可丢弃的副本：不可用时降级或从 PG / Checkpoint 重建，不放宽权限。
+- 图状态由 PG Checkpoint 持久化，聊天与确认共用会话级互斥锁；失败或未保存的请求可用 `/chat/retry`、`/chat/recover` 恢复。
 
-## 快速开始
+## 3. 核心能力
 
-只想复现界面与业务流程时，可直接在仓库根目录运行以下命令，无需本机 Python / Node / Java：
+以下按系统模块列出架构边界与不变量。各项的取舍与理由见 [DECISIONS](docs/DECISIONS.md)，实现细节见[后端说明](backend/README.md)。
+
+### 权限内生与知识入库
+
+- **权限**：区域 / 部门 / 角色授权在召回 SQL 内预过滤；权限为空或查询失败时不检索（fail-closed）。
+- **文档版本**：新修订先是草稿，发布在串行化事务内完成；数据库约束保证每个文档至多一个生效修订；空文档或编码结果缺失时拒绝入库，发布失败时旧版继续生效。
+- **现场日志与技能矩阵**：模板按表头定位列，日志行和技能行可混排在同一张表；入库前先脱敏（口令、电话、邮箱），再做精确去重和同机型内的 SimHash + Jaccard 近似去重；去重后的案例发布到 `field-cases` 知识库，每个案例一个分块。
+
+### 四通道混合检索与精确编码门槛
+
+- **四个召回通道**：BGE-M3 稠密向量、BGE-M3 稀疏向量（OpenCC 简繁归一，仅用于稀疏侧）、分块 `identifiers` 列的 GIN 精确召回、Elasticsearch（IK 分词、拼写纠错表、中英同义词）。
+- **ES 同步与降级**：事务性 outbox 同步，`drain / reconcile / rebuild` 命令对账；ES 的每个命中都回 PG 复查发布状态和读权限；ES 不可用时降级为 PG 通道。
+- **融合**：加权 RRF，按查询是否含编号使用两套权重，`rrf_weighting=equal` 为对照。
+- **精确编码门槛**：问题中显式的故障码 / SOP 编号必须出现在已授权候选的正文或章节路径中，且最终证据要覆盖全部必需编号；机型名不是必需编号，单独按机型过滤。
+
+### 查询理解、澄清与可核验引用
+
+- **`query_plan`**：用函数调用产出改写、最多 3 个子查询、意图、置信度和机型，再由确定性代码纠偏（修拼写、补回被改写丢掉的编号、丢弃对话里没提到的机型）。路由只能把检索范围收窄到“可读 KB ∩ 意图 KB”，交集为空或置信度低于 0.6 时检索全部可读 KB；规划失败或超时（8 秒）回退到不规划的路径。
+- **机型澄清**：证据来自按机型分节的文档而用户没说机型时，在“检索后、作答前”追问，不调用回答模型。
+- **引用**：证据注册表记录每次检索的来源；`cite_check` 剥离伪造的引用标记，识别简体 / 繁体拒答声明并清空来源卡，按当前问题的字形转换回答正文；来源预览每次重新鉴权。
+
+### 求助单闭环与经验沉淀
+
+- **槽位收集**：跨轮收集机台、症状、已尝试步骤等，服务端强制核对用户原话，防止模型把检索到的资料抄进槽位；说“算了”会清空草稿。
+- **专家推荐**：只推荐技能为“掌握”的工程师，按同区域、未结单少、作业次数多排序，理由显示在确认卡上；没有合适人选则进入待派单队列。
+- **状态机与流水**：状态迁移由服务端按动作和角色校验，事件流水由数据库触发器保证只追加；前端有“我的求助单”和“专家工作台”。
+- **结案沉淀**：求助单解决时，在同一事务内生成脱敏的案例草稿；管理员预览并发布后才进入检索。
+
+### 分层记忆与复用前重验
+
+- **Checkpoint**：PG Checkpoint 持久化图状态，是槽位草稿的持久记录。
+- **短期工作记忆**：Redis（`knv:wm:{user_id}:{thread_id}`，TTL 24 小时）保存槽位草稿和滚动摘要；副本带锚点，与 Checkpoint 不符、丢失或 Redis 不可用时重建。历史超过 Token 预算（默认 6000，近似计数）时保留最近 3 轮，更早的轮次压缩成摘要；摘要不读取工具输出和证据，Checkpoint 保留全文。
+- **长期情景记忆**：pgvector 保存按用户隔离的情景；每轮最多召回 3 条，使用前逐条重验（引用资料仍已发布且当前可读、求助单仍属本人且已解决），失效整条丢弃。
+- **画像与上下文**：用户画像只做计数（字形、机型、提交过求助的机台），不参与权限；上下文组装器按优先级填预算，本轮工具结果不截断。本人可经 `GET /memory`、`DELETE /memory` 查看和删除。
+
+### 独立 MCP 工具服务与会话可靠性
+
+- **MCP**：检索、技能查询、求助单查询、准备和提交求助单共 5 个工具，可在 API 进程内执行，也可由独立的 streamable HTTP MCP 服务执行（设置 `KNV_MCP_URL`）。每次运行签发短期、受众隔离的 JWT，不进入 Checkpoint；写操作按 `confirmation_id` 在执行端二次鉴权并幂等提交。
+- **会话**：PG 会话级互斥锁（409 `CONVERSATION_BUSY`）；失败检查点可续跑（`/chat/retry`）；回答已完成但未保存时可无模型补存（`/chat/recover`）。
+
+## 4. 评测与验证概览
+
+下表中的数字均来自 [评测报告](docs/evaluation-report.md)，只适用于对应的虚构语料和用例，不代表真实部署效果；各 Agent 层结果均为单模型（`deepseek-flash`）单次运行，未估计波动。
+
+| 验证类别 | 规模 | 核心结果 | 报告章节 |
+|---|---|---|---|
+| 确定性自动化测试与验收 | 后端 907、前端 157；HTTP 验收（含 `--mcp`）与容器验收 | 在 PG、ES、Redis 可达时全部通过；不调用付费模型 | 第 26.1 节、[CI 说明](docs/ci.md) |
+| v3 检索消融 | 评测集 60 例 + 四组各 28 例的验证 / 回归集 | 小语料下 Recall@5 饱和；精排默认关闭 | 第 1–25 节中 v3 部分（含第 13、18、21 节） |
+| v4 现场检索 | 39 例（dev 24 / 留出 15） | Recall@5 三种配置均为 1.0；越权泄露 0；加权与等权在该集上分不出差别 | 第 25 节 |
+| v4 Agent 层真实模型 | 42 例（dev 24 / 冻结留出 18） | dev 首轮 22/24，修复后 24/24；冻结留出集只跑一次，**16/18** | 第 26 节 |
+
+## 5. 已知局限、未测量项与范围边界
+
+### 已知缺陷与模型局限
+
+- 留出集暴露：只说“提个求助单”而没有任何细节时，规划器没有“发起求助”意图，该轮被当作普通问答检索，因此漏建求助单（`a6-07`）。
+- 回答类情景记忆只记录本轮最后一句提问；对只回一个机型之类的短追问，记录里缺少上文。
+- 精排（Rerank）在小语料上没有稳定的净收益，阈值也没有独立标定，默认关闭。
+- 离线容器演示使用 Hash 编码器，纯编号或极短问句的余弦分数偏低，因此演示脚本使用带主题词或机台号的问法。
+- 端到端只用了单个模型（`deepseek-flash`），每份报告都是单次运行，没有估计波动。
+
+### 尚未完成的测量与审核
+
+- 查询改写开 / 关对检索层的净效果对比：未测量。
+- 滚动摘要质量与压缩后的槽位保留率：未测量。
+- 情景记忆召回质量与 `0.5` 相似度阈值的标定：未测量。
+- 真人逐句回答支持度审核数仍为 `0`；模型审核不能替代人工审核。
+- v4 的七个演示故事尚未录制新版视频。
+
+### 明确不做（Out of Scope）
+
+- LLM 案例字段抽取（按可砍清单，仅保留规则抽取）。
+- OCR。
+- 异步入库队列。
+- 真实企业 SSO 与 IM 通知推送。
+- 多租户，以及跨区物理分集群的数据驻留。
+
+## 6. 快速开始
+
+### 方式 A：Docker Compose 六服务离线演示
+
+只需 Docker 与 Compose v2，不需要本机 Python / Node。在仓库根目录运行：
 
 ```bash
 docker compose -f deploy/compose.demo.yaml up --build -d --wait
 ```
 
-打开 [本机离线演示](http://127.0.0.1:8088)。这套环境使用独立数据库和固定回答，不调用真实模型；首次构建需要网络。数据持久化、停止 / 重置和自动验收见[容器演示说明](docs/container-demo.md)。
+打开 [http://127.0.0.1:8088](http://127.0.0.1:8088)。栈内包含 PostgreSQL、Elasticsearch、Redis、MCP 工具服务、API 和 Web 六个服务；使用独立数据库和脚本化的固定回答，回答标注“演示用固定回答”，不加载 BGE、不调用真实模型，只验证权限、引用、版本、求助单与记忆等流程。首次构建需要访问镜像仓库、PyPI 和 npm。
 
-下列步骤用于本机开发与真实模型配置：
+重置为初始演示数据（会删除这套演示的数据卷）：
+
+```bash
+docker compose -f deploy/compose.demo.yaml down --volumes
+```
+
+端口占用、数据持久化与自动验收见[容器演示说明](docs/container-demo.md)。
+
+### 方式 B：本地开发与真实模型运行
 
 需要 Docker、[uv](https://docs.astral.sh/uv/)、Node 20+。真实检索需要 GPU 或较强 CPU 加载 BGE-M3（约 2.2GB，首次运行从 HuggingFace 下载）。
 
-```bash
-docker compose -f deploy/compose.yaml up -d        # PostgreSQL；另含 es 服务，首次会构建带 IK 插件的 ES 镜像（需联网）
-cd backend
-uv sync --extra ml
-uv run alembic upgrade head
-KNV_ENCODER=bge-m3 uv run python -m knoventra.db.seed
-cp .env.example .env     # 填入 OpenAI 兼容的 KNV_LLM_BASE_URL / KNV_LLM_API_KEY / KNV_LLM_MODEL
-uv run uvicorn knoventra.main:app
-```
+1. 启动 PostgreSQL、Elasticsearch、Redis（首次会构建带 IK 插件的 ES 镜像，需联网）：
+
+   ```bash
+   docker compose -f deploy/compose.yaml up -d --wait
+   ```
+
+2. 安装依赖、迁移并导入默认种子（种子含虚构资料、PDF 和现场作业 SOP）：
+
+   ```bash
+   cd backend
+   uv sync --extra ml
+   uv run alembic upgrade head
+   KNV_ENCODER=bge-m3 uv run python -m knoventra.db.seed
+   ```
+
+3. 导入虚构的现场日志与技能矩阵，并把去重后的案例发布到 `field-cases`：
+
+   ```bash
+   uv run python -m knoventra.ingestion.journal ../data/demo/journals/*.xlsx --registry ../data/demo/journals/machines.json --publish-kb field-cases
+   ```
+
+4. 配置并启动后端：复制 `.env.example` 为 `.env`，填入 OpenAI 兼容的 `KNV_LLM_BASE_URL`、`KNV_LLM_API_KEY`、`KNV_LLM_MODEL`。使用 DeepSeek 的工具调用时必须设置 `KNV_LLM_THINKING=disabled`：其默认思考模式要求回传推理历史，当前通用适配器不保留该字段；其他服务保持 `provider-default`。详见[后端说明](backend/README.md#llm-与-thinking-模式)。
+
+   ```bash
+   cp .env.example .env
+   uv run uvicorn knoventra.main:app
+   ```
+
+5. 启动前端（默认把 `/api` 代理到 `http://localhost:8000`，可用 `KNV_API` 覆盖）：
+
+   ```bash
+   cd ../web
+   npm install
+   npm run dev
+   ```
+
+演示账号与资料见 `data/demo/manifest.json`（密码为虚构的演示值）。不想配置模型时，可运行 `backend/dev/mock_server.py` 检查界面，其回答是固定的，不代表问答质量。
+
+**可选：启用 ES / Redis / MCP**（均不设置时只用 PG 的三个召回通道、每次从 Checkpoint 重建草稿、工具在 API 进程内执行）：
+
+- ES：`.env` 设置 `KNV_ES_URL=http://localhost:59200`，然后在 `backend/` 执行 `uv run python -m knoventra.search_es.sync rebuild` 建立索引；之后发布会自动同步，`reconcile` 用于对账补齐，`drain` 用于消费 outbox。
+- Redis：`.env` 设置 `KNV_REDIS_URL=redis://localhost:56379/0`。
+- MCP：在 `backend/` 执行 `uv run python -m knoventra.mcp_server`（默认 `127.0.0.1:58765`），`.env` 设置 `KNV_MCP_URL=http://127.0.0.1:58765/mcp`，并给 `KNV_TOOL_TOKEN_SECRET` 设置一个与 `KNV_JWT_SECRET` 不同的值（API 与 MCP 服务读取同一个 `.env`）。
+
+**测试与验收**（均在 `backend/` 下；测试使用独立的 `knoventra_test` 库和离线 Hash 编码器，不需要模型；ES / Redis 测试在不可达时跳过，设置 `KNV_REQUIRE_ES=1`、`KNV_REQUIRE_REDIS=1` 后改为失败，CI 即如此运行）：
 
 ```bash
-cd web && npm install && npm run dev
+uv run pytest
+uv run --no-sync python dev/check_migrations.py
+uv run --no-sync python dev/check_demo.py
+uv run --no-sync python dev/check_demo.py --mcp
 ```
 
-演示账号与资料见 `data/demo/manifest.json`（密码为虚构的演示值）。资料含 12 份 Markdown 和一份两页 PDF；PDF 的生成脚本为 `data/demo/generate_it_badge_pdf.py`，需要 ReportLab、FontTools 和中文 TrueType 字体。已入库的旧演示库可再次执行种子命令加入新资料。不想配置 LLM 时，可用 `backend/dev/mock_server.py` 做界面检查，其回答是固定的，只用于演示流程。
+`dev/check_compose_demo.py` 对容器演示做同等验收，前端用 `cd web && npm test && npm run build && npm run lint`。范围见[自动化验收](docs/ci.md)。
 
-使用 DeepSeek 的工具调用时，在 `backend/.env` 显式设置 `KNV_LLM_THINKING=disabled` 并重启后端。其默认思考模式要求回传推理历史，当前通用适配器不保留该字段；其他服务保持 `provider-default`，不会额外发送供应商扩展。配置与限制见[后端说明](backend/README.md#explicit-provider-thinking-mode)。
-
-启用 ES 关键词通道：在 `backend/.env` 设置 `KNV_ES_URL=http://localhost:59200`，然后执行 `uv run python -m knoventra.search_es.sync rebuild` 建立索引；之后发布修订会自动同步，`reconcile` 用于对账补齐。不设置 `KNV_ES_URL` 时只用 PG 的三个召回通道。
-
-启用 Redis 工作记忆：`docker compose -f deploy/compose.yaml up -d redis`，在 `backend/.env` 设置 `KNV_REDIS_URL=redis://localhost:56379/0`。不设置时槽位草稿每次从 Checkpoint 重建，长对话的摘要每轮重新生成。
-
-启用 MCP 工具服务：在 `backend/` 执行 `uv run python -m knoventra.mcp_server`（默认 `127.0.0.1:58765`），在 `backend/.env` 设置 `KNV_MCP_URL=http://127.0.0.1:58765/mcp`，并给 `KNV_TOOL_TOKEN_SECRET` 设一个与 `KNV_JWT_SECRET` 不同的值（API 和 MCP 服务读同一个 `.env`）。
-
-导入现场日志并发布案例：
+**三套评测入口**（在 `backend/` 下；详细参数见[后端说明](backend/README.md#评测工具链)）：
 
 ```bash
-uv run python -m knoventra.ingestion.journal ../data/demo/journals/*.xlsx --registry ../data/demo/journals/machines.json --publish-kb field-cases
+# 检索层：不调用 LLM
+KNV_ENCODER=bge-m3 uv run python eval/run_eval.py --split dev
+
+# v4 现场检索：先建独立评测库，再比较三种配置，不调用 LLM
+KNV_ENCODER=bge-m3 uv run python eval/setup_field_eval.py
+KNV_ENCODER=bge-m3 uv run python eval/run_field_eval.py --split dev
+
+# Agent 层：先离线预检；真实运行会产生模型费用，需要 --allow-llm 并事先确认预算
+uv run python eval/run_agent_eval.py --split dev --dry-run
 ```
 
-测试（使用独立的 `knoventra_test` 库和离线哈希编码器，不需要模型和 LLM；ES 相关测试在 `localhost:59200` 不可达时跳过，CI 中设置 `KNV_REQUIRE_ES=1`，不可达即失败；Redis 测试同理，地址 `localhost:56379`，开关 `KNV_REQUIRE_REDIS=1`）：
+留出集只能用 `--confirm-final` 运行一次，不得针对它调参或重跑。
 
-```bash
-cd backend && uv run pytest
-```
+## 7. 文档导航与上游来源
 
-离线 HTTP 演示与服务重启验收：在 `backend/` 执行 `uv run --no-sync python dev/check_demo.py`。脚本创建并删除独立临时库，验证权限、来源、版本发布和转交确认的持久化恢复，不调用真实模型。配置与范围见[自动化验收](docs/ci.md#http-演示与进程重启验收)。
-
-评测：
-
-```bash
-cd backend
-KNV_ENCODER=bge-m3 uv run python eval/run_eval.py --split dev                 # 检索层，不调用 LLM
-uv run python eval/run_eval.py --split dev --mode agent --case-id ops-01 --dry-run # 离线预检，不调用模型
-```
-
-真实 Agent 评测需配置 `KNV_LLM_*`、提供输入 / 输出单价并显式传入 `--allow-llm`。费用为基于输入长度假设的场景估算，不是账单上限；先检查用例范围和预检结果，具体命令见[后端说明](backend/README.md)。
-
-## 文档
+**架构与计划**
 
 - [开发方案 v3.0](docs/knoventra-development-plan.md)
+- [v4 计划](docs/knoventra-v4-plan.md)
 - [关键架构决策](docs/DECISIONS.md)
+
+**评测与审核**
+
 - [评测报告](docs/evaluation-report.md)
-- [回答支持度审核流程](backend/eval/REVIEW.md)
-- [20例dev的10个可答例真人审核页](backend/eval/results/dev-agent-stream-nothinking-20261109-review-qa-human.html)
-- [4例定向验证的3个可答例真人审核页](backend/eval/results/dev-agent-followup-20261109-review-qa-human.html)
-- [演示与会话恢复验证](docs/demo-guide.md)
+- [回答支持度审核流程](backend/eval/REVIEW.md)（含真人审核页的生成与使用说明；审核页 HTML 需在本地浏览器打开，GitHub 网页端只会显示其源码）
+
+**演示与 CI**
+
+- [v4 演示脚本](docs/demo-v4-script.md)
+- [演示与会话恢复验证（v3 手册）](docs/demo-guide.md)
+- [容器化离线演示](docs/container-demo.md)
 - [本地浏览器流程录像（脚本模型）](docs/demo/README.md)
 - [自动化验收与 CI](docs/ci.md)
-- [后端说明](backend/README.md) · [前端说明](web/README.md)
 
-## 上游基线与来源
+**子模块说明**
+
+- [后端说明](backend/README.md)
+- [前端说明](web/README.md)
+
+**上游基线与来源**
 
 - 源项目：[nageoffer/ragent](https://github.com/nageoffer/ragent)，基线提交 [`c3b6157`](https://github.com/nageoffer/ragent/commit/c3b6157730ac1f66a312bcd286c47d3ee6aaac42)，许可证 [Apache-2.0](LICENSE)。
-- 上游的 Java 源码、`frontend/`、数据库脚本和原项目介绍曾作为设计参考保留在仓库中，2026-11-24 已从当前目录树移除，仍可在提交历史中查到（基线导入提交之后、移除提交之前的任一版本）。**Python 后端（`backend/`）与前端（`web/`）为独立编写，未复制上游代码**。
+- 上游的 Java 源码、`frontend/`、数据库脚本、原项目介绍及其 `docs/` 文档与架构图曾作为设计参考保留在仓库中，2026-11-24 已从当前目录树移除，仍可在提交历史中查到（基线导入提交之后、移除提交之前的任一版本）。**Python 后端（`backend/`）与前端（`web/`）为独立编写，未复制上游代码。**
 - 详细来源说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

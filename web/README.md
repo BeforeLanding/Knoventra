@@ -1,192 +1,76 @@
-# Knoventra web
+# Knoventra 前端
 
-Vite + React + TypeScript, four pages: login (demo account switcher), chat (streaming answer, source cards,
-source preview, confirm card, refusal state, conversation replay), owned escalation history, and admin
-(upload, revisions, publish).
+Vite + React + TypeScript 单页应用，使用 hash 路由。后端与整体介绍见[根目录 README](../README.md) 和[后端说明](../backend/README.md)。
 
-```bash
-cd web && npm install && npm run dev      # proxies /api to KNV_API (default http://localhost:8000)
-```
+## 路由与角色可见性
 
-UI-only check without an LLM key: `backend/dev/mock_server.py` (canned answers; shows flow, not answer quality).
+登录页加 6 个导航视图（`src/App.tsx`、`src/pages/`）：
 
-## File parse rejection
+| 路由 | 视图 | 可见性 |
+|---|---|---|
+| `#/login` | 登录：演示账号切换 | 未持有 token 时总是显示 |
+| `#/chat`（默认） | 问答：流式回答、来源卡与预览、确认卡、拒答态、会话回放与标题筛选；回到有更新的会话时，顶部的“你的求助单已更新”提示横幅列出专家或管理员更新过的求助单 | 所有登录用户 |
+| `#/escalations` | 转交记录：本人记录，只读，分页刷新 | 所有登录用户 |
+| `#/help` | 我的求助单 | 所有登录用户 |
+| `#/memory` | 我的记忆：查看画像与情景记忆，可逐条或整体删除 | 所有登录用户 |
+| `#/workbench` | 专家工作台：处理派给自己的求助单（管理员另有待派单队列并可派单） | 有 `engineer_name` 的用户或管理员 |
+| `#/admin` | 资料管理：上传、修订、发布 | 仅管理员 |
 
-Uploads rejected with 422 / `DOCUMENT_PARSE_INVALID` show a specific instruction to use
-UTF-8 Markdown or valid, unlocked PDF text without NUL. The form stays editable with its
-fields and file choice intact for explicit correction; the client does not retry or report
-an uncertain commit for this recognized rejection. Other error handling remains unchanged.
+导航按角色隐藏入口，但**授权始终由后端判定**；前端的隐藏不是安全边界。
 
-## Preparing an existing document's next revision
-
-Each catalog row has “填入新修订”. It copies the exact KB, title (including original
-spacing/script) and language into the upload form, replaces any prior metadata, clears
-the previous file choice and focuses file selection. The button describes this replacement
-in its tooltip; the resulting message asks for a new file and explicitly says it will be
-uploaded as a draft. It makes no request and does not reserve a version or publish anything.
-
-The form remains editable; changing KB/title can create a separate document under the
-existing server identity rules. Choose a file and explicitly upload, then publish separately.
-This shortcut requires a verified catalog and supported KB/language and is disabled during
-any active operation. Backend validation and version allocation remain authoritative.
-
-## Admin catalog filters
-
-The document table supports a literal, case-insensitive title substring, an exact KB
-selection, and a revision-state filter. Conditions combine with AND. State filters match
-documents containing at least one such revision; all revisions of a matching document
-remain visible for version comparison. Revisionless documents appear with no state filter.
-The table shows matching/total document counts, an empty-match message and a clear action.
-
-Filters apply only to the already loaded catalog and issue no requests or mutations.
-They survive explicit refreshes and successful writes followed by refresh; clearing them
-does not reset the upload form. A selected KB absent from refreshed data stays explicitly
-selected until cleared. Failed refreshes keep the existing unverified-data warning and
-write lock even when filtering. Leaving the page resets filters. Title search does not
-search body text, normalize scripts or interpret wildcard characters. This does not add
-server pagination or reduce the full-catalog response size.
-
-## Identity loading
-
-Each protected route entry verifies `/me` before mounting chat, records or admin. Token or route changes
-discard the old identity/page boundary and cancel its request; returning to a previous route still
-requires a fresh check. Late responses cannot replace the new account. An identity-load failure offers
-explicit retry or account switching, without repeatedly requesting in the background. Login itself
-does not load protected identity. Same-page token updates and other-tab localStorage changes invalidate
-the boundary; listener subscriptions are removed on unmount. An older request's 401 does not erase a
-newer token, and an already canceled request cannot force logout. Current-session 401 still clears the
-token and returns to login. These UI checks do not replace backend authorization or cancel committed
-work: changing routes/accounts can abort the browser connection while server processing continues.
-
-## Login submission
-
-Choosing an account starts one cancellable login request and disables every account button until it
-fails or leaves the login screen. Repeated clicks do not create parallel requests. Failures offer an
-explicit retry, without background resubmission; leaving cancels the request. The client checks the
-response token before storing it, ignores a canceled response, and rejects a result if credentials
-changed while it was pending. Navigation only uses the still-current committed result. Success uses
-hash routing and the existing identity check, without a full-page reload. Cancellation does not revoke
-a token already issued by the server; this is a client submission guard, not cross-tab transactional
-login serialization or JWT validation. Server `/me` remains the identity authority.
-
-## Conversation list
-
-The sidebar uses the owned cursor API, loading 20 conversations initially. “加载更多会话” appends the next
-page and deduplicates IDs; “刷新会话” restarts from the newest page without changing the currently open
-conversation or its messages. A pagination or same-filter refresh error preserves existing rows and the current cursor for an explicit
-retry. List reads have separate loading/error state and never start a model or resume a checkpoint.
-New completed requests refresh the first page and cancel an older in-flight list read; late results
-cannot overwrite that refresh. Leaving chat cancels the current list request. Upgrade the backend
-alongside this frontend; the old array endpoint is retained for other clients.
-
-Submit “会话标题关键词” with “搜索会话” to filter your titles. Typing alone does not query the server;
-the active submitted filter is displayed separately and retained during paging, refresh and post-run
-refresh. Changing the filter clears old results/cursor and cancels the old request so different result
-sets cannot mix. Clear the field and submit to return to all titles. An unsuccessful new filter shows
-an error with no old results; explicit refresh retries that submitted filter. Search does not change the
-active conversation/messages, open checkpoints or call a model. It matches title text only, not the full
-conversation; text beyond the initial title prefix cannot be found by this feature.
-
-## Question input
-
-Chat displays the authenticated server's `chat_max_chars` limit (default/fallback 4,000). It counts
-Unicode code points in the trimmed text actually sent, so ordinary emoji do not count twice as UTF-16
-surrogate pairs. Oversized text stays editable and is not sent or truncated. Whitespace-only text is
-not sent. Server validation failures show an error and restore the rejected question when the composer
-has no newer draft; no automatic replay is performed. This is a per-question limit, not a history,
-token-count or billing cap. The server rejects invalid questions before conversation processing;
-existing saved messages and confirmation/recovery actions are unaffected.
-
-## Conversation recovery
-
-Select an existing conversation after a refresh to load `/conversations/{id}/state`.
-The page restores saved refusal/error states and any pending confirmation with its expiry time.
-The composer stays blocked until the confirmation is resolved. Expired confirmations offer a close
-action; already saved decisions offer recovery using the server's decision. Failed confirmation
-requests reload the checkpoint before allowing a retry, rather than displaying an optimistic approval.
-Conversation switching is disabled while a request is active; leaving the chat aborts the browser request.
-The server also rejects concurrent chat/confirmation mutations for the same conversation with
-`CONVERSATION_BUSY` (HTTP 409). The page retains the busy notice after restoring state; reopen the
-conversation after the other request finishes before retrying.
-Incomplete checkpoints without an interrupt expose `retry_checkpoint_id` and an explicit continuation
-button. It posts to `/chat/retry` with that checkpoint ID, preserving the original question and stored
-decisions. State reads never execute a retry; stale/finished/pending-confirmation runs are rejected and
-the page reloads current state. Recovery can repeat model calls and is always user initiated.
-Completed, tracked checkpoints whose final message is missing expose `recover_checkpoint_id` and
-a separate save-only button. It posts to `/chat/recover`, which preserves the original answer, source
-cards and refusal state without invoking a model or tool. Save failures remain visible after state
-refresh and leave the repair action available. Legacy turns without tracking metadata are not inferred.
+## 开发与构建命令
 
 ```bash
-npm test        # API streaming and React recovery interaction regressions (jsdom)
-npm run build   # TypeScript and production bundle
-npm run lint
+cd web
+npm install
+npm run dev      # 把 /api 代理到 KNV_API（默认 http://localhost:8000）
+npm test         # vitest + jsdom：API 流式解析与 React 交互回归
+npm run build    # tsc -b && vite build
+npm run lint     # oxlint
 ```
 
-These checks use mock API responses. They verify UI behaviour and do not measure real model answers.
-For the complete demonstration sequence, see [the demo guide](../docs/demo-guide.md).
+测试使用模拟的 API 响应，验证界面行为，不衡量真实模型回答。CI 在 Linux / Node 24 上用锁定文件 `npm ci` 后依次执行 `npm test`、`npm run build`、`npm run lint`，见[自动化验收](../docs/ci.md)。不想配置 LLM 时，可用 `backend/dev/mock_server.py`（固定回答，只演示流程）；完整演示步骤见[演示指南](../docs/demo-guide.md)与 [v4 演示脚本](../docs/demo-v4-script.md)。
 
-The SSE client requires a complete `done` or `confirm` event before treating a stream as finished.
-EOF/read failure before that point raises `STREAM_INCOMPLETE`; malformed UTF-8/JSON or invalid event
-payloads raise `STREAM_INVALID`. LF, CRLF and CR delimiters, fragmented UTF-8, heartbeat comments and
-multiline JSON data are supported. The reader is canceled and unlocked after a terminal event, parser
-failure or early consumer exit; an open connection after `done` cannot keep the UI waiting.
-The chat displays the failure and reloads the known conversation state, restoring a saved answer,
-confirmation, retry or save-only recovery action as appropriate. It never automatically resubmits a
-request. Until state synchronization succeeds the composer stays blocked. If a new conversation's
-metadata was never received, its server ID is unknown; refresh the list and reopen it to inspect results.
-That interrupted composer is blocked as well; the client does not invent an ID or claim to have synced it.
+## 核心交互与状态恢复契约
 
-## Source preview
+### 身份核验边界
 
-Source cards are keyboard-operable buttons. Opening one shows loading immediately and fetches the
-source with a fresh authorization check; the response must match the requested chunk ID. Closing via
-the button, Escape or backdrop cancels the request. Switching context or leaving chat also cancels it;
-late responses and failures cannot reopen an old dialog or overwrite a newer source. No full-text
-preview cache is used. Failure shows an unavailable/unauthorized/missing-source message without old
-content; reopen the card to retry. The modal traps keyboard focus on its close control, makes the
-background inert, and returns focus to the source button after closing when that button still exists.
-Component tests cover ordering and cancellation; they do not replace real-browser accessibility checks.
+每次进入受保护路由都先请求 `/me`，通过后才挂载页面。token 或路由变化会丢弃旧的身份 / 页面边界并取消其请求，回到先前的路由仍需重新核验；迟到的响应不能替换新账号。身份加载失败时提供显式重试或切换账号，不在后台反复请求；登录本身不加载受保护身份。同页 token 更新和其他标签页的 localStorage 变化都会使边界失效，监听器在卸载时移除。较旧请求的 401 不会清除较新的 token，已取消的请求不能触发登出；当前会话的 401 清除 token 并回到登录页。这些检查不替代后端授权，也不撤销已提交的服务端工作。
 
-## Document management
+登录选择账号后只发起一个可取消的请求，所有账号按钮在其失败或离开登录页之前禁用；失败提供显式重试。写入前核对响应 token，忽略已取消的响应，凭据在等待期间变化时丢弃结果。取消不撤销服务器已签发的 token；这是客户端提交保护，不是跨标签页事务性登录，也不是 JWT 校验——服务端 `/me` 始终是身份的权威。
 
-The admin page shows list loading/failure/empty states and an explicit “刷新资料” action. Upload,
-publish and list refresh share a single active-operation guard; write controls remain disabled until
-the current list has loaded. Confirmed mutations refresh that list before enabling another write.
-Success and refresh failure are separate: a failed follow-up read does not turn a successful publish
-into a reported rollback. If a mutation response is lost, the outcome is unconfirmed; the page blocks
-another write until an explicit list refresh and never automatically resubmits. Failed uploads retain
-their form fields; confirmed uploads clear the form and remain drafts until published separately.
-Leaving the page cancels its browser request and ignores late responses. Cancellation does not undo
-a committed upload/publish, and a fresh list is only a snapshot; inspect revisions before retrying an
-uncertain action. These client guards do not replace server authorization, document locks or constraints.
+### SSE 解析与中断同步
 
-When the catalog advertises `upload_max_bytes`, the page displays the byte limit and rejects an oversized
-selected file before sending it. The server remains authoritative (older catalogs without this field
-still work). HTTP 413 is shown as a rejected upload, preserves the form and permits selecting a smaller
-file without repeating the failed request or demanding a list refresh. Other uncertain submission
-failures retain the existing explicit-verification flow.
+SSE 客户端必须收到完整的 `done` 或 `confirm` 事件才视为流结束：在此之前 EOF / 读取失败抛出 `STREAM_INCOMPLETE`，UTF-8 / JSON 非法或事件载荷无效抛出 `STREAM_INVALID`。支持 LF / CRLF / CR 分隔、分片的 UTF-8、心跳注释和多行 JSON 数据；终止事件、解析失败或消费者提前退出后读取器被取消并解锁，`done` 之后仍打开的连接不会让界面一直等待。出现失败时，页面显示错误并重新加载已知会话的状态，按情况恢复已存的回答、确认、续跑或补存操作，**从不自动重发请求**；状态同步成功前输入框保持禁用。若新会话的元数据尚未收到，其服务端 ID 未知，需刷新列表后重新打开，客户端不会虚构 ID。
 
-The catalog's optional `upload_rules` supplies the title character limit and language choices; older
-responses fall back to 255 and `zh-Hans` / `zh-Hant` / `en`. Titles are checked for non-whitespace text,
-NUL and code-point length before sending, without rewriting/truncating accepted text. A server 422 is
-shown as a rejected upload: the form stays intact and editable for explicit correction, without a forced
-catalog refresh or automatic resubmission. Network/uncertain failures still require catalog verification.
-These checks validate metadata, not the file's actual language; the server rechecks existing-document
-language and retains its lock-based final check.
+### 确认、续跑与补存的隔离
 
-A recognized 503 / `ENCODER_OUTPUT_INVALID` identifies invalid encoder results before ingestion. The
-page preserves the form and explains the service fault without automatic replay. Unknown service/network
-errors keep the conservative verification flow. API errors expose a structured uppercase machine code
-when supplied as `detail` or `detail.code`, retaining their original status and message otherwise.
+选择已有会话会加载 `/conversations/{id}/state`，恢复已存的拒答 / 错误状态，以及待确认的卡片及其有效期；待确认处理之前输入框保持禁用。过期的确认提供关闭操作，已保存的决定以服务端的决定恢复，确认请求失败时先重新加载检查点再允许重试，不显示乐观的批准。同一会话被另一个请求占用时，服务端返回 409 `CONVERSATION_BUSY`，页面在恢复状态后保留该提示；确认与已激活 interrupt 不符时返回 409 `CONFIRMATION_NOT_ACTIVE`，页面恢复当前卡片并给出具体提示。
 
-## Escalation records
+- **续跑**：存在 `retry_checkpoint_id`（未完成且无 interrupt 的检查点）时显示“继续未完成请求”，向 `/chat/retry` 提交该检查点 ID，保留原问题与已存决定；过期、已完成或待确认的运行会被服务端拒绝，页面重新加载当前状态。续跑可能重复模型调用，且始终由用户显式触发。
+- **补存**：存在 `recover_checkpoint_id`（已完成但最终消息未保存）时显示“恢复已完成回答”，向 `/chat/recover` 提交，保留原回答、来源卡和拒答状态，不调用模型或工具；保存失败的提示在状态刷新后仍然保留，补存操作保持可用。未跟踪元数据的历史轮次不被推断。
+- 会话切换在请求进行中禁用，离开聊天页会中止浏览器请求。
 
-Open “转交记录” (`#/escalations`) to view your confirmed transfers without asking the model. Records show
-summary, current status and creation time; legacy rows display “历史时间未知”. Refresh starts at the newest
-page; “加载更多” appends older records using the owned cursor. A failed page keeps existing records and
-the cursor so the user can retry. Leaving the page aborts the active fetch, including pagination requests.
-The page is read-only; canceling a confirmation creates no list record.
+### 问题输入与会话列表
 
-CI reproduces `npm ci`, component/API tests, production build and lint on Linux / Node 24 from the
-checked-in lockfile. Current frontend lint passes without warnings; see [the CI guide](../docs/ci.md).
+问题输入显示服务端 `chat_max_chars`（默认 / 回退 4000），按去除首尾空白后实际发送文本的 Unicode 码点计数（emoji 不按 UTF-16 代理对重复计）。超限文本保持可编辑、不发送也不截断，仅含空白的文本不发送；服务端校验失败时显示错误，并在输入框没有更新的草稿时恢复被拒的问题，不自动重发。这是单个问题的上限，不是历史、Token 或费用上限。
+
+侧边栏使用属主游标 API，初始加载 20 条；“加载更多会话”追加下一页并按 ID 去重，“刷新会话”从最新页重来且不改变当前打开的会话；分页或同筛选刷新出错时保留已有行和游标，等待显式重试。提交“会话标题关键词”并点击“搜索会话”才会筛选（只输入不请求）；提交的筛选在分页与刷新中保持，更换筛选会清空旧结果与游标并取消旧请求，避免不同结果集混合；新筛选失败时只显示错误，不保留旧结果。仅匹配标题（通常是首问的前 30 个字符），不匹配会话正文。新完成的请求会刷新第一页并取消更旧的在途列表读取。
+
+### 目录筛选与上传校验（资料管理）
+
+- **筛选**：目录表支持标题子串（字面、不区分大小写）、精确 KB 和修订状态三个条件，以 AND 组合；状态筛选匹配“至少含一个该状态修订”的文档，匹配文档的所有修订仍显示以便对比版本；显示匹配 / 总数、无匹配提示和清除操作。筛选只作用于已加载的目录，不发请求；在显式刷新和成功写入后的刷新中保持，清除筛选不重置上传表单，离开页面即重置；不搜索正文、不做字形归一或通配符解释，也不减小完整目录响应。
+- **上传前校验**：目录公布 `upload_max_bytes` 时显示字节上限并在发送前拒绝超限文件（旧目录缺该字段仍可用）；`upload_rules` 提供标题上限和语言选项（旧响应回退到 255 与 `zh-Hans` / `zh-Hant` / `en`）。标题检查非空白、无 NUL 和码点长度，不改写、不截断。这些只校验元数据，不校验文件真实语言；服务端保持权威。
+- **错误处理**：413 与 422（含 `DOCUMENT_PARSE_INVALID` 与元数据错误）显示为被拒绝的上传，表单与文件选择保持原样可编辑，不强制刷新目录，不自动重发；503 `ENCODER_OUTPUT_INVALID` 显示服务故障说明；未知或网络类的不确定失败仍走保守的“先刷新目录核实”流程。API 错误在 `detail` 或 `detail.code` 提供结构化大写编码时予以暴露。
+- **写入保护**：上传、发布和列表刷新共用一个活动操作保护，目录加载完成前写控件禁用；已确认的写入先刷新列表再允许下一次写。写入成功与随后刷新失败是两种状态，不把成功的发布报告为回滚；若写入响应丢失，结果视为未确认，页面阻止再次写入直到显式刷新，且从不自动重发。成功上传后表单清空，修订保持草稿，需单独发布。离开页面会取消浏览器请求并忽略迟到的响应；取消不撤销已提交的上传 / 发布。
+- **“填入新修订”**：每个目录行的按钮把该文档的 KB、标题（保留原间距与字形）和语言复制到上传表单、清除之前选的文件并聚焦文件选择；不发请求、不预占版本、不发布。表单仍可编辑（改 KB / 标题可创建另一个文档），须已验证目录且 KB / 语言受支持，任何操作进行中时禁用。
+
+### 来源预览：无缓存与重鉴权
+
+来源卡是可用键盘操作的按钮。打开时立即显示加载，并**以新的鉴权检查**获取来源，响应必须与请求的分块 ID 一致；不使用全文预览缓存。关闭（按钮、Escape、遮罩）、切换上下文或离开聊天页都会取消请求，迟到的响应和失败不能重新打开旧对话框或覆盖较新的来源。失败时显示不可用 / 未授权 / 缺失的提示，不保留旧内容，重新打开卡片即可重试。弹窗把键盘焦点限制在关闭控件，背景设为 inert，关闭后焦点回到来源按钮（若仍存在）。组件测试覆盖顺序与取消，不替代真实浏览器的无障碍检查。
+
+### 求助单、记忆与转交记录页面
+
+- **转交记录**（`#/escalations`）：本人确认过的转交，显示摘要、当前状态和创建时间，历史行显示“历史时间未知”；刷新回到最新页，“加载更多”按属主游标追加，失败的页保留已有记录与游标；离开页面中止当前请求；页面只读，取消的确认不产生记录。
+- **我的求助单 / 专家工作台**：共用一个组件。`mine` 模式列出本人提交的求助单；`workbench` 模式列出派给本人的求助单，管理员另有待派单队列并可看到推荐专家。详情页列出处理记录（只追加的事件流水）和当前角色在当前状态下可执行的动作（派单、取消派单、开始处理、进展、提交解决方案、重新打开、确认关闭、撤销），进展与解决方案须填写说明；动作的合法性与角色以服务端状态机为准，前端按钮不是授权。
+- **我的记忆**：显示画像和情景记忆（数量），可逐条或整体删除；删除是对 `DELETE /memory/episodes/{id}`、`DELETE /memory` 的显式请求。

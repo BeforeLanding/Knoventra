@@ -18,9 +18,9 @@
 
 **2026-11-09 模型协议补齐与真实复测准备：发现 DeepSeek 默认思考模式要求工具轮次回传推理历史，而当前通用适配器不保留该字段；新增显式 `KNV_LLM_THINKING=provider-default|disabled`，在线 / 评测复用构造参数，预检和报告记录实际选择，日志校验核对一致性。新建隔离库的最终 13 份资料 / 23 块指纹与冻结语料一致，20 例流式 / 非思考模式峰价费用场景为 US$0.24288（非账单上限）。真实复测尚未启动，没有新的效果或延迟测量；待明确授权外部模型调用后执行，见 [评测报告](evaluation-report.md)第 19 节。**
 
-**2026-11-09 首回答分片统计：Agent 评测显式启用流式模型输出，通过每例独立的回调记录最后一次无工具调用回复的首个非空文本分片耗时，汇总有效样本数与 P50 / P95 / 最大值。排除推理字段、工具调用前说明、非流式替身、截断与运行故障；确认恢复沿用原例起点。新策略版本与旧报告校验兼容，旧实测文件不改写。该值是首 token 延迟的分片级近似，采样早于引用 / 拒答后处理，不是浏览器或已核验答案延迟；真实模型复测与真人审核仍待完成。定义见 [后端说明](../backend/README.md#first-streamed-answer-content)。**
+**2026-11-09 首回答分片统计：Agent 评测显式启用流式模型输出，通过每例独立的回调记录最后一次无工具调用回复的首个非空文本分片耗时，汇总有效样本数与 P50 / P95 / 最大值。排除推理字段、工具调用前说明、非流式替身、截断与运行故障；确认恢复沿用原例起点。新策略版本与旧报告校验兼容，旧实测文件不改写。该值是首 token 延迟的分片级近似，采样早于引用 / 拒答后处理，不是浏览器或已核验答案延迟；真实模型复测与真人审核仍待完成。定义见 [后端说明](../backend/README.md#agent-层计时指标)。**
 
-**2026-11-09 延迟统计补齐：按第 9.2 节为 Agent 的逐次已完成检索记录单调时钟耗时，新 Agent 评测汇总整例与逐检索的样本数、P50 / P95 / 最大值，并显示完成检索总数以区分旧记录缺失计时。空样本不补零，原报告保持不变。该计时包含服务端数据库会话与检索链路，不包含浏览器传输，也不等于首个答案 token 延迟；后者与真实模型复测、真人审核仍待完成。定义见 [后端说明](../backend/README.md#agent-latency-measurements)。**
+**2026-11-09 延迟统计补齐：按第 9.2 节为 Agent 的逐次已完成检索记录单调时钟耗时，新 Agent 评测汇总整例与逐检索的样本数、P50 / P95 / 最大值，并显示完成检索总数以区分旧记录缺失计时。空样本不补零，原报告保持不变。该计时包含服务端数据库会话与检索链路，不包含浏览器传输，也不等于首个答案 token 延迟；后者与真实模型复测、真人审核仍待完成。定义见 [后端说明](../backend/README.md#agent-层计时指标)。**
 
 目标仓库：https://github.com/BeforeLanding/Knoventra
 
@@ -427,7 +427,7 @@ Java 上游目录在 MVP 期间保持不动。MVP 完成后再决定是移入 `r
 
 ## 附录：参考
 
-- [Ragent 固定提交](https://github.com/nageoffer/ragent/commit/c3b6157730ac1f66a312bcd286c47d3ee6aaac42) 与 [保留的上游介绍](../README.upstream.md)。
+- [Ragent 固定提交](https://github.com/nageoffer/ragent/commit/c3b6157730ac1f66a312bcd286c47d3ee6aaac42) 与 上游原 README（`README.upstream.md`，已于 2026-11-24 随上游源码从工作树移除，可在提交历史中查阅）。
 - [LangGraph 中断与恢复](https://docs.langchain.com/oss/python/langgraph/interrupts)、[持久化](https://docs.langchain.com/oss/python/langgraph/persistence)。
 - [pgvector](https://github.com/pgvector/pgvector)（`sparsevec` 类型）、[BGE-M3](https://huggingface.co/BAAI/bge-m3)、[OpenCC](https://github.com/BYVoid/OpenCC)。
 - 依赖的具体版本与接口行为以 D1 锁定和实测为准。

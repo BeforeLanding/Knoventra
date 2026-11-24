@@ -1,7 +1,7 @@
 [project]
 name = "knoventra"
 version = "0.1.0"
-description = "Knoventra: permission-aware enterprise knowledge QA (MVP)"
+description = "Knoventra: permission-aware enterprise knowledge QA and field help assistant"
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "fastapi>=0.115",

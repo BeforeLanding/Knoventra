@@ -1,6 +1,8 @@
 # 容器化离线演示
 
-这套入口用于复现虚构资料上的权限、引用、版本和转交流程。后端使用 Hash 编码器和固定回答，回答会标注“演示用固定回答”；不加载 BGE、不调用 LLM，不代表真实问答效果。无需本机安装 Python、uv、Node 或 Java，只需已启动的 Docker 与 Compose v2。首次构建需要访问镜像仓库、PyPI 和 npm。
+> 验收摘要（v4.0，2026-11-24）：提交 `3bf9e463` 的 CI 中，`Container demo acceptance` job 与另外两个 job 一起通过；该验收覆盖六个服务从零构建，并核对 ES 有候选且未降级、Redis 有读取、MCP 有经过鉴权的工具调用。它覆盖后端 HTTP 与静态资源交付，不含浏览器交互、真实模型语义审核或生产部署验证。
+
+这套入口用于复现虚构资料上的权限、引用、版本和转交流程，以及 v4 的现场日志、求助单、记忆与 MCP 流程。后端使用 Hash 编码器和固定回答，回答会标注“演示用固定回答”；不加载 BGE、不调用 LLM，不代表真实问答效果。无需本机安装 Python、uv、Node 或 Java，只需已启动的 Docker 与 Compose v2。首次构建需要访问镜像仓库、PyPI 和 npm。
 
 v4 起演示栈包含六个服务：PostgreSQL（唯一事实源）、Elasticsearch（关键词通道，镜像与开发环境相同，API 每次启动后按 PG 重建索引，不挂数据卷）、Redis（工作记忆，不持久化）、MCP 工具服务（API 的每次工具调用都带每次运行签发的身份 token 走 MCP）、API 和前端。演示用的工具 token 密钥和数据库密码只用于本机演示。API 启动时依次执行迁移、导入演示资料、导入虚构的现场日志（技能矩阵和去重后的案例，发布到 `field-cases`，内容未变时跳过），最后重建 ES 索引。登录页除了六个演示账号，还有两名虚构的现场工程师（Tan Wei Ming、Zhou Lan），用来演示专家工作台。七个故事的演示步骤见 [v4 演示脚本](demo-v4-script.md)。
 
@@ -64,4 +66,4 @@ uv run --no-sync python dev/check_compose_demo.py
 
 正常完成或检查失败都会移除本次随机项目的容器、网络和数据卷；构建镜像及缓存保留供复用。强杀脚本或机器断电可能留下资源，启动日志会打印项目名，便于手动核对清理。验收会修改自己的临时演示资料，因此不支持向现有演示地址直接执行。
 
-CI 新增独立 `Container demo acceptance` job。2026-11-16 本地 Docker Desktop / Linux 容器验收通过，基础镜像及锁定依赖从镜像环境安装，未复用宿主虚拟环境或 node_modules。提交 `01867cba` 的[远端三个 job](https://github.com/BeforeLanding/Knoventra/actions/runs/43789121462)也全部通过，含完整容器验收；重启就绪检查仅作用于现有 API，并核验前端容器 ID / 发布端口不变，避免 Compose 版本差异导致前端被重建。该结果覆盖后端 HTTP 与静态资源交付，没有执行浏览器交互、真实模型语义审核或生产部署验证。
+CI 中由独立的 `Container demo acceptance` job 运行上述验收，当前状态见本文开头和[自动化验收](ci.md)。以下是该 job 首次加入时（2026-11-16，当时为三服务演示）的历史记录：本地 Docker Desktop / Linux 容器验收通过，提交 `01867cba` 的[远端三个 job](https://github.com/BeforeLanding/Knoventra/actions/runs/43789121462)也全部通过；重启就绪检查仅作用于现有 API，并核验前端容器 ID / 发布端口不变，避免 Compose 版本差异导致前端被重建。当时的结果覆盖后端 HTTP 与静态资源交付，没有执行浏览器交互、真实模型语义审核或生产部署验证。

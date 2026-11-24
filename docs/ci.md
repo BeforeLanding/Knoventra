@@ -1,6 +1,10 @@
 # 自动化验收
 
-**2026-11-16 远端验收：提交 `01867cba` 的[GitHub Actions](https://github.com/BeforeLanding/Knoventra/actions/runs/43789121462)三个 job 全部通过：后端 697 项（53.73 秒）、迁移全链 / ORM / 种子重放、离线 HTTP 两次重启验收；前端 145 项、生产构建、零警告 lint；新增容器演示验收，包括经 Nginx 的静态资源 / HTTP / SSE、API 重启与重建后的确认恢复和幂等性。首次运行中 Compose 意外重建前端导致端口变化的问题已修复，并新增前端容器 ID / 端口不变断言。以下历史记录保留当时状态；本次无真实模型调用，不替代真人审核。**
+**当前状态（v4.0 封版，2026-11-24）：提交 `3bf9e463` 的[远端运行](https://github.com/BeforeLanding/Knoventra/actions/runs/45344073409)三个 job 全部通过。后端 907 项测试在 PostgreSQL、Elasticsearch、Redis 均可达的条件下运行（ES / Redis 不可达即失败），随后执行 `dev/check_demo.py` 与 `dev/check_demo.py --mcp`；前端 157 项测试、生产构建与 lint；容器演示验收。测试数量来自[评测报告](evaluation-report.md)第 26.1 节。本流程不调用付费模型，不替代真人审核。**
+
+> 以下 2026-11-16 的验收摘要是当时的历史记录（后端 697 项、前端 145 项，尚无 ES / Redis / MCP 步骤），不代表当前规模：
+>
+> 2026-11-16 远端验收：提交 `01867cba` 的[GitHub Actions](https://github.com/BeforeLanding/Knoventra/actions/runs/43789121462)三个 job 全部通过：后端 697 项（53.73 秒）、迁移全链 / ORM / 种子重放、离线 HTTP 两次重启验收；前端 145 项、生产构建、零警告 lint；新增容器演示验收，包括经 Nginx 的静态资源 / HTTP / SSE、API 重启与重建后的确认恢复和幂等性。首次运行中 Compose 意外重建前端导致端口变化的问题已修复，并新增前端容器 ID / 端口不变断言。以下历史记录保留当时状态；本次无真实模型调用，不替代真人审核。
 
 工作流：[`.github/workflows/ci.yml`](../.github/workflows/ci.yml)。在 `main`、`feat/**`、`fix/**` 推送、PR 和手动触发时运行。三个独立 Linux job：`Backend and migrations`、`Web tests and build`、`Container demo acceptance`。同一分支有新运行时取消旧运行；仓库 token 只有读取权限，checkout 不保留凭证。
 
@@ -57,7 +61,10 @@ uv sync --locked --group dev
 uv run --no-sync python dev/check_migrations.py
 uv run --no-sync pytest -q --tb=short
 uv run --no-sync python dev/check_demo.py
+uv run --no-sync python dev/check_demo.py --mcp
 ```
+
+`deploy/compose.yaml` 同时包含 PostgreSQL、Elasticsearch 和 Redis（首次会构建带 IK 插件的 ES 镜像）。只想跑与 CI 一致的严格模式时，设置 `KNV_REQUIRE_ES=1`、`KNV_REQUIRE_REDIS=1`，并确认 `localhost:59200`、`localhost:56379` 可达。
 
 前端从 `web/` 执行：
 
@@ -70,6 +77,8 @@ npm run lint
 
 本轮还在干净的 Linux Python 3.12 / Node 24 容器中执行相同的安装与检查命令，源码副本排除被忽略的 `.env`、现有虚拟环境及 node_modules。静态工作流检查使用 actionlint。容器使用本机独立测试数据库；GitHub 实际 job 使用自己的 PostgreSQL service。
 
+以下为各日期的历史验证记录，数量为当时规模。
+
 2026-11-07 本地 Linux 验证：后端 213 项、前端 22 项通过，生产构建、迁移链、ORM 差异、种子重放和 actionlint 通过；lint 保留两项既有警告。发现并修复了过期确认测试依赖列表顺序和共享 Session 缓存的不稳定读取，没有放宽有效期 / 归属断言。
 
 2026-11-08 当前分支在 Windows 本地隔离 PostgreSQL 库验证：后端 546 项、前端 145 项通过；空库迁移 / 降级 / 重升、ORM 差异和含 PDF 的种子重放通过；前端生产构建与 lint 通过。此轮没有调用 LLM。该验证不等于新增改动已在 Linux CI 或 GitHub Actions 运行。
@@ -80,7 +89,7 @@ npm run lint
 
 最终代码提交 `ec158ff1` 的[远端验收](https://github.com/BeforeLanding/Knoventra/actions/runs/42584559193)两个job通过：后端 **697项（53.47秒）**，含54个六账号矩阵和43个明确转交 / 评测观测用例；全链迁移、ORM差异及种子重放通过；前端 **145项（11个文件）**、生产构建与零警告lint通过。本运行不调用LLM；付费评测与真人审核的范围独立见评测报告。
 
-该工作流覆盖独立 Python 后端和 `web/`，保留的上游 Java 模块不在此 CI 范围内；Actions 通过不自动设置分支保护。
+该工作流覆盖 Python 后端、`web/` 和容器演示；上游 Java 源码已于 2026-11-24 从工作树移除，不再存在于 CI 范围内。Actions 通过不自动设置分支保护。
 
 2026-11-16 新增 HTTP 验收的本地验证：Windows 后端完整 **697 项通过（101.97 秒）**，全链迁移 / ORM 差异 / 种子重放通过。HTTP 演示及两次服务重启验收通过；继承错误模型配置并以 Python `-O` 再跑也通过，临时库均已清理。本轮未改前端、未重复前端检查，未调用真实模型；新增 CI 步骤尚无远端运行记录。
 

@@ -248,7 +248,7 @@ KNV_ENCODER=bge-m3 KNV_RERANK=off HF_HUB_OFFLINE=1 uv run python eval/run_eval.p
 
 未完成：v2-m3 本身的实测、更大语料、独立调参集上的 Rerank 阈值标定、对真实模型回答的人工支持度复核与端到端净效果。val5 是在既有失败分析后针对同一虚构语料写的回归集，不是从外部独立抽样的测试集。
 
-复现命令见 [backend/README.md](../backend/README.md#optional-reranking)。重跑请使用新结果路径，保留这两次原始测量。
+复现命令见 [backend/README.md](../backend/README.md#可选精排)。重跑请使用新结果路径，保留这两次原始测量。
 
 ## 12. 回答来源快照、离线审核与繁体拒答修复（2026-11-01）
 

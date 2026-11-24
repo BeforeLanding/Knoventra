@@ -9,7 +9,7 @@
 - Import date: 2026-10-26
 - License: Apache License, Version 2.0; see [LICENSE](LICENSE).
 
-Knoventra is based on Ragent and retains the imported source history and existing source notices. The original project README is preserved at [README.upstream.md](README.upstream.md).
+Knoventra is based on Ragent and retains the imported source history and existing source notices. The original project README was preserved as `README.upstream.md` at that time; the file was removed from the working tree on 2026-11-24 together with the upstream sources (see below) and remains available in the commit history.
 
 Changes in the initial Knoventra documentation commit: replace the root README with a Knoventra introduction, preserve the upstream README separately, and add a secondary-development plan and this attribution file. No application behavior is changed by that documentation commit.
 
@@ -29,4 +29,4 @@ The Python backend (`backend/`) and the new frontend (`web/`, scaffolded from th
 
 ## Removal of the upstream sources (2026-11-24)
 
-The imported upstream sources are no longer in the working tree: the Java/Maven modules (`agent/`, `bootstrap/`, `framework/`, `infra-ai/`, `mcp-server/`, `rag/`, `system/`), `resources/`, the upstream `frontend/`, `scripts/`, `assets/`, the Maven wrapper and build files, IDE settings, and `README.upstream.md`. They remain available in this repository's git history and in the upstream repository at the commit recorded above. The Python backend (`backend/`) and the web frontend (`web/`) were written independently and do not copy upstream code. This attribution and the root [LICENSE](LICENSE) are kept.
+The imported upstream sources are no longer in the working tree: the Java/Maven modules (`agent/`, `bootstrap/`, `framework/`, `infra-ai/`, `mcp-server/`, `rag/`, `system/`), `resources/`, the upstream `frontend/`, `scripts/`, `assets/`, the Maven wrapper and build files, IDE settings, and `README.upstream.md`. The upstream-only documents under `docs/` were removed in the same cleanup: the upstream dashboard statistics note (`docs/dashboard-statistics.md`), the PDF ingestion example and its pipeline request (`docs/examples/`), the upstream release notes (`docs/releases/`), and the two upstream architecture diagrams (`docs/assets/ragent-architecture.svg`, `docs/assets/ragent-architecture-overview.svg`). They remain available in this repository's git history and in the upstream repository at the commit recorded above. The Python backend (`backend/`) and the web frontend (`web/`) were written independently and do not copy upstream code. This attribution and the root [LICENSE](LICENSE) are kept.
