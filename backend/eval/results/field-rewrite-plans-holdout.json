@@ -1,0 +1,343 @@
+{
+ "kind": "field-rewrite-plans",
+ "date": "2026-11-24",
+ "split": "holdout",
+ "cases_sha256": "8755eb501d4c0d7f6332a9ad8e7dd43b7930afb8bd6b6cd0cb299844e6ca29fd",
+ "n_cases": 15,
+ "model": "deepseek-flash",
+ "llm_thinking": "disabled",
+ "planner_prompt_sha256": "0e35a65a9fd65cfb68b1af0be313a31b56143411099f6483f6257410a5fd537c",
+ "query_plan_policy": "plan-v1",
+ "plans": {
+  "f1-03": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 1381.13,
+   "plan": {
+    "rewritten": "SOP-FAC-100210-001 保压时间是多久",
+    "queries": [
+     "SOP-FAC-100210-001 保压时间是多久"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.9,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-04": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 1187.325,
+   "plan": {
+    "rewritten": "A-2207 偶发报警怎么处理",
+    "queries": [
+     "A-2207 偶发报警怎么处理"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.8,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-07": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 934.252,
+   "plan": {
+    "rewritten": "SOP-SAF-900110-001 测试前要通知谁",
+    "queries": [
+     "SOP-SAF-900110-001 测试前要通知谁"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.9,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-10": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 670.888,
+   "plan": {
+    "rewritten": "chamber teaching 时 robot 速度是多少",
+    "queries": [
+     "chamber teaching 时 robot 速度是多少"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.82,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-12": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 682.299,
+   "plan": {
+    "rewritten": "DI flow troubleshooting 读值跳动怎么处理",
+    "queries": [
+     "DI flow troubleshooting 读值跳动怎么处理"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.82,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-15": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 678.585,
+   "plan": {
+    "rewritten": "腔体示教（chamber teaching）完成后 dynamic test 需要跑多少片",
+    "queries": [
+     "腔体示教（chamber teaching）完成后 dynamic test 需要跑多少片"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.85,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-17": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 1266.372,
+   "plan": {
+    "rewritten": "ST-250 门超控怎么解除",
+    "queries": [
+     "ST-250 门超控怎么解除"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.92,
+    "machine_model": "ST-250",
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-20": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 783.039,
+   "plan": {
+    "rewritten": "化学品流量偏差超过 5% 怎么调",
+    "queries": [
+     "化学品流量偏差超过 5% 怎么调"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.86,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-23": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 1017.004,
+   "plan": {
+    "rewritten": "WX-38 单面机 spindle 扭矩",
+    "queries": [
+     "WX-38 单面机 spindle 扭矩"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.6,
+    "machine_model": "WX-38",
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-25": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 719.958,
+   "plan": {
+    "rewritten": "WX-38 的 door override 在哪里打开",
+    "queries": [
+     "WX-38 的 door override 在哪里打开"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.85,
+    "machine_model": "WX-38",
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-28": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 690.994,
+   "plan": {
+    "rewritten": "circulation pump 出现异响的处理方法",
+    "queries": [
+     "circulation pump 出现异响的处理方法"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.85,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-30": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 931.021,
+   "plan": {
+    "rewritten": "nozzle 间歇漏液有人遇到过吗，相关案例或处理经验",
+    "queries": [
+     "nozzle 间歇漏液有人遇到过吗，相关案例或处理经验"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.75,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-33": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 1003.265,
+   "plan": {
+    "rewritten": "golden wafer 使用完毕后应放回哪里/如何存放",
+    "queries": [
+     "golden wafer 使用完毕后应放回哪里/如何存放"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.75,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-35": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 1282.951,
+   "plan": {
+    "rewritten": "DI filter 装反会有什么后果",
+    "queries": [
+     "DI filter 装反会有什么后果"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.8,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-38": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 701.377,
+   "plan": {
+    "rewritten": "spindle 更换时的扭矩要求是多少",
+    "queries": [
+     "spindle 更换时的扭矩要求是多少"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.8,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  }
+ }
+}

@@ -218,6 +218,13 @@ uv run python eval/run_eval.py --split dev --mode agent --case-id ops-01 --dry-r
 - `eval/review_answers.py prepare|summarize`：从含 `review_snapshot` 的报告生成审核包并汇总；人工与模型审核分别统计，未审核内容不计为支持；`eval/render_review_html.py` 生成离线真人审核页。流程、判定口径、抽样与局限见[审核说明](eval/REVIEW.md)。
 - `eval/analyze_refusals.py <report> --out <triage.json>`：把拒答分为检索闸门失败、检索后模型拒答和运行错误，筛出证据里含目标原文却仍拒答的“复核候选”（不自动认定为过度拒答）。
 
+**查询改写 / 规划开关消融 `eval/run_field_rewrite_eval.py`**（v4，只调规划器，不跑回答模型）：对 `eval/cases_field_v1.jsonl` 每例只调一次规划器并缓存（绑定用例 SHA-256、split 与提示词 SHA-256，不匹配则拒绝复用），再离线比较 `pg` / `es_weighted` × `off` / `rewrite_only` / `full_plan` 三种查询模式，并给出逐题名次变化、规划器统计与耗时分布。`--dry-run` 只打印用例数、哈希、模型名和调用次数，不连库不调模型；创建缓存必须 `--allow-llm`（每例一次付费规划调用）；`--plans-in <缓存>` 复用已有缓存（0 次模型调用，输出需用新文件名）；留出集需 `--confirm-final`，只运行一次；输出文件独占创建，不覆盖。
+
+```bash
+KNV_ENCODER=bge-m3 HF_HUB_OFFLINE=1 uv run python eval/run_field_rewrite_eval.py --split dev --dry-run
+KNV_ENCODER=bge-m3 HF_HUB_OFFLINE=1 uv run python eval/run_field_rewrite_eval.py --split dev --plans-in eval/results/field-rewrite-plans-dev.json --out eval/results/new-rewrite-rerun.json
+```
+
 **精排对照与阈值标定**：`eval/run_rerank_pair.py --confirm-final --out-dir <新目录>` 在临时库上用同一 28 例各跑一次关 / 开精排，比较配对指纹，需要缓存的模型权重、`KNV_TEST_ADMIN_URL`，不调用 LLM；`eval/calibrate_rerank.py --out <文件>` 在 `eval/cases_threshold_v1.jsonl`（12 标定 + 12 验证）上只用标定半部分选阈值并报告验证误差，不修改服务配置。
 
 ```bash

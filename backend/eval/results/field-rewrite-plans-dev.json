@@ -1,0 +1,535 @@
+{
+ "kind": "field-rewrite-plans",
+ "date": "2026-11-24",
+ "split": "dev",
+ "cases_sha256": "8755eb501d4c0d7f6332a9ad8e7dd43b7930afb8bd6b6cd0cb299844e6ca29fd",
+ "n_cases": 24,
+ "model": "deepseek-flash",
+ "llm_thinking": "disabled",
+ "planner_prompt_sha256": "0e35a65a9fd65cfb68b1af0be313a31b56143411099f6483f6257410a5fd537c",
+ "query_plan_policy": "plan-v1",
+ "plans": {
+  "f1-01": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 868.599,
+   "plan": {
+    "rewritten": "SOP-WCL-380110-001 第 4 节复位前要做什么",
+    "queries": [
+     "SOP-WCL-380110-001 第 4 节复位前要做什么"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.9,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-02": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 944.955,
+   "plan": {
+    "rewritten": "A-1301 报警是什么意思",
+    "queries": [
+     "A-1301 报警是什么意思"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.9,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-05": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 817.685,
+   "plan": {
+    "rewritten": "SOP-GEN-200420-001 的偏心要求是多少",
+    "queries": [
+     "SOP-GEN-200420-001 的偏心要求是多少"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.9,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-06": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 657.012,
+   "plan": {
+    "rewritten": "E17-42 报警复位之后需要观察多久",
+    "queries": [
+     "E17-42 报警复位之后需要观察多久"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.9,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-08": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 887.332,
+   "plan": {
+    "rewritten": "mix tank troubleshooting",
+    "queries": [
+     "mix tank troubleshooting"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.62,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-09": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 891.661,
+   "plan": {
+    "rewritten": "chemical flow DHF 流量设定多少",
+    "queries": [
+     "chemical flow DHF 流量设定多少"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.8,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-11": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 886.819,
+   "plan": {
+    "rewritten": "spindle 更换时的螺丝扭矩要求",
+    "queries": [
+     "spindle 更换时的螺丝扭矩要求"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.72,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-13": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 1657.69,
+   "plan": {
+    "rewritten": "主轴更换后的 run-out 要求",
+    "queries": [
+     "主轴更换后的 run-out 要求"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.85,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-14": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 685.368,
+   "plan": {
+    "rewritten": "装载口调平怎么做",
+    "queries": [
+     "装载口调平怎么做"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.85,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-16": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 980.735,
+   "plan": {
+    "rewritten": "混液槽告警后 pump 不转",
+    "queries": [
+     "混液槽告警后 pump 不转"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.85,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-18": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 824.928,
+   "plan": {
+    "rewritten": "How to reset the mix tank interlock",
+    "queries": [
+     "How to reset the mix tank interlock"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.85,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-19": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 705.639,
+   "plan": {
+    "rewritten": "主軸更換時螺絲扭矩規格是多少",
+    "queries": [
+     "主軸更換時螺絲扭矩規格是多少"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.85,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-21": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 1062.306,
+   "plan": {
+    "rewritten": "濕式濾芯安裝前要注意什麼",
+    "queries": [
+     "濕式濾芯安裝前要注意什麼"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.78,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-22": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 966.647,
+   "plan": {
+    "rewritten": "WX-P 双面机 spindle 扭矩",
+    "queries": [
+     "WX-P 双面机 spindle 扭矩"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.6,
+    "machine_model": "WX-P",
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-24": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 739.438,
+   "plan": {
+    "rewritten": "ST-250 service door override 步骤",
+    "queries": [
+     "ST-250 service door override 步骤"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.9,
+    "machine_model": "ST-250",
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-26": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 776.728,
+   "plan": {
+    "rewritten": "WX-38 切换 tank 时报警、pump 不转，以往的处理方法和案例",
+    "queries": [
+     "WX-38 切换 tank 时报警、pump 不转，以往的处理方法和案例"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.9,
+    "machine_model": "WX-38",
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-27": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 699.916,
+   "plan": {
+    "rewritten": "chuck 高速段 wafer 偏移报警怎么处理",
+    "queries": [
+     "chuck 高速段 wafer 偏移报警怎么处理"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.9,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-29": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 979.533,
+   "plan": {
+    "rewritten": "远程支持时怎么登录客户 VPN",
+    "queries": [
+     "远程支持时怎么登录客户 VPN"
+    ],
+    "intent": "it_guide",
+    "confidence": 0.9,
+    "machine_model": null,
+    "route_kbs": [
+     "it-public"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-31": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 1313.17,
+   "plan": {
+    "rewritten": "load port 调整后脚座需要做什么（调整步骤与注意事项）",
+    "queries": [
+     "load port 调整后脚座需要做什么（调整步骤与注意事项）"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.82,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-32": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 770.652,
+   "plan": {
+    "rewritten": "EMO 测试的步骤",
+    "queries": [
+     "EMO 测试的步骤"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.82,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-34": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 1519.171,
+   "plan": {
+    "rewritten": "CDA 管路缠绕特氟龙带的层数标准是多少",
+    "queries": [
+     "CDA 管路缠绕特氟龙带的层数标准是多少"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.85,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-36": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 622.586,
+   "plan": {
+    "rewritten": "dynamic test 怎样算通过（判定标准）",
+    "queries": [
+     "dynamic test 怎样算通过（判定标准）"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.8,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-37": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 738.129,
+   "plan": {
+    "rewritten": "mix tank A-1301 怎么处理",
+    "queries": [
+     "mix tank A-1301 怎么处理"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.75,
+    "machine_model": null,
+    "route_kbs": [
+     "ops-global",
+     "ops-cn",
+     "field-sop",
+     "field-cases"
+    ],
+    "skill_item": null,
+    "notes": []
+   }
+  },
+  "f1-39": {
+   "status": "ok",
+   "reason": null,
+   "latency_ms": 918.792,
+   "plan": {
+    "rewritten": "C21-05 校准",
+    "queries": [
+     "C21-05 校准"
+    ],
+    "intent": "case_sop",
+    "confidence": 0.55,
+    "machine_model": null,
+    "route_kbs": null,
+    "skill_item": null,
+    "notes": [
+     "low_confidence_all_readable"
+    ]
+   }
+  }
+ }
+}

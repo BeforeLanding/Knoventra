@@ -1,0 +1,2531 @@
+{
+ "date": "2026-11-24",
+ "split": "holdout",
+ "cases_sha256": "8755eb501d4c0d7f6332a9ad8e7dd43b7930afb8bd6b6cd0cb299844e6ca29fd",
+ "n_cases": 15,
+ "config": {
+  "encoder": "bge-m3",
+  "top_k": 5,
+  "rrf_k": 60,
+  "weights_identifier": {
+   "ident": 2.0,
+   "es": 1.5,
+   "sparse": 1.0,
+   "dense": 0.5
+  },
+  "weights_natural": {
+   "dense": 1.0,
+   "sparse": 0.5,
+   "es": 1.5,
+   "ident": 1.0
+  },
+  "model": "deepseek-flash",
+  "llm_thinking": "disabled",
+  "planner_prompt_sha256": "0e35a65a9fd65cfb68b1af0be313a31b56143411099f6483f6257410a5fd537c",
+  "query_plan_policy": "plan-v1",
+  "query_plan_timeout_s": 8.0,
+  "query_plan_min_confidence": 0.6,
+  "plan_cache": "D:\\Agent\\Knoventra\\backend\\eval\\results\\field-rewrite-plans-holdout.json"
+ },
+ "corpus": {
+  "published_chunks": 503
+ },
+ "planner": {
+  "n": 15,
+  "ok": 15,
+  "fallback": 0,
+  "fallback_reasons": [],
+  "intents": {
+   "case_sop": 15
+  },
+  "answerable_intents": {
+   "case_sop": [
+    "f1-03",
+    "f1-04",
+    "f1-07",
+    "f1-10",
+    "f1-12",
+    "f1-15",
+    "f1-17",
+    "f1-20",
+    "f1-23",
+    "f1-25",
+    "f1-28",
+    "f1-30",
+    "f1-33",
+    "f1-35"
+   ]
+  },
+  "latency_ms": {
+   "n": 15,
+   "p50": 931.021,
+   "p95": 1381.13,
+   "max": 1381.13
+  }
+ },
+ "results": {
+  "pg": {
+   "off": {
+    "metrics": {
+     "overall": {
+      "n": 14,
+      "recall@5": 1.0,
+      "mrr": 0.964,
+      "source_recall@5": 1.0
+     },
+     "by_category": {
+      "case": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "identifier": {
+       "n": 3,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "model": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "plain": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "synonym": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "traditional": {
+       "n": 1,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "typo": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 0.75,
+       "source_recall@5": 1.0
+      }
+     },
+     "access": {
+      "n": 1,
+      "leaked_chunks": 0
+     },
+     "degraded_queries": 0
+    },
+    "cases": [
+     {
+      "id": "f1-03",
+      "category": "identifier",
+      "retrieval_latency_ms": 1491.121,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-FAC-100210-001 CDA 管路连接与保压"
+      ]
+     },
+     {
+      "id": "f1-04",
+      "category": "identifier",
+      "retrieval_latency_ms": 88.968,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-31DC4EA676A88062 nozzle 间歇漏液，alarm "
+      ]
+     },
+     {
+      "id": "f1-07",
+      "category": "identifier",
+      "retrieval_latency_ms": 89.129,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-SAF-900110-001 EMO 测试",
+       "field-sop|SOP-SAF-900110-001 EMO 测试"
+      ]
+     },
+     {
+      "id": "f1-10",
+      "category": "typo",
+      "retrieval_latency_ms": 76.306,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-2C294A68F3428E99 chamber teaching",
+       "field-sop|SOP-GEN-200510-001 Load port leveling",
+       "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+       "field-cases|CASE-32A76F66BEF3E2BF chamber tecahing",
+       "field-cases|CASE-FD03801C9FF6DDA1 chamber teaching"
+      ]
+     },
+     {
+      "id": "f1-12",
+      "category": "typo",
+      "retrieval_latency_ms": 74.054,
+      "degraded": [],
+      "hit": true,
+      "rank": 2,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-8FE5CBB82FEF9EFF DI flow trouble sh",
+       "field-cases|CASE-1A1307F88902DE9F DI flow trouble sh",
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter",
+       "field-cases|CASE-E8AE302C13D0B44B 通水后 DI flow 调试",
+       "field-cases|CASE-12166648D80CF4F5 通水後 DI flow 調試"
+      ]
+     },
+     {
+      "id": "f1-15",
+      "category": "synonym",
+      "retrieval_latency_ms": 82.498,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-2C294A68F3428E99 chamber teaching",
+       "field-cases|CASE-FD03801C9FF6DDA1 chamber teaching",
+       "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+       "field-cases|CASE-32A76F66BEF3E2BF chamber tecahing",
+       "field-cases|CASE-E6FD343F93119038 Chamber teaching"
+      ]
+     },
+     {
+      "id": "f1-17",
+      "category": "synonym",
+      "retrieval_latency_ms": 112.454,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 5,
+      "top": [
+       "field-cases|CASE-6263E4AE0471F2CD service door overr",
+       "field-cases|CASE-68FB68A58EAB8376 EMO 测试",
+       "field-cases|CASE-E8AE302C13D0B44B 通水后 DI flow 调试",
+       "field-cases|CASE-E84A1A84113F59D5 软件更新及 EAP 通讯测试",
+       "field-sop|SOP-GEN-200310-001 Service door override"
+      ]
+     },
+     {
+      "id": "f1-20",
+      "category": "traditional",
+      "retrieval_latency_ms": 136.808,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-FAC-100110-001 Chemical flow 调试",
+       "field-cases|CASE-0BE046B9DB50A9E8 chamical flow 調試",
+       "field-cases|CASE-E8CAD35745FBD678 chamical flow 调试",
+       "field-cases|CASE-91B7EE1D0D3DFDE0 chuck 高速段 wafer 偏移",
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter"
+      ]
+     },
+     {
+      "id": "f1-23",
+      "category": "model",
+      "retrieval_latency_ms": 117.067,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 2,
+      "top": [
+       "field-cases|CASE-32B2296F5BAE56B3 spindle 更换（单面机）",
+       "field-sop|SOP-WCL-380120-002 Spindle 更换",
+       "field-cases|CASE-A68312A9A53E53C2 spindle 更换（双面机）",
+       "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+       "field-sop|SOP-WCL-380120-002 Spindle 更换"
+      ]
+     },
+     {
+      "id": "f1-25",
+      "category": "model",
+      "retrieval_latency_ms": 114.216,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-1DE0658C740D1BCF service door overr",
+       "field-cases|CASE-F75EC05BC0E75AE2 service door overr",
+       "field-sop|SOP-GEN-200310-001 Service door override",
+       "field-sop|SOP-GEN-200310-001 Service door override",
+       "field-cases|CASE-6263E4AE0471F2CD service door overr"
+      ]
+     },
+     {
+      "id": "f1-28",
+      "category": "case",
+      "retrieval_latency_ms": 90.699,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-7AC62DDA1C9AF7C1 circulation pump 异",
+       "field-cases|CASE-BE82000959F3C3A8 circulation pump 异",
+       "field-cases|CASE-48CACECFD12E78C0 circulation pump 異",
+       "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+       "ops-global|泵组维护手册"
+      ]
+     },
+     {
+      "id": "f1-30",
+      "category": "case",
+      "retrieval_latency_ms": 80.815,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-31DC4EA676A88062 nozzle 间歇漏液，alarm ",
+       "field-cases|CASE-1A1307F88902DE9F DI flow trouble sh",
+       "ops-global|冷卻系統維護手冊",
+       "field-cases|CASE-EF42C6BD491333C6 mix tank 切换报 A-130",
+       "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl"
+      ]
+     },
+     {
+      "id": "f1-33",
+      "category": "plain",
+      "retrieval_latency_ms": 93.827,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-GEN-200420-001 Golden check",
+       "field-cases|CASE-80C5A656E1DA2DCF golden check",
+       "field-cases|CASE-30895A9CC4468256 golden check",
+       "field-sop|SOP-GEN-200420-001 Golden check",
+       "field-cases|CASE-6BE21DCB1CFB5D00 Golden check"
+      ]
+     },
+     {
+      "id": "f1-35",
+      "category": "plain",
+      "retrieval_latency_ms": 83.988,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 4,
+      "top": [
+       "field-cases|CASE-D76BC0362B350D0A install DI filter",
+       "field-cases|CASE-45A3B7CD0CFEDC01 install DI filter",
+       "field-cases|CASE-618509ADF6666C54 install DI filter",
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter",
+       "field-cases|CASE-1A1307F88902DE9F DI flow trouble sh"
+      ]
+     },
+     {
+      "id": "f1-38",
+      "category": "access",
+      "retrieval_latency_ms": 105.66,
+      "degraded": [],
+      "leaked": 0
+     }
+    ],
+    "retrieval_latency_ms": {
+     "n": 15,
+     "p50": 90.699,
+     "p95": 1491.121,
+     "max": 1491.121
+    }
+   },
+   "rewrite_only": {
+    "metrics": {
+     "overall": {
+      "n": 14,
+      "recall@5": 1.0,
+      "mrr": 1.0,
+      "source_recall@5": 1.0
+     },
+     "by_category": {
+      "case": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "identifier": {
+       "n": 3,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "model": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "plain": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "synonym": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "traditional": {
+       "n": 1,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "typo": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      }
+     },
+     "access": {
+      "n": 1,
+      "leaked_chunks": 0
+     },
+     "degraded_queries": 0
+    },
+    "cases": [
+     {
+      "id": "f1-03",
+      "category": "identifier",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 110.714,
+      "degraded": [],
+      "queries": [
+       "SOP-FAC-100210-001 保压时间是多久"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-FAC-100210-001 CDA 管路连接与保压"
+      ]
+     },
+     {
+      "id": "f1-04",
+      "category": "identifier",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 147.895,
+      "degraded": [],
+      "queries": [
+       "A-2207 偶发报警怎么处理"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-31DC4EA676A88062 nozzle 间歇漏液，alarm "
+      ]
+     },
+     {
+      "id": "f1-07",
+      "category": "identifier",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 134.102,
+      "degraded": [],
+      "queries": [
+       "SOP-SAF-900110-001 测试前要通知谁"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-SAF-900110-001 EMO 测试",
+       "field-sop|SOP-SAF-900110-001 EMO 测试"
+      ]
+     },
+     {
+      "id": "f1-10",
+      "category": "typo",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 119.742,
+      "degraded": [],
+      "queries": [
+       "chamber teaching 时 robot 速度是多少"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-E6FD343F93119038 Chamber teaching",
+       "field-cases|CASE-2C294A68F3428E99 chamber teaching",
+       "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+       "field-cases|CASE-FD03801C9FF6DDA1 chamber teaching",
+       "field-cases|CASE-9BF940A8912CEB2C Chamber teaching"
+      ]
+     },
+     {
+      "id": "f1-12",
+      "category": "typo",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 92.072,
+      "degraded": [],
+      "queries": [
+       "DI flow troubleshooting 读值跳动怎么处理"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-1A1307F88902DE9F DI flow trouble sh",
+       "field-cases|CASE-8FE5CBB82FEF9EFF DI flow trouble sh",
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter",
+       "field-cases|CASE-E8AE302C13D0B44B 通水后 DI flow 调试",
+       "field-cases|CASE-12166648D80CF4F5 通水後 DI flow 調試"
+      ]
+     },
+     {
+      "id": "f1-15",
+      "category": "synonym",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 105.795,
+      "degraded": [],
+      "queries": [
+       "腔体示教（chamber teaching）完成后 dynamic test 需要跑多少片"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-2C294A68F3428E99 chamber teaching",
+       "field-cases|CASE-FD03801C9FF6DDA1 chamber teaching",
+       "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+       "field-cases|CASE-32A76F66BEF3E2BF chamber tecahing",
+       "field-cases|CASE-E6FD343F93119038 Chamber teaching"
+      ]
+     },
+     {
+      "id": "f1-17",
+      "category": "synonym",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 84.351,
+      "degraded": [],
+      "queries": [
+       "ST-250 门超控怎么解除"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 5,
+      "top": [
+       "field-cases|CASE-6263E4AE0471F2CD service door overr",
+       "field-cases|CASE-68FB68A58EAB8376 EMO 测试",
+       "field-cases|CASE-E8AE302C13D0B44B 通水后 DI flow 调试",
+       "field-cases|CASE-E84A1A84113F59D5 软件更新及 EAP 通讯测试",
+       "field-sop|SOP-GEN-200310-001 Service door override"
+      ]
+     },
+     {
+      "id": "f1-20",
+      "category": "traditional",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 96.324,
+      "degraded": [],
+      "queries": [
+       "化学品流量偏差超过 5% 怎么调"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-FAC-100110-001 Chemical flow 调试",
+       "field-cases|CASE-0BE046B9DB50A9E8 chamical flow 調試",
+       "field-cases|CASE-E8CAD35745FBD678 chamical flow 调试",
+       "field-cases|CASE-91B7EE1D0D3DFDE0 chuck 高速段 wafer 偏移",
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter"
+      ]
+     },
+     {
+      "id": "f1-23",
+      "category": "model",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 130.378,
+      "degraded": [],
+      "queries": [
+       "WX-38 单面机 spindle 扭矩"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 2,
+      "top": [
+       "field-cases|CASE-32B2296F5BAE56B3 spindle 更换（单面机）",
+       "field-sop|SOP-WCL-380120-002 Spindle 更换",
+       "field-cases|CASE-A68312A9A53E53C2 spindle 更换（双面机）",
+       "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+       "field-sop|SOP-WCL-380120-002 Spindle 更换"
+      ]
+     },
+     {
+      "id": "f1-25",
+      "category": "model",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 129.045,
+      "degraded": [],
+      "queries": [
+       "WX-38 的 door override 在哪里打开"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-1DE0658C740D1BCF service door overr",
+       "field-cases|CASE-F75EC05BC0E75AE2 service door overr",
+       "field-sop|SOP-GEN-200310-001 Service door override",
+       "field-sop|SOP-GEN-200310-001 Service door override",
+       "field-cases|CASE-6263E4AE0471F2CD service door overr"
+      ]
+     },
+     {
+      "id": "f1-28",
+      "category": "case",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 110.617,
+      "degraded": [],
+      "queries": [
+       "circulation pump 出现异响的处理方法"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-7AC62DDA1C9AF7C1 circulation pump 异",
+       "field-cases|CASE-BE82000959F3C3A8 circulation pump 异",
+       "field-cases|CASE-48CACECFD12E78C0 circulation pump 異",
+       "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+       "field-cases|CASE-974089235ED77E95 Mix tank alarm A-1"
+      ]
+     },
+     {
+      "id": "f1-30",
+      "category": "case",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 111.97,
+      "degraded": [],
+      "queries": [
+       "nozzle 间歇漏液有人遇到过吗，相关案例或处理经验"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-31DC4EA676A88062 nozzle 间歇漏液，alarm ",
+       "field-cases|CASE-1A1307F88902DE9F DI flow trouble sh",
+       "field-cases|CASE-E8CAD35745FBD678 chamical flow 调试",
+       "ops-global|冷卻系統維護手冊",
+       "field-cases|CASE-0BE046B9DB50A9E8 chamical flow 調試"
+      ]
+     },
+     {
+      "id": "f1-33",
+      "category": "plain",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 98.952,
+      "degraded": [],
+      "queries": [
+       "golden wafer 使用完毕后应放回哪里/如何存放"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-GEN-200420-001 Golden check",
+       "field-cases|CASE-80C5A656E1DA2DCF golden check",
+       "field-cases|CASE-30895A9CC4468256 golden check",
+       "field-sop|SOP-GEN-200420-001 Golden check",
+       "field-cases|CASE-6BE21DCB1CFB5D00 Golden check"
+      ]
+     },
+     {
+      "id": "f1-35",
+      "category": "plain",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 77.683,
+      "degraded": [],
+      "queries": [
+       "DI filter 装反会有什么后果"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-D76BC0362B350D0A install DI filter",
+       "field-cases|CASE-45A3B7CD0CFEDC01 install DI filter",
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter",
+       "field-cases|CASE-618509ADF6666C54 install DI filter",
+       "field-cases|CASE-1A1307F88902DE9F DI flow trouble sh"
+      ]
+     },
+     {
+      "id": "f1-38",
+      "category": "access",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 89.431,
+      "degraded": [],
+      "queries": [
+       "spindle 更换时的扭矩要求是多少"
+      ],
+      "leaked": 0
+     }
+    ],
+    "retrieval_latency_ms": {
+     "n": 15,
+     "p50": 110.617,
+     "p95": 147.895,
+     "max": 147.895
+    },
+    "changes_vs_off": [
+     {
+      "id": "f1-12",
+      "category": "typo",
+      "question": "DI flow trouble shotting 读值跳动",
+      "rank": [
+       2,
+       1
+      ],
+      "source_rank": [
+       3,
+       3
+      ],
+      "queries": [
+       "DI flow troubleshooting 读值跳动怎么处理"
+      ],
+      "route": null,
+      "non_retrieval_intent": null
+     },
+     {
+      "id": "f1-35",
+      "category": "plain",
+      "question": "DI filter 装反会怎样",
+      "rank": [
+       1,
+       1
+      ],
+      "source_rank": [
+       4,
+       3
+      ],
+      "queries": [
+       "DI filter 装反会有什么后果"
+      ],
+      "route": null,
+      "non_retrieval_intent": null
+     }
+    ]
+   },
+   "full_plan": {
+    "metrics": {
+     "overall": {
+      "n": 14,
+      "recall@5": 1.0,
+      "mrr": 1.0,
+      "source_recall@5": 1.0
+     },
+     "by_category": {
+      "case": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "identifier": {
+       "n": 3,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "model": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "plain": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "synonym": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "traditional": {
+       "n": 1,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "typo": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      }
+     },
+     "access": {
+      "n": 1,
+      "leaked_chunks": 0
+     },
+     "degraded_queries": 0
+    },
+    "cases": [
+     {
+      "id": "f1-03",
+      "category": "identifier",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 111.997,
+      "degraded": [],
+      "queries": [
+       "SOP-FAC-100210-001 保压时间是多久"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-FAC-100210-001 CDA 管路连接与保压"
+      ]
+     },
+     {
+      "id": "f1-04",
+      "category": "identifier",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 119.75,
+      "degraded": [],
+      "queries": [
+       "A-2207 偶发报警怎么处理"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-31DC4EA676A88062 nozzle 间歇漏液，alarm "
+      ]
+     },
+     {
+      "id": "f1-07",
+      "category": "identifier",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 99.293,
+      "degraded": [],
+      "queries": [
+       "SOP-SAF-900110-001 测试前要通知谁"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-SAF-900110-001 EMO 测试",
+       "field-sop|SOP-SAF-900110-001 EMO 测试"
+      ]
+     },
+     {
+      "id": "f1-10",
+      "category": "typo",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 118.116,
+      "degraded": [],
+      "queries": [
+       "chamber teaching 时 robot 速度是多少"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-E6FD343F93119038 Chamber teaching",
+       "field-cases|CASE-2C294A68F3428E99 chamber teaching",
+       "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+       "field-cases|CASE-FD03801C9FF6DDA1 chamber teaching",
+       "field-cases|CASE-9BF940A8912CEB2C Chamber teaching"
+      ]
+     },
+     {
+      "id": "f1-12",
+      "category": "typo",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 98.108,
+      "degraded": [],
+      "queries": [
+       "DI flow troubleshooting 读值跳动怎么处理"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-1A1307F88902DE9F DI flow trouble sh",
+       "field-cases|CASE-8FE5CBB82FEF9EFF DI flow trouble sh",
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter",
+       "field-cases|CASE-E8AE302C13D0B44B 通水后 DI flow 调试",
+       "field-cases|CASE-12166648D80CF4F5 通水後 DI flow 調試"
+      ]
+     },
+     {
+      "id": "f1-15",
+      "category": "synonym",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 113.216,
+      "degraded": [],
+      "queries": [
+       "腔体示教（chamber teaching）完成后 dynamic test 需要跑多少片"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-2C294A68F3428E99 chamber teaching",
+       "field-cases|CASE-FD03801C9FF6DDA1 chamber teaching",
+       "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+       "field-cases|CASE-32A76F66BEF3E2BF chamber tecahing",
+       "field-cases|CASE-E6FD343F93119038 Chamber teaching"
+      ]
+     },
+     {
+      "id": "f1-17",
+      "category": "synonym",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 112.718,
+      "degraded": [],
+      "queries": [
+       "ST-250 门超控怎么解除"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 5,
+      "top": [
+       "field-cases|CASE-6263E4AE0471F2CD service door overr",
+       "field-cases|CASE-68FB68A58EAB8376 EMO 测试",
+       "field-cases|CASE-E8AE302C13D0B44B 通水后 DI flow 调试",
+       "field-cases|CASE-E84A1A84113F59D5 软件更新及 EAP 通讯测试",
+       "field-sop|SOP-GEN-200310-001 Service door override"
+      ]
+     },
+     {
+      "id": "f1-20",
+      "category": "traditional",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 79.358,
+      "degraded": [],
+      "queries": [
+       "化学品流量偏差超过 5% 怎么调"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-FAC-100110-001 Chemical flow 调试",
+       "field-cases|CASE-0BE046B9DB50A9E8 chamical flow 調試",
+       "field-cases|CASE-E8CAD35745FBD678 chamical flow 调试",
+       "field-cases|CASE-91B7EE1D0D3DFDE0 chuck 高速段 wafer 偏移",
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter"
+      ]
+     },
+     {
+      "id": "f1-23",
+      "category": "model",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 115.137,
+      "degraded": [],
+      "queries": [
+       "WX-38 单面机 spindle 扭矩"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 2,
+      "top": [
+       "field-cases|CASE-32B2296F5BAE56B3 spindle 更换（单面机）",
+       "field-sop|SOP-WCL-380120-002 Spindle 更换",
+       "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+       "field-sop|SOP-WCL-380120-002 Spindle 更换",
+       "field-cases|CASE-E8CAD35745FBD678 chamical flow 调试"
+      ]
+     },
+     {
+      "id": "f1-25",
+      "category": "model",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 94.885,
+      "degraded": [],
+      "queries": [
+       "WX-38 的 door override 在哪里打开"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-1DE0658C740D1BCF service door overr",
+       "field-cases|CASE-F75EC05BC0E75AE2 service door overr",
+       "field-sop|SOP-GEN-200310-001 Service door override",
+       "field-cases|CASE-16D28EB91FDACF2F 软件更新及 EAP 通讯测试",
+       "field-cases|CASE-1F9C7CA059229C4E EMO 测试"
+      ]
+     },
+     {
+      "id": "f1-28",
+      "category": "case",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 85.439,
+      "degraded": [],
+      "queries": [
+       "circulation pump 出现异响的处理方法"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-7AC62DDA1C9AF7C1 circulation pump 异",
+       "field-cases|CASE-BE82000959F3C3A8 circulation pump 异",
+       "field-cases|CASE-48CACECFD12E78C0 circulation pump 異",
+       "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+       "field-cases|CASE-974089235ED77E95 Mix tank alarm A-1"
+      ]
+     },
+     {
+      "id": "f1-30",
+      "category": "case",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 80.808,
+      "degraded": [],
+      "queries": [
+       "nozzle 间歇漏液有人遇到过吗，相关案例或处理经验"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-31DC4EA676A88062 nozzle 间歇漏液，alarm ",
+       "field-cases|CASE-1A1307F88902DE9F DI flow trouble sh",
+       "field-cases|CASE-E8CAD35745FBD678 chamical flow 调试",
+       "ops-global|冷卻系統維護手冊",
+       "field-cases|CASE-0BE046B9DB50A9E8 chamical flow 調試"
+      ]
+     },
+     {
+      "id": "f1-33",
+      "category": "plain",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 80.018,
+      "degraded": [],
+      "queries": [
+       "golden wafer 使用完毕后应放回哪里/如何存放"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-GEN-200420-001 Golden check",
+       "field-cases|CASE-80C5A656E1DA2DCF golden check",
+       "field-cases|CASE-30895A9CC4468256 golden check",
+       "field-sop|SOP-GEN-200420-001 Golden check",
+       "field-cases|CASE-6BE21DCB1CFB5D00 Golden check"
+      ]
+     },
+     {
+      "id": "f1-35",
+      "category": "plain",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 86.438,
+      "degraded": [],
+      "queries": [
+       "DI filter 装反会有什么后果"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-D76BC0362B350D0A install DI filter",
+       "field-cases|CASE-45A3B7CD0CFEDC01 install DI filter",
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter",
+       "field-cases|CASE-618509ADF6666C54 install DI filter",
+       "field-cases|CASE-1A1307F88902DE9F DI flow trouble sh"
+      ]
+     },
+     {
+      "id": "f1-38",
+      "category": "access",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": false
+      },
+      "retrieval_latency_ms": 105.649,
+      "degraded": [],
+      "queries": [
+       "spindle 更换时的扭矩要求是多少"
+      ],
+      "leaked": 0
+     }
+    ],
+    "retrieval_latency_ms": {
+     "n": 15,
+     "p50": 99.293,
+     "p95": 119.75,
+     "max": 119.75
+    },
+    "changes_vs_off": [
+     {
+      "id": "f1-12",
+      "category": "typo",
+      "question": "DI flow trouble shotting 读值跳动",
+      "rank": [
+       2,
+       1
+      ],
+      "source_rank": [
+       3,
+       3
+      ],
+      "queries": [
+       "DI flow troubleshooting 读值跳动怎么处理"
+      ],
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "non_retrieval_intent": null
+     },
+     {
+      "id": "f1-35",
+      "category": "plain",
+      "question": "DI filter 装反会怎样",
+      "rank": [
+       1,
+       1
+      ],
+      "source_rank": [
+       4,
+       3
+      ],
+      "queries": [
+       "DI filter 装反会有什么后果"
+      ],
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "non_retrieval_intent": null
+     }
+    ]
+   }
+  },
+  "es_weighted": {
+   "off": {
+    "metrics": {
+     "overall": {
+      "n": 14,
+      "recall@5": 1.0,
+      "mrr": 1.0,
+      "source_recall@5": 1.0
+     },
+     "by_category": {
+      "case": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "identifier": {
+       "n": 3,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "model": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "plain": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "synonym": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "traditional": {
+       "n": 1,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "typo": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      }
+     },
+     "access": {
+      "n": 1,
+      "leaked_chunks": 0
+     },
+     "degraded_queries": 0
+    },
+    "cases": [
+     {
+      "id": "f1-03",
+      "category": "identifier",
+      "retrieval_latency_ms": 219.597,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-FAC-100210-001 CDA 管路连接与保压",
+       "field-sop|SOP-FAC-100210-001 CDA 管路连接与保压"
+      ]
+     },
+     {
+      "id": "f1-04",
+      "category": "identifier",
+      "retrieval_latency_ms": 240.073,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-31DC4EA676A88062 nozzle 间歇漏液，alarm "
+      ]
+     },
+     {
+      "id": "f1-07",
+      "category": "identifier",
+      "retrieval_latency_ms": 233.221,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-SAF-900110-001 EMO 测试",
+       "field-sop|SOP-SAF-900110-001 EMO 测试"
+      ]
+     },
+     {
+      "id": "f1-10",
+      "category": "typo",
+      "retrieval_latency_ms": 218.324,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+       "field-cases|CASE-2C294A68F3428E99 chamber teaching",
+       "field-cases|CASE-FD03801C9FF6DDA1 chamber teaching",
+       "field-cases|CASE-32A76F66BEF3E2BF chamber tecahing",
+       "field-sop|SOP-GEN-200510-001 Load port leveling"
+      ]
+     },
+     {
+      "id": "f1-12",
+      "category": "typo",
+      "retrieval_latency_ms": 210.072,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-1A1307F88902DE9F DI flow trouble sh",
+       "field-cases|CASE-8FE5CBB82FEF9EFF DI flow trouble sh",
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter",
+       "field-cases|CASE-E8AE302C13D0B44B 通水后 DI flow 调试",
+       "field-cases|CASE-12166648D80CF4F5 通水後 DI flow 調試"
+      ]
+     },
+     {
+      "id": "f1-15",
+      "category": "synonym",
+      "retrieval_latency_ms": 236.175,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+       "field-cases|CASE-FD03801C9FF6DDA1 chamber teaching",
+       "field-cases|CASE-2C294A68F3428E99 chamber teaching",
+       "field-cases|CASE-32A76F66BEF3E2BF chamber tecahing",
+       "field-cases|CASE-E6FD343F93119038 Chamber teaching"
+      ]
+     },
+     {
+      "id": "f1-17",
+      "category": "synonym",
+      "retrieval_latency_ms": 184.704,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 2,
+      "top": [
+       "field-cases|CASE-6263E4AE0471F2CD service door overr",
+       "field-sop|SOP-GEN-200310-001 Service door override",
+       "field-cases|CASE-68FB68A58EAB8376 EMO 测试",
+       "field-cases|CASE-91B7EE1D0D3DFDE0 chuck 高速段 wafer 偏移",
+       "field-cases|CASE-8FE5CBB82FEF9EFF DI flow trouble sh"
+      ]
+     },
+     {
+      "id": "f1-20",
+      "category": "traditional",
+      "retrieval_latency_ms": 184.976,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-FAC-100110-001 Chemical flow 调试",
+       "field-cases|CASE-0BE046B9DB50A9E8 chamical flow 調試",
+       "field-cases|CASE-E8CAD35745FBD678 chamical flow 调试",
+       "field-cases|CASE-12166648D80CF4F5 通水後 DI flow 調試",
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter"
+      ]
+     },
+     {
+      "id": "f1-23",
+      "category": "model",
+      "retrieval_latency_ms": 177.663,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 2,
+      "top": [
+       "field-cases|CASE-32B2296F5BAE56B3 spindle 更换（单面机）",
+       "field-sop|SOP-WCL-380120-002 Spindle 更换",
+       "field-cases|CASE-A68312A9A53E53C2 spindle 更换（双面机）",
+       "field-sop|SOP-WCL-380120-002 Spindle 更换",
+       "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl"
+      ]
+     },
+     {
+      "id": "f1-25",
+      "category": "model",
+      "retrieval_latency_ms": 178.029,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 2,
+      "top": [
+       "field-cases|CASE-1DE0658C740D1BCF service door overr",
+       "field-sop|SOP-GEN-200310-001 Service door override",
+       "field-cases|CASE-F75EC05BC0E75AE2 service door overr",
+       "field-sop|SOP-GEN-200310-001 Service door override",
+       "field-cases|CASE-6263E4AE0471F2CD service door overr"
+      ]
+     },
+     {
+      "id": "f1-28",
+      "category": "case",
+      "retrieval_latency_ms": 194.59,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-BE82000959F3C3A8 circulation pump 异",
+       "field-cases|CASE-7AC62DDA1C9AF7C1 circulation pump 异",
+       "field-cases|CASE-48CACECFD12E78C0 circulation pump 異",
+       "ops-global|泵组维护手册",
+       "field-cases|CASE-974089235ED77E95 Mix tank alarm A-1"
+      ]
+     },
+     {
+      "id": "f1-30",
+      "category": "case",
+      "retrieval_latency_ms": 194.783,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-31DC4EA676A88062 nozzle 间歇漏液，alarm ",
+       "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+       "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+       "ops-global|冷卻系統維護手冊",
+       "field-cases|CASE-E8CAD35745FBD678 chamical flow 调试"
+      ]
+     },
+     {
+      "id": "f1-33",
+      "category": "plain",
+      "retrieval_latency_ms": 238.649,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-GEN-200420-001 Golden check",
+       "field-cases|CASE-30895A9CC4468256 golden check",
+       "field-cases|CASE-80C5A656E1DA2DCF golden check",
+       "field-sop|SOP-GEN-200420-001 Golden check",
+       "field-cases|CASE-6BE21DCB1CFB5D00 Golden check"
+      ]
+     },
+     {
+      "id": "f1-35",
+      "category": "plain",
+      "retrieval_latency_ms": 211.996,
+      "degraded": [],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-D76BC0362B350D0A install DI filter",
+       "field-cases|CASE-618509ADF6666C54 install DI filter",
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter",
+       "field-cases|CASE-45A3B7CD0CFEDC01 install DI filter",
+       "field-cases|CASE-8FE5CBB82FEF9EFF DI flow trouble sh"
+      ]
+     },
+     {
+      "id": "f1-38",
+      "category": "access",
+      "retrieval_latency_ms": 161.026,
+      "degraded": [],
+      "leaked": 0
+     }
+    ],
+    "retrieval_latency_ms": {
+     "n": 15,
+     "p50": 210.072,
+     "p95": 240.073,
+     "max": 240.073
+    }
+   },
+   "rewrite_only": {
+    "metrics": {
+     "overall": {
+      "n": 14,
+      "recall@5": 1.0,
+      "mrr": 1.0,
+      "source_recall@5": 1.0
+     },
+     "by_category": {
+      "case": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "identifier": {
+       "n": 3,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "model": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "plain": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "synonym": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "traditional": {
+       "n": 1,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "typo": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      }
+     },
+     "access": {
+      "n": 1,
+      "leaked_chunks": 0
+     },
+     "degraded_queries": 0
+    },
+    "cases": [
+     {
+      "id": "f1-03",
+      "category": "identifier",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 281.298,
+      "degraded": [],
+      "queries": [
+       "SOP-FAC-100210-001 保压时间是多久"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-FAC-100210-001 CDA 管路连接与保压",
+       "field-sop|SOP-FAC-100210-001 CDA 管路连接与保压"
+      ]
+     },
+     {
+      "id": "f1-04",
+      "category": "identifier",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 231.396,
+      "degraded": [],
+      "queries": [
+       "A-2207 偶发报警怎么处理"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-31DC4EA676A88062 nozzle 间歇漏液，alarm "
+      ]
+     },
+     {
+      "id": "f1-07",
+      "category": "identifier",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 250.529,
+      "degraded": [],
+      "queries": [
+       "SOP-SAF-900110-001 测试前要通知谁"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-SAF-900110-001 EMO 测试",
+       "field-sop|SOP-SAF-900110-001 EMO 测试"
+      ]
+     },
+     {
+      "id": "f1-10",
+      "category": "typo",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 199.299,
+      "degraded": [],
+      "queries": [
+       "chamber teaching 时 robot 速度是多少"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+       "field-cases|CASE-FD03801C9FF6DDA1 chamber teaching",
+       "field-cases|CASE-2C294A68F3428E99 chamber teaching",
+       "field-cases|CASE-E6FD343F93119038 Chamber teaching",
+       "field-cases|CASE-32A76F66BEF3E2BF chamber tecahing"
+      ]
+     },
+     {
+      "id": "f1-12",
+      "category": "typo",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 204.0,
+      "degraded": [],
+      "queries": [
+       "DI flow troubleshooting 读值跳动怎么处理"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-1A1307F88902DE9F DI flow trouble sh",
+       "field-cases|CASE-8FE5CBB82FEF9EFF DI flow trouble sh",
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter",
+       "field-cases|CASE-E8AE302C13D0B44B 通水后 DI flow 调试",
+       "field-cases|CASE-12166648D80CF4F5 通水後 DI flow 調試"
+      ]
+     },
+     {
+      "id": "f1-15",
+      "category": "synonym",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 227.401,
+      "degraded": [],
+      "queries": [
+       "腔体示教（chamber teaching）完成后 dynamic test 需要跑多少片"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+       "field-cases|CASE-FD03801C9FF6DDA1 chamber teaching",
+       "field-cases|CASE-2C294A68F3428E99 chamber teaching",
+       "field-cases|CASE-32A76F66BEF3E2BF chamber tecahing",
+       "field-cases|CASE-E6FD343F93119038 Chamber teaching"
+      ]
+     },
+     {
+      "id": "f1-17",
+      "category": "synonym",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 228.844,
+      "degraded": [],
+      "queries": [
+       "ST-250 门超控怎么解除"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 2,
+      "top": [
+       "field-cases|CASE-6263E4AE0471F2CD service door overr",
+       "field-sop|SOP-GEN-200310-001 Service door override",
+       "field-cases|CASE-68FB68A58EAB8376 EMO 测试",
+       "field-cases|CASE-91B7EE1D0D3DFDE0 chuck 高速段 wafer 偏移",
+       "field-cases|CASE-8FE5CBB82FEF9EFF DI flow trouble sh"
+      ]
+     },
+     {
+      "id": "f1-20",
+      "category": "traditional",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 221.824,
+      "degraded": [],
+      "queries": [
+       "化学品流量偏差超过 5% 怎么调"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-FAC-100110-001 Chemical flow 调试",
+       "field-cases|CASE-0BE046B9DB50A9E8 chamical flow 調試",
+       "field-cases|CASE-E8CAD35745FBD678 chamical flow 调试",
+       "field-cases|CASE-12166648D80CF4F5 通水後 DI flow 調試",
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter"
+      ]
+     },
+     {
+      "id": "f1-23",
+      "category": "model",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 233.328,
+      "degraded": [],
+      "queries": [
+       "WX-38 单面机 spindle 扭矩"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 2,
+      "top": [
+       "field-cases|CASE-32B2296F5BAE56B3 spindle 更换（单面机）",
+       "field-sop|SOP-WCL-380120-002 Spindle 更换",
+       "field-cases|CASE-A68312A9A53E53C2 spindle 更换（双面机）",
+       "field-sop|SOP-WCL-380120-002 Spindle 更换",
+       "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl"
+      ]
+     },
+     {
+      "id": "f1-25",
+      "category": "model",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 214.306,
+      "degraded": [],
+      "queries": [
+       "WX-38 的 door override 在哪里打开"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 2,
+      "top": [
+       "field-cases|CASE-1DE0658C740D1BCF service door overr",
+       "field-sop|SOP-GEN-200310-001 Service door override",
+       "field-cases|CASE-F75EC05BC0E75AE2 service door overr",
+       "field-sop|SOP-GEN-200310-001 Service door override",
+       "field-cases|CASE-6263E4AE0471F2CD service door overr"
+      ]
+     },
+     {
+      "id": "f1-28",
+      "category": "case",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 205.56,
+      "degraded": [],
+      "queries": [
+       "circulation pump 出现异响的处理方法"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-BE82000959F3C3A8 circulation pump 异",
+       "field-cases|CASE-7AC62DDA1C9AF7C1 circulation pump 异",
+       "field-cases|CASE-48CACECFD12E78C0 circulation pump 異",
+       "ops-global|泵组维护手册",
+       "field-cases|CASE-974089235ED77E95 Mix tank alarm A-1"
+      ]
+     },
+     {
+      "id": "f1-30",
+      "category": "case",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 204.918,
+      "degraded": [],
+      "queries": [
+       "nozzle 间歇漏液有人遇到过吗，相关案例或处理经验"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-31DC4EA676A88062 nozzle 间歇漏液，alarm ",
+       "ops-global|冷卻系統維護手冊",
+       "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+       "field-cases|CASE-1A1307F88902DE9F DI flow trouble sh",
+       "field-cases|CASE-E8CAD35745FBD678 chamical flow 调试"
+      ]
+     },
+     {
+      "id": "f1-33",
+      "category": "plain",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 249.285,
+      "degraded": [],
+      "queries": [
+       "golden wafer 使用完毕后应放回哪里/如何存放"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-GEN-200420-001 Golden check",
+       "field-sop|SOP-GEN-200420-001 Golden check",
+       "field-cases|CASE-30895A9CC4468256 golden check",
+       "field-cases|CASE-80C5A656E1DA2DCF golden check",
+       "field-cases|CASE-6BE21DCB1CFB5D00 Golden check"
+      ]
+     },
+     {
+      "id": "f1-35",
+      "category": "plain",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 223.534,
+      "degraded": [],
+      "queries": [
+       "DI filter 装反会有什么后果"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter",
+       "field-cases|CASE-D76BC0362B350D0A install DI filter",
+       "field-cases|CASE-618509ADF6666C54 install DI filter",
+       "field-cases|CASE-45A3B7CD0CFEDC01 install DI filter",
+       "field-cases|CASE-1A1307F88902DE9F DI flow trouble sh"
+      ]
+     },
+     {
+      "id": "f1-38",
+      "category": "access",
+      "planner_status": "ok",
+      "retrieval_latency_ms": 192.485,
+      "degraded": [],
+      "queries": [
+       "spindle 更换时的扭矩要求是多少"
+      ],
+      "leaked": 0
+     }
+    ],
+    "retrieval_latency_ms": {
+     "n": 15,
+     "p50": 223.534,
+     "p95": 281.298,
+     "max": 281.298
+    },
+    "changes_vs_off": [
+     {
+      "id": "f1-35",
+      "category": "plain",
+      "question": "DI filter 装反会怎样",
+      "rank": [
+       1,
+       1
+      ],
+      "source_rank": [
+       3,
+       1
+      ],
+      "queries": [
+       "DI filter 装反会有什么后果"
+      ],
+      "route": null,
+      "non_retrieval_intent": null
+     }
+    ]
+   },
+   "full_plan": {
+    "metrics": {
+     "overall": {
+      "n": 14,
+      "recall@5": 1.0,
+      "mrr": 1.0,
+      "source_recall@5": 1.0
+     },
+     "by_category": {
+      "case": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "identifier": {
+       "n": 3,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "model": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "plain": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "synonym": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "traditional": {
+       "n": 1,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      },
+      "typo": {
+       "n": 2,
+       "recall@5": 1.0,
+       "mrr": 1.0,
+       "source_recall@5": 1.0
+      }
+     },
+     "access": {
+      "n": 1,
+      "leaked_chunks": 0
+     },
+     "degraded_queries": 0
+    },
+    "cases": [
+     {
+      "id": "f1-03",
+      "category": "identifier",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 230.893,
+      "degraded": [],
+      "queries": [
+       "SOP-FAC-100210-001 保压时间是多久"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-FAC-100210-001 CDA 管路连接与保压",
+       "field-sop|SOP-FAC-100210-001 CDA 管路连接与保压"
+      ]
+     },
+     {
+      "id": "f1-04",
+      "category": "identifier",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 227.621,
+      "degraded": [],
+      "queries": [
+       "A-2207 偶发报警怎么处理"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-31DC4EA676A88062 nozzle 间歇漏液，alarm "
+      ]
+     },
+     {
+      "id": "f1-07",
+      "category": "identifier",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 247.097,
+      "degraded": [],
+      "queries": [
+       "SOP-SAF-900110-001 测试前要通知谁"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-SAF-900110-001 EMO 测试",
+       "field-sop|SOP-SAF-900110-001 EMO 测试"
+      ]
+     },
+     {
+      "id": "f1-10",
+      "category": "typo",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 179.767,
+      "degraded": [],
+      "queries": [
+       "chamber teaching 时 robot 速度是多少"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+       "field-cases|CASE-FD03801C9FF6DDA1 chamber teaching",
+       "field-cases|CASE-2C294A68F3428E99 chamber teaching",
+       "field-cases|CASE-E6FD343F93119038 Chamber teaching",
+       "field-cases|CASE-32A76F66BEF3E2BF chamber tecahing"
+      ]
+     },
+     {
+      "id": "f1-12",
+      "category": "typo",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 188.577,
+      "degraded": [],
+      "queries": [
+       "DI flow troubleshooting 读值跳动怎么处理"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 3,
+      "top": [
+       "field-cases|CASE-1A1307F88902DE9F DI flow trouble sh",
+       "field-cases|CASE-8FE5CBB82FEF9EFF DI flow trouble sh",
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter",
+       "field-cases|CASE-E8AE302C13D0B44B 通水后 DI flow 调试",
+       "field-cases|CASE-12166648D80CF4F5 通水後 DI flow 調試"
+      ]
+     },
+     {
+      "id": "f1-15",
+      "category": "synonym",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 288.291,
+      "degraded": [],
+      "queries": [
+       "腔体示教（chamber teaching）完成后 dynamic test 需要跑多少片"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-GEN-200410-001 Chamber teaching 与 dy",
+       "field-cases|CASE-FD03801C9FF6DDA1 chamber teaching",
+       "field-cases|CASE-2C294A68F3428E99 chamber teaching",
+       "field-cases|CASE-32A76F66BEF3E2BF chamber tecahing",
+       "field-cases|CASE-E6FD343F93119038 Chamber teaching"
+      ]
+     },
+     {
+      "id": "f1-17",
+      "category": "synonym",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 537.918,
+      "degraded": [],
+      "queries": [
+       "ST-250 门超控怎么解除"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 2,
+      "top": [
+       "field-cases|CASE-6263E4AE0471F2CD service door overr",
+       "field-sop|SOP-GEN-200310-001 Service door override",
+       "field-cases|CASE-68FB68A58EAB8376 EMO 测试",
+       "field-cases|CASE-91B7EE1D0D3DFDE0 chuck 高速段 wafer 偏移",
+       "field-cases|CASE-8FE5CBB82FEF9EFF DI flow trouble sh"
+      ]
+     },
+     {
+      "id": "f1-20",
+      "category": "traditional",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 169.422,
+      "degraded": [],
+      "queries": [
+       "化学品流量偏差超过 5% 怎么调"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-FAC-100110-001 Chemical flow 调试",
+       "field-cases|CASE-0BE046B9DB50A9E8 chamical flow 調試",
+       "field-cases|CASE-E8CAD35745FBD678 chamical flow 调试",
+       "field-cases|CASE-12166648D80CF4F5 通水後 DI flow 調試",
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter"
+      ]
+     },
+     {
+      "id": "f1-23",
+      "category": "model",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 230.847,
+      "degraded": [],
+      "queries": [
+       "WX-38 单面机 spindle 扭矩"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 2,
+      "top": [
+       "field-cases|CASE-32B2296F5BAE56B3 spindle 更换（单面机）",
+       "field-sop|SOP-WCL-380120-002 Spindle 更换",
+       "field-sop|SOP-WCL-380120-002 Spindle 更换",
+       "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+       "field-cases|CASE-1DE0658C740D1BCF service door overr"
+      ]
+     },
+     {
+      "id": "f1-25",
+      "category": "model",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 196.387,
+      "degraded": [],
+      "queries": [
+       "WX-38 的 door override 在哪里打开"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 2,
+      "top": [
+       "field-cases|CASE-1DE0658C740D1BCF service door overr",
+       "field-sop|SOP-GEN-200310-001 Service door override",
+       "field-cases|CASE-F75EC05BC0E75AE2 service door overr",
+       "field-cases|CASE-1F9C7CA059229C4E EMO 测试",
+       "field-cases|CASE-16D28EB91FDACF2F 软件更新及 EAP 通讯测试"
+      ]
+     },
+     {
+      "id": "f1-28",
+      "category": "case",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 215.043,
+      "degraded": [],
+      "queries": [
+       "circulation pump 出现异响的处理方法"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-BE82000959F3C3A8 circulation pump 异",
+       "field-cases|CASE-7AC62DDA1C9AF7C1 circulation pump 异",
+       "field-cases|CASE-48CACECFD12E78C0 circulation pump 異",
+       "ops-global|泵组维护手册",
+       "field-cases|CASE-974089235ED77E95 Mix tank alarm A-1"
+      ]
+     },
+     {
+      "id": "f1-30",
+      "category": "case",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 200.044,
+      "degraded": [],
+      "queries": [
+       "nozzle 间歇漏液有人遇到过吗，相关案例或处理经验"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-cases|CASE-31DC4EA676A88062 nozzle 间歇漏液，alarm ",
+       "ops-global|冷卻系統維護手冊",
+       "field-sop|SOP-WCL-380110-001 Mix tank 液位报警与 interl",
+       "field-cases|CASE-1A1307F88902DE9F DI flow trouble sh",
+       "field-cases|CASE-E8CAD35745FBD678 chamical flow 调试"
+      ]
+     },
+     {
+      "id": "f1-33",
+      "category": "plain",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 188.968,
+      "degraded": [],
+      "queries": [
+       "golden wafer 使用完毕后应放回哪里/如何存放"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-GEN-200420-001 Golden check",
+       "field-sop|SOP-GEN-200420-001 Golden check",
+       "field-cases|CASE-30895A9CC4468256 golden check",
+       "field-cases|CASE-80C5A656E1DA2DCF golden check",
+       "field-cases|CASE-6BE21DCB1CFB5D00 Golden check"
+      ]
+     },
+     {
+      "id": "f1-35",
+      "category": "plain",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "retrieval_latency_ms": 202.779,
+      "degraded": [],
+      "queries": [
+       "DI filter 装反会有什么后果"
+      ],
+      "hit": true,
+      "rank": 1,
+      "source_hit": true,
+      "source_rank": 1,
+      "top": [
+       "field-sop|SOP-FAC-100120-001 DI flow 调试与 DI filter",
+       "field-cases|CASE-D76BC0362B350D0A install DI filter",
+       "field-cases|CASE-618509ADF6666C54 install DI filter",
+       "field-cases|CASE-45A3B7CD0CFEDC01 install DI filter",
+       "field-cases|CASE-1A1307F88902DE9F DI flow trouble sh"
+      ]
+     },
+     {
+      "id": "f1-38",
+      "category": "access",
+      "planner_status": "ok",
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": false
+      },
+      "retrieval_latency_ms": 188.831,
+      "degraded": [],
+      "queries": [
+       "spindle 更换时的扭矩要求是多少"
+      ],
+      "leaked": 0
+     }
+    ],
+    "retrieval_latency_ms": {
+     "n": 15,
+     "p50": 202.779,
+     "p95": 537.918,
+     "max": 537.918
+    },
+    "changes_vs_off": [
+     {
+      "id": "f1-35",
+      "category": "plain",
+      "question": "DI filter 装反会怎样",
+      "rank": [
+       1,
+       1
+      ],
+      "source_rank": [
+       3,
+       1
+      ],
+      "queries": [
+       "DI filter 装反会有什么后果"
+      ],
+      "route": {
+       "requested": [
+        "ops-global",
+        "ops-cn",
+        "field-sop",
+        "field-cases"
+       ],
+       "applied": true
+      },
+      "non_retrieval_intent": null
+     }
+    ]
+   }
+  }
+ }
+}
