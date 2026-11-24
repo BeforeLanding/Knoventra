@@ -98,3 +98,52 @@ def test_graph_records_the_rejection_for_the_turn():
     assert out["error_code"] == "MODEL_TOOL_CALL_INVALID"
     assert out["tool_rejection"] == [{"name": "request_help", "arg_keys": ["machine"],
                                       "errors": [{"loc": ["machine"], "type": "extra_forbidden"}]}]
+
+
+@pytest.mark.parametrize("blank", ["", "   ", "\n"])
+def test_blank_help_slots_mean_not_given(blank):
+    """Models often send "" for a slot the user has not given yet; that must not refuse the call."""
+    from knoventra.agent.graph import _HelpArgs
+
+    args = {"machine_id": "610101", "symptom": "pump 不转", "alarm": blank, "tried_steps": blank}
+    assert _valid_tool_batch([tool("request_help", args)])
+    parsed = _HelpArgs.model_validate(args)
+    assert (parsed.alarm, parsed.tried_steps) == (None, None) and parsed.machine_id == "610101"
+
+
+def test_required_text_on_other_tools_stays_nonblank():
+    assert not _valid_tool_batch([tool("search_knowledge", {"query": " "})])
+    assert not _valid_tool_batch([tool("lookup_skills", {"skill": ""})])
+    assert not _valid_tool_batch([tool("request_help", {"machine": "610101"})])  # extra fields still forbidden
+
+
+def test_blank_tried_steps_starts_a_draft_instead_of_refusing_the_turn():
+    """Dev run a6-04 shape: the user gives no tried steps, the model sends tried_steps=""."""
+    from langchain_core.messages import ToolMessage
+
+    from fakes import call, session_factory_for
+
+    def agent(messages):
+        if isinstance(messages[-1], ToolMessage):
+            return AIMessage("请问你已经做过哪些处理？")
+        return call("request_help", {"machine_id": "610101", "symptom": "切换 tank 报 A-1301", "tried_steps": ""}, "h1")
+    db = Mock()
+    graph = build_graph(AgentDeps(session_factory_for(db), None, None, ScriptedModel(script=agent), InMemorySaver(),
+                                  long_term_memory=False))
+    out = graph.invoke({"messages": [HumanMessage("帮我提求助单，610101 切换 tank 报 A-1301")], "evidence": {},
+                        "sources": [], "error_code": None},
+                       {"configurable": {"thread_id": uuid.uuid4().hex, "user_id": "u"}})
+    assert out["error_code"] is None and out.get("tool_rejection") is None
+    tool_msg = next(m for m in out["messages"] if isinstance(m, ToolMessage))
+    assert "还缺：已尝试的步骤" in tool_msg.content and tool_msg.artifact["help_draft"]["machine_id"] == "610101"
+
+
+def test_verbatim_short_answers_pass_but_formal_rewrites_do_not():
+    """Why rule 8 asks for the user's own wording: the support check compares words, not meaning."""
+    from knoventra.help.slots import merge_checked
+
+    said = [HumanMessage("610101 pump 不转，帮我提单"), HumanMessage("还没试过")]
+    draft, rejected = merge_checked(None, {"machine_id": "610101", "symptom": "pump 不转", "tried_steps": "还没试过"}, said)
+    assert rejected == [] and draft["tried_steps"] == "还没试过"
+    _, rejected = merge_checked(None, {"tried_steps": "尚未执行任何排障措施"}, said)
+    assert rejected == ["tried_steps"]

@@ -56,7 +56,7 @@ SYSTEM_PROMPT = """你是示例精密设备公司的内部知识助手。
 4. 用户明确要求转人工/转交专家时，立即调用 escalate_to_expert，即使信息不全也不要先追问；summary 依据已有对话写成可直接交给专家的问题摘要（确认卡会让用户核对）。其他情况不要调用。
 5. 查询转交进度用 get_escalation_status。只报告工具实际返回的记录和状态；转交工具仅创建待处理记录，不代表已通知、已受理或已分派到特定团队，不承诺响应时间。没有执行相应工具时，不承诺能修改已提交的转交，也不要让用户在已完成的确认卡中补充内容。
 6. 严格保留用户问题中的时间、频率、对象和编码约束，不自行增加条件（例如“日常”不等于“每日”）。用户未明确要求全部项目或完整清单时，不擅自增加完整性要求。章节标题给出的类别与正文频率可以同时成立，例如“日常检查”章节中的“每周检查”仍属于该类检查；回答时保留原频率，不因它不是每日而判作无关。资料只支持问题的一部分时，先引用并回答可证实的范围，对其余部分拒绝推断，不因无法证明清单完整就整体拒答。
-8. 现场故障查不到可行方案、或用户要发起求助单时，调用 request_help，只填用户在对话中亲口说过的机台号、告警、现象、已尝试步骤；检索到的资料和历史案例里的处理步骤不是用户已尝试的步骤，不能填进去。工具会告诉你还缺什么，一次只向用户追问一项，不要编造。
+8. 现场故障查不到可行方案、或用户要发起求助单时，调用 request_help，只填用户在对话中亲口说过的机台号、告警、现象、已尝试步骤；检索到的资料和历史案例里的处理步骤不是用户已尝试的步骤，不能填进去。填写 symptom 和 tried_steps 时尽量保留用户原话的措辞，不要同义改写、书面化或扩写（例如用户说“还没试过”就填“还没试过”）；用户没提供的项不要传。工具会告诉你还缺什么，一次只向用户追问一项，不要编造。
 7. 用户问谁会做某项技能、该找谁时，调用 lookup_skills，只报告工具返回的人员、掌握程度和作业次数，不推测其他人选。
 9. 下方的“历史记忆”是该用户以往对话和求助单的记录，可以用来回答“上次那个问题后来怎么解决的”，回答时说明来自以往记录；涉及操作步骤或参数时，仍须调用 search_knowledge 并引用资料。“用户画像”只用于理解指代，不要据此假设本轮问的是哪台机台。"""
 
@@ -113,6 +113,16 @@ class _HelpArgs(_ToolArgs):
     symptom: str | None = Field(default=None, max_length=500, description="故障现象")
     alarm: str | None = Field(default=None, max_length=200, description="告警码或告警信息")
     tried_steps: str | None = Field(default=None, max_length=500, description="已尝试的步骤")
+
+    @field_validator("machine_id", "symptom", "alarm", "tried_steps", mode="before")
+    @classmethod
+    def blank_means_not_given(cls, value):
+        # Every slot is optional: models often send "" for a slot the user has not given yet.
+        # Treat it as omitted, so one empty slot does not refuse the whole call (nonblank then
+        # sees None). Required text on the other tools stays nonblank.
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
 
 
 @tool(args_schema=_HelpArgs)
