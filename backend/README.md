@@ -60,6 +60,8 @@ Python 3.12 / FastAPI / LangGraph / PostgreSQL + pgvector；可选 Elasticsearch
 
 **MCP 与双密钥**：`KNV_MCP_URL`（默认空 = 工具在 API 进程内执行）、`KNV_MCP_HOST`（`127.0.0.1`）、`KNV_MCP_PORT`（58765）、`KNV_MCP_ALLOWED_HOSTS`（Host 头白名单，JSON 列表；容器内如 `["mcp:*"]`）、`KNV_MCP_TIMEOUT_S`（30）、`KNV_TOOL_TOKEN_SECRET`、`KNV_TOOL_TOKEN_TTL_S`（300）。**登录 JWT 与工具 token 使用两把不同的密钥**：`KNV_TOOL_TOKEN_SECRET` 必须与 `KNV_JWT_SECRET` 不同，工具 token 带专用受众，登录 token 无法用于 MCP，反之亦然。
 
+**密钥校验**：`Settings` 构造时强制：`KNV_JWT_SECRET` 与 `KNV_TOOL_TOKEN_SECRET` 在任何环境下都非空白且互不相同；`KNV_ENV` 不是 `dev` 时还拒绝 `dev-only-` 开头的占位值和短于 32 字符的密钥，违反时进程启动失败。
+
 **上传与输入上限**：`KNV_UPLOAD_MAX_BYTES`（20 MiB，正整数）、`KNV_CHAT_MAX_CHARS`（4000 个 Unicode 码点，经 `GET /me` 的 `chat_max_chars` 告知前端）、`KNV_CONFIRM_TTL_MINUTES`（30）。
 
 ### LLM 与 thinking 模式
@@ -76,6 +78,8 @@ Python 3.12 / FastAPI / LangGraph / PostgreSQL + pgvector；可选 Elasticsearch
 可选 `ml` 依赖组（`torch`、`FlagEmbedding`）仅在加载 BGE-M3 / 精排时需要；CI 与离线测试用 `uv sync --locked --group dev`，不下载模型。
 
 ## 本地启动与数据导入
+
+`GET /api/v1/healthz` 免登录，只执行 `SELECT 1` 检查数据库可达，成功返回 `{"status": "ok"}`；容器演示的 API 健康检查使用它。应用启动是惰性的（不预先构建图、编码器或模型客户端，因此未配置 LLM 时其余路由照常工作）；停机时 `lifespan` 关闭检查点连接池、清理已缓存的图、关闭 Redis 客户端并关闭规划线程池，下一次使用会重新创建。
 
 ```bash
 docker compose -f deploy/compose.yaml up -d --wait   # 在仓库根目录：PostgreSQL、ES、Redis
@@ -118,6 +122,9 @@ uv run python -m knoventra.search_es.sync reconcile   # 与 PG 对账补齐
 - 检索类回答必须至少含一个已登记的引用：当本轮最近一批工具调用只含 `search_knowledge` 时，没有有效 `[S1]` 式引用的成功回答以 `MODEL_CITATION_MISSING` 结束；该次检索无证据且返回 `NO_ACCESS` / `INSUFFICIENT_EVIDENCE` 时，最终回答为固定拒答，即使模型无视了拒答指令。流式预览可能早于最终校验后的答案出现，`done` 事件里的答案为准。这是引用存在性检查，不是逐句支持度核验。
 
 ### 引用与拒答
+
+- **发起求助意图**：`query_plan` 的意图含 `request_help`（用户要发起 / 新建 / 提交求助单，不论是否已说细节；区别于查询进度的 `help_status` 和询问制度的 `it_guide`）。它不是检索意图，规划后直接进入 `agent`，不检索。系统提示词要求此时立即调用 `request_help`（可传 `{}`）；若规划成功、意图为 `request_help`、置信度不低于 `KNV_QUERY_PLAN_MIN_CONFIDENCE`、本轮无进行中草稿，而模型只返回无工具调用的文字，服务端改为发出一次 `request_help({})`，并在 `memory_trace` 记录 `help_fallback`；模型已带槽位调用时不改动。评测器的 `INTENTS` 保持冻结用例使用的 6 个标签，规划器可返回的全部意图是 `VALID_INTENTS`。
+- **情景记忆的提问文本**：首问用用户原话；多轮时优先使用规划器的 `rewritten`，否则在上一条助手消息是机型澄清或本轮不超过 20 个字符时写成“上一问（本轮补充）”。用户画像始终只统计本轮的原始消息。
 
 - 证据注册表记录每次检索的来源，`cite_check` 剥离未登记的引用标记；简体 `【无依据】` 与繁体 `【無依據】` 的开头拒答声明都被识别：去掉标记与引用、输出 `INSUFFICIENT_EVIDENCE`、没有来源卡。
 - `unambiguous-question-opencc-v1`：回答正文按**当前问题**的字形转换——OpenCC 信号能唯一判定为繁体 / 简体时，才转为相应字形；共用字符、非中文或混合输入保持模型原文。引用别名、故障码、行内 / 围栏代码和 HTTP URL 保持不变；证据、来源卡文本和已存文档保持原字形。每轮只看本轮问题，不从历史推断偏好。这是字形转换，不是翻译。

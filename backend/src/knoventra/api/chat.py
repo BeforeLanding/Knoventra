@@ -5,6 +5,7 @@ import json
 import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
+import logging
 from functools import lru_cache
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -19,6 +20,7 @@ from knoventra.access.scope import NoAccess, compute_scope
 from knoventra.agent.checkpoint import make_checkpointer
 from knoventra.agent.graph import AgentDeps, build_graph
 from knoventra.agent.model import chat_model_kwargs
+from knoventra.agent.query_plan import shutdown_pool
 from knoventra.api.deps import current_user, get_db
 from knoventra.api.run_lock import ConversationLease, ConversationStreamingResponse
 from knoventra.config import settings
@@ -31,6 +33,7 @@ from knoventra.tools.backend import McpTools, ToolCredential
 from knoventra.auth.security import issue_tool_token
 from knoventra.retrieval.rerank import get_reranker
 
+log = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1")
 
 
@@ -38,6 +41,27 @@ router = APIRouter(prefix="/api/v1")
 def _session():
     with SessionLocal() as db:
         yield db
+
+
+_checkpoint_pool = None
+
+
+def shutdown_resources() -> None:
+    """Release what the lazily built graph holds. Idempotent, and the next request rebuilds."""
+    global _checkpoint_pool
+    pool, _checkpoint_pool = _checkpoint_pool, None
+    if pool is not None:
+        try:
+            pool.close()
+        except Exception:  # noqa: BLE001 - shutdown is best effort
+            log.warning("closing the checkpoint pool failed", exc_info=True)
+    get_graph.cache_clear()
+    if get_working_memory.cache_info().currsize:
+        memory = get_working_memory()
+        if memory is not None:
+            memory.close()
+    get_working_memory.cache_clear()
+    shutdown_pool()
 
 
 @lru_cache(maxsize=1)
@@ -55,7 +79,8 @@ def get_graph():
     # Summarizer: not streamed (its node never reaches users), bounded by its own timeout;
     # a failure keeps the full history for that turn.
     summarizer = ChatOpenAI(**{**chat_model_kwargs(), "timeout": settings.summary_timeout_s}, max_retries=0)
-    saver, _pool = make_checkpointer(settings.database_url)
+    global _checkpoint_pool
+    saver, _checkpoint_pool = make_checkpointer(settings.database_url)
     # Tools run on the MCP server when one is configured, else in this process.
     tools = McpTools(settings.mcp_url, settings.mcp_timeout_s) if settings.mcp_url else None
     return build_graph(AgentDeps(_session, get_encoder(), get_reranker(), llm, saver, planner,

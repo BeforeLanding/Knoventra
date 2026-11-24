@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, ValidationInfo, field_validator
+from pydantic import Field, ValidationInfo, field_validator, model_validator
 from typing import Literal
 
 
@@ -98,6 +98,23 @@ class Settings(BaseSettings):
         if info.data.get("rerank") == "bge" and not value.strip():
             raise ValueError("rerank_model must be nonblank when rerank=bge")
         return value
+
+    @model_validator(mode="after")
+    def secrets_are_separate_and_strong(self):
+        """The login JWT and the MCP tool token must never share a key; outside dev, no placeholder keys."""
+        for name in ("jwt_secret", "tool_token_secret"):
+            if not getattr(self, name).strip():
+                raise ValueError(f"{name} must not be blank")
+        if self.jwt_secret == self.tool_token_secret:
+            raise ValueError("jwt_secret and tool_token_secret must differ")
+        if self.env != "dev":
+            for name in ("jwt_secret", "tool_token_secret"):
+                value = getattr(self, name)
+                if value.startswith("dev-only-"):
+                    raise ValueError(f"{name} is a development placeholder; set a real secret when env != dev")
+                if len(value) < 32:
+                    raise ValueError(f"{name} must be at least 32 characters when env != dev")
+        return self
 
 
 settings = Settings()

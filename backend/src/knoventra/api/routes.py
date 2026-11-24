@@ -3,7 +3,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from knoventra.access.scope import NoAccess, compute_scope
@@ -30,6 +30,13 @@ router = APIRouter(prefix="/api/v1")
 class LoginIn(BaseModel):
     email: str
     password: str
+
+
+@router.get("/healthz")
+def healthz(db: Session = Depends(get_db)):
+    """Liveness plus database reachability; no login, no model, no encoder."""
+    db.execute(text("SELECT 1"))
+    return {"status": "ok"}
 
 
 @router.post("/auth/login")

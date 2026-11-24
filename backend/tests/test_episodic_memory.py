@@ -290,3 +290,55 @@ def test_memory_api_shows_and_deletes_only_your_own(client, db, enc, users):
     assert db.get(Profile, me.id) is None
     assert db.scalar(select(func.count()).select_from(Episode).where(Episode.user_id == other.id)) == 1
     assert client.get("/api/v1/memory").status_code == 401
+
+
+# ------------------------------------------------------------------ follow-up questions keep their context
+
+def _episode_texts(db, user):
+    return [e.text for e in db.scalars(select(Episode).where(Episode.user_id == user.id, Episode.source_kind == "answer")
+                                       .order_by(Episode.created_at))]
+
+
+def test_first_question_is_stored_verbatim_even_with_a_planner_rewrite(db, enc, users):
+    from test_query_plan import plan_call, planner
+    user = users["sg-ops"]
+    g = graph_for(db, enc, planner=planner(plan_call(rewritten="E17 故障码 42 排查步骤", intent="case_sop", confidence=0.9)))
+    ask(g, user, "E17-42 報警怎麼排查")
+    assert _episode_texts(db, user)[0].startswith("问：E17-42 報警怎麼排查")
+
+
+def test_short_follow_up_without_planner_is_joined_to_the_previous_question(db, enc, users):
+    user, thread = users["sg-ops"], uuid.uuid4().hex
+    g = graph_for(db, enc)
+    ask(g, user, "E17-42 报警怎么排查", thread)
+    ask(g, user, "WX-38", thread)
+    texts = _episode_texts(db, user)
+    assert texts[0].startswith("问：E17-42 报警怎么排查\n") and texts[1].startswith("问：E17-42 报警怎么排查（WX-38）")
+    prof = db.get(Profile, user.id)
+    # Profile counts read each turn's own words only: one WX-38 mention; "WX-38" itself has no script.
+    assert prof.model_counts == {"WX-38": 1} and prof.lang_counts == {"zh-Hans": 1}
+
+
+def test_follow_up_after_a_model_clarification_is_joined_even_when_long(db, enc, users):
+    user = users["sg-ops"]
+    cfg = {"configurable": {"thread_id": uuid.uuid4().hex, "user_id": user.id}}
+    history = [HumanMessage("spindle 更换扭矩多少", id="q1"),
+               AIMessage("请问是哪个机型？", response_metadata={"clarification": True}, id="a1"),
+               HumanMessage("我们这边用的是单面机 WX-38 型号的机台", id="q2")]
+    graph_for(db, enc).invoke({"messages": history, "evidence": {}, "sources": [], "error_code": None}, cfg)
+    assert _episode_texts(db, user)[0].startswith("问：spindle 更换扭矩多少（我们这边用的是单面机 WX-38 型号的机台）")
+
+
+def test_follow_up_with_a_planner_uses_the_rewritten_question(db, enc, users):
+    from test_query_plan import plan_call, planner
+    user, thread = users["sg-ops"], uuid.uuid4().hex
+    g = graph_for(db, enc, planner=planner(
+        plan_call(rewritten="E17-42 报警的排查步骤", intent="case_sop", confidence=0.9),
+        plan_call(rewritten="WX-38 的 E17-42 报警排查步骤", intent="case_sop", confidence=0.9, machine_model="WX-38")))
+    ask(g, user, "E17-42 报警怎么排查", thread)
+    ask(g, user, "那它呢", thread)
+    texts = _episode_texts(db, user)
+    assert texts[1].startswith("问：WX-38 的 E17-42 报警排查步骤")
+    prof = db.get(Profile, user.id)
+    # The rewrite names WX-38, but the user never did: the profile does not count it.
+    assert prof.model_counts == {} and prof.lang_counts == {"zh-Hans": 1}

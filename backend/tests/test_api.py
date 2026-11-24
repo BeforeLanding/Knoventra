@@ -107,3 +107,31 @@ def test_debug_search_explains_exact_identifier_rejection(client):
     assert r.status_code == 200 and body["evidence"] == []
     assert body["identifiers"] == {"required": ["E17-44"], "missing": ["E17-44"]}
     assert body["stages"]["fused"] and body["stages"]["identifier_match"] == []
+
+
+def test_healthz_needs_no_login_and_checks_the_database(client):
+    r = client.get("/api/v1/healthz")
+    assert r.status_code == 200 and r.json() == {"status": "ok"}
+
+
+def test_lifespan_can_be_entered_twice_and_planning_keeps_working(db):
+    from langchain_core.messages import AIMessage, HumanMessage
+    from fakes import ScriptedModel
+    from knoventra.agent.query_plan import plan_query
+
+    def plan_model():
+        call = AIMessage("", tool_calls=[{"name": "QueryPlan", "id": "p", "type": "tool_call", "args": {
+            "rewritten": "EMO 测试", "sub_queries": [], "intent": "case_sop", "confidence": 0.9}}])
+        return ScriptedModel(script=lambda messages: call)
+
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        for _ in range(2):
+            with TestClient(app) as c:
+                assert c.get("/api/v1/healthz").status_code == 200
+                plan, trace = plan_query(plan_model(), [HumanMessage("EMO 测试")])
+                assert plan is not None and trace["status"] == "ok"
+        plan, trace = plan_query(plan_model(), [HumanMessage("EMO 测试")])  # after the last shutdown
+        assert plan is not None
+    finally:
+        app.dependency_overrides.clear()

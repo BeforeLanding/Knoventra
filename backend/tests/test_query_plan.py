@@ -181,3 +181,71 @@ def test_a_split_never_appends_the_other_model_as_a_restored_code():
     plan = QueryPlan(rewritten="spindle 扭矩", sub_queries=[], intent="case_sop", confidence=0.9, machine_model=None)
     r = postprocess(plan, human("WX-38 和 WX-P 的 spindle 扭矩有什么区别，E17-42 也有关系吗"))
     assert r.queries == ["WX-38 spindle 扭矩 E17-42", "WX-P spindle 扭矩 E17-42"]
+
+
+# ------------------------------------------------------------------ request_help intent (a6-07)
+
+from knoventra.memory.drafts import checkpoint_draft  # noqa: E402
+from fakes import call  # noqa: E402
+
+
+def _help_graph(db, enc, agent, *plans):
+    deps = AgentDeps(session_factory_for(db), enc, None, ScriptedModel(script=agent), InMemorySaver(), planner(*plans))
+    return build_graph(deps)
+
+
+def _turn(graph, user, thread, text):
+    cfg = {"configurable": {"thread_id": thread, "user_id": user.id}}
+    return graph.invoke({"messages": [HumanMessage(text, id=uuid.uuid4().hex)], "evidence": {}, "sources": [],
+                         "error_code": None}, cfg)
+
+
+def _help_calls(out):
+    return [c for m in out["messages"] if isinstance(m, AIMessage) for c in m.tool_calls if c["name"] == "request_help"]
+
+
+def chatty_agent(messages):
+    last = messages[-1]
+    if isinstance(last, ToolMessage):
+        return AIMessage("请告诉我机台号。" if "还缺" in last.content else "好的。")
+    return AIMessage("好的，请告诉我机台号和现象，我已记录。")
+
+
+def test_request_help_is_not_a_retrieval_intent_and_skips_search(db, enc, users):
+    out = run(db, enc, users["sg-ops"], "提个求助单",
+              plan_call(rewritten="提个求助单", intent="request_help", confidence=0.9), agent_script=chatty_agent)
+    assert out["query_plan"]["intent"] == "request_help" and out["query_plan"]["route_kbs"] is None
+    assert out["retrieval_trace"] == []
+    assert not any(c["name"] == "search_knowledge" for m in out["messages"] if isinstance(m, AIMessage) for c in m.tool_calls)
+
+
+def test_prose_only_reply_to_a_bare_help_request_opens_the_draft_and_later_slots_merge(db, enc, users):
+    user, thread = users["sg-ops"], uuid.uuid4().hex
+    graph = _help_graph(db, enc, lambda m: chatty_agent(m) if isinstance(m[-1], ToolMessage) or "610101" not in m[-1].content
+                        else call("request_help", {"machine_id": "610101", "symptom": "pump 不转"}, "h2"),
+                        plan_call(rewritten="提个求助单", intent="request_help", confidence=0.9))
+    first = _turn(graph, user, thread, "提个求助单")
+    assert [c["args"] for c in _help_calls(first)] == [{}]
+    assert any(e.get("event") == "help_fallback" for e in first["memory_trace"])
+    assert "还缺" in next(m for m in reversed(first["messages"]) if isinstance(m, ToolMessage)).content
+    second = _turn(graph, user, thread, "机台 610101，pump 不转")
+    draft = checkpoint_draft(second["messages"], second.get("pending"))[1]
+    assert draft["machine_id"] == "610101" and "pump" in draft["symptom"]
+
+
+def test_model_supplied_slots_are_not_overridden(db, enc, users):
+    def agent(messages):
+        if isinstance(messages[-1], ToolMessage):
+            return AIMessage("还缺已尝试的步骤。")
+        return call("request_help", {"machine_id": "610101", "symptom": "pump 不转"}, "h1")
+    out = run(db, enc, users["sg-ops"], "机台 610101 pump 不转，提个求助单",
+              plan_call(rewritten="提个求助单", intent="request_help", confidence=0.9), agent_script=agent)
+    calls = _help_calls(out)
+    assert [c["args"] for c in calls] == [{"machine_id": "610101", "symptom": "pump 不转"}]
+    assert not any(e.get("event") == "help_fallback" for e in out["memory_trace"])
+
+
+def test_low_confidence_request_help_gets_no_fallback(db, enc, users):
+    out = run(db, enc, users["sg-ops"], "提个求助单",
+              plan_call(rewritten="提个求助单", intent="request_help", confidence=0.2), agent_script=chatty_agent)
+    assert _help_calls(out) == []

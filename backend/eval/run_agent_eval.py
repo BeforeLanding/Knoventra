@@ -42,7 +42,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 CASES = HERE / "cases_agent_v1.jsonl"
 EVAL_DB = "knoventra_eval_v4"
-INTENTS = ("case_sop", "policy", "it_guide", "skill_lookup", "help_status", "chitchat")
+INTENTS = ("case_sop", "policy", "it_guide", "skill_lookup", "help_status", "chitchat")  # labels the frozen cases use
+VALID_INTENTS = (*INTENTS, "request_help")  # every intent the planner can return
 TOOLS = ("search_knowledge", "get_escalation_status", "escalate_to_expert", "lookup_skills", "request_help")
 SLOT_KEYS = ("machine_id", "machine_model", "alarm_codes", "symptom", "tried_steps")
 TURN_KEYS = {"intent", "clarify", "tool", "queries_min", "queries_max", "rewrite_any", "skill_any", "missing", "card"}
@@ -79,7 +80,7 @@ def validate_cases(cases: list[dict]) -> list[str]:
             if set(exp) - TURN_KEYS:
                 errors.append(f"{cid} turn {i}: unknown expect keys {sorted(set(exp) - TURN_KEYS)}")
             intent = exp.get("intent")
-            if intent is not None and not all(x in INTENTS for x in ([intent] if isinstance(intent, str) else intent)):
+            if intent is not None and not all(x in VALID_INTENTS for x in ([intent] if isinstance(intent, str) else intent)):
                 errors.append(f"{cid} turn {i}: unknown intent {intent}")
             if "tool" in exp and exp["tool"] is not None and exp["tool"] not in TOOLS:
                 errors.append(f"{cid} turn {i}: unknown tool {exp['tool']}")

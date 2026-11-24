@@ -25,6 +25,12 @@ class RedisWorkingMemory:
         self.client = client
         self.ttl_s = ttl_s
 
+    def close(self) -> None:
+        try:
+            self.client.close()
+        except Exception:  # noqa: BLE001 - shutdown is best effort
+            pass
+
     @staticmethod
     def key(user_id: str, thread_id: str) -> str:
         return f"knv:wm:{user_id}:{thread_id}"

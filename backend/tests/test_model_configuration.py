@@ -120,3 +120,28 @@ def test_invalid_runtime_rerank_config_never_silently_disables_or_loads(monkeypa
     with pytest.raises(ModelConfigurationError):
         rerank.get_reranker()
     loader.assert_not_called()
+
+
+GOOD_A = 'a' * 40
+GOOD_B = 'b' * 40
+
+
+@pytest.mark.parametrize('options', [
+    {'jwt_secret': 'same-secret-same-secret', 'tool_token_secret': 'same-secret-same-secret'},
+    {'jwt_secret': '  ', 'tool_token_secret': GOOD_B},
+    {'jwt_secret': GOOD_A, 'tool_token_secret': ''},
+    {'env': 'prod'},  # both development placeholders
+    {'env': 'prod', 'jwt_secret': GOOD_A},  # tool secret is still the placeholder
+    {'env': 'prod', 'jwt_secret': 'short', 'tool_token_secret': GOOD_B},
+    {'env': 'prod', 'jwt_secret': GOOD_A, 'tool_token_secret': 'dev-only-' + 'x' * 40},
+    {'env': 'prod', 'jwt_secret': GOOD_A, 'tool_token_secret': GOOD_A},
+])
+def test_unsafe_secret_configuration_is_rejected(options):
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, **options)
+
+
+def test_dev_defaults_and_independent_long_production_secrets_are_accepted():
+    Settings(_env_file=None)  # the dev placeholders differ from each other
+    ok = Settings(_env_file=None, env='prod', jwt_secret=GOOD_A, tool_token_secret=GOOD_B)
+    assert ok.jwt_secret != ok.tool_token_secret

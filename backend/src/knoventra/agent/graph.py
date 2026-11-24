@@ -56,7 +56,7 @@ SYSTEM_PROMPT = """你是示例精密设备公司的内部知识助手。
 4. 用户明确要求转人工/转交专家时，立即调用 escalate_to_expert，即使信息不全也不要先追问；summary 依据已有对话写成可直接交给专家的问题摘要（确认卡会让用户核对）。其他情况不要调用。
 5. 查询转交进度用 get_escalation_status。只报告工具实际返回的记录和状态；转交工具仅创建待处理记录，不代表已通知、已受理或已分派到特定团队，不承诺响应时间。没有执行相应工具时，不承诺能修改已提交的转交，也不要让用户在已完成的确认卡中补充内容。
 6. 严格保留用户问题中的时间、频率、对象和编码约束，不自行增加条件（例如“日常”不等于“每日”）。用户未明确要求全部项目或完整清单时，不擅自增加完整性要求。章节标题给出的类别与正文频率可以同时成立，例如“日常检查”章节中的“每周检查”仍属于该类检查；回答时保留原频率，不因它不是每日而判作无关。资料只支持问题的一部分时，先引用并回答可证实的范围，对其余部分拒绝推断，不因无法证明清单完整就整体拒答。
-8. 现场故障查不到可行方案、或用户要发起求助单时，调用 request_help，只填用户在对话中亲口说过的机台号、告警、现象、已尝试步骤；检索到的资料和历史案例里的处理步骤不是用户已尝试的步骤，不能填进去。填写 symptom 和 tried_steps 时尽量保留用户原话的措辞，不要同义改写、书面化或扩写（例如用户说“还没试过”就填“还没试过”）；用户没提供的项不要传。工具会告诉你还缺什么，一次只向用户追问一项，不要编造。
+8. 现场故障查不到可行方案、或用户要发起求助单时，调用 request_help；用户要发起求助单时，即使还没提供任何机台号、告警、现象或已尝试步骤，也必须立即调用 request_help（未提供的项全部省略，可传空参数 {} 开启草稿），不要不调工具只用文字追问，也不要声称“已记录”。只填用户在对话中亲口说过的机台号、告警、现象、已尝试步骤；检索到的资料和历史案例里的处理步骤不是用户已尝试的步骤，不能填进去。填写 symptom 和 tried_steps 时尽量保留用户原话的措辞，不要同义改写、书面化或扩写（例如用户说“还没试过”就填“还没试过”）；用户没提供的项不要传。工具会告诉你还缺什么，一次只向用户追问一项，不要编造。
 7. 用户问谁会做某项技能、该找谁时，调用 lookup_skills，只报告工具返回的人员、掌握程度和作业次数，不推测其他人选。
 9. 下方的“历史记忆”是该用户以往对话和求助单的记录，可以用来回答“上次那个问题后来怎么解决的”，回答时说明来自以往记录；涉及操作步骤或参数时，仍须调用 search_knowledge 并引用资料。“用户画像”只用于理解指代，不要据此假设本轮问的是哪台机台。"""
 
@@ -413,6 +413,17 @@ def build_graph(deps: AgentDeps):
             return {"messages": [AIMessage(text, id=response.id)], "error_code": error,
                     "sources": [], "pending": None, "model_declared_refusal": False,
                     "model_finish_reason": reason, "memory_trace": memory_trace, "tool_rejection": rejected}
+        plan = state.get("query_plan") or {}
+        if (not response.tool_calls and not draft and isinstance(last, HumanMessage)
+                and not help_slots.CANCEL.match(str(last.content))
+                and plan.get("status") == "ok" and plan.get("intent") == "request_help"
+                and float(plan.get("confidence") or 0) >= settings.query_plan_min_confidence):
+            # The planner saw a request to file a help request, but the model only asked in prose
+            # (so no draft would exist). Open the draft deterministically with no slots; the tool
+            # then reports what is missing and the next turn's slots merge into it.
+            response = AIMessage("", id=response.id, tool_calls=[
+                {"name": "request_help", "args": {}, "id": "plan-help", "type": "tool_call"}])
+            memory_trace = [*memory_trace, {"event": "help_fallback", "reason": "intent_request_help_no_tool_call"}]
         return {"messages": [response], "model_finish_reason": reason, "memory_trace": memory_trace}
 
     def after_agent(state: State):
@@ -532,7 +543,8 @@ def build_graph(deps: AgentDeps):
         # Answering would mix model-specific steps; ask instead and show no sources.
         question = next((m.content for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), "")
         return {"messages": [AIMessage(format_answer(question, clarification_text(state["clarification"]),
-                                                     default_script(state)))],
+                                                     default_script(state)),
+                                       response_metadata={"clarification": True})],
                 "sources": [], "error_code": None}
 
     def prepare_escalation(state: State, config: RunnableConfig):
@@ -621,6 +633,23 @@ def build_graph(deps: AgentDeps):
             upd["messages"] = [AIMessage(text, id=last.id)]
         return upd
 
+    def memory_question(state: State, human: HumanMessage, raw: str) -> str:
+        """The question stored with an answer episode: the user's own words for a first question,
+        context-completed for a short follow-up. The profile never sees this text."""
+        msgs = state["messages"]
+        idx = next(i for i in range(len(msgs) - 1, -1, -1) if msgs[i] is human or msgs[i].id == human.id)
+        earlier = [m for m in msgs[:idx] if isinstance(m, HumanMessage)]
+        if not earlier:
+            return raw
+        plan = state.get("query_plan") or {}
+        if plan.get("status") == "ok" and str(plan.get("rewritten") or "").strip():
+            return format_answer(raw, str(plan["rewritten"]).strip(), None)
+        prev_ai = msgs[idx - 1] if idx > 0 else None
+        asked = isinstance(prev_ai, AIMessage) and bool((prev_ai.response_metadata or {}).get("clarification"))
+        if asked or len(raw.strip()) <= 20:
+            return f"{str(earlier[-1].content).strip()}（{raw.strip()}）"
+        return raw
+
     def remember(state: State, config: RunnableConfig):
         if not deps.long_term_memory:
             return {}
@@ -628,13 +657,14 @@ def build_graph(deps: AgentDeps):
         human = next((m for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), None)
         if human is None:
             return {}
-        question, answer = str(human.content), state["messages"][-1]
+        raw, answer = str(human.content), state["messages"][-1]
+        question = memory_question(state, human, raw)
         chunk_ids = [s["chunk_id"] for s in state.get("sources") or []]
         grounded = bool(chunk_ids) and not state.get("error_code") and not state.get("model_declared_refusal")
         event = {"event": "remember", "episode": False}
         try:
             with deps.session_factory() as db:
-                user_profile.bump(db, cfg["user_id"], lang=answer_script(question), models=stated_models([human]))
+                user_profile.bump(db, cfg["user_id"], lang=answer_script(raw), models=stated_models([human]))  # raw words only
                 if grounded and settings.episodic_memory:
                     episodic.remember_answer(db, deps.encoder, user_id=cfg["user_id"], thread_id=cfg["thread_id"],
                                              turn_id=human.id, question=question, answer=str(answer.content),

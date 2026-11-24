@@ -10,6 +10,7 @@ Any failure or timeout returns None and the agent falls back to v3 behaviour.
 from __future__ import annotations
 
 import re
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
@@ -27,7 +28,7 @@ from knoventra.ingestion.cases import MODEL_ALIASES, models_from_text, strip_mod
 from knoventra.retrieval.identifiers import extract_query_identifiers
 
 QUERY_PLAN_POLICY = "plan-v1"
-Intent = Literal["case_sop", "policy", "it_guide", "skill_lookup", "help_status", "chitchat"]
+Intent = Literal["case_sop", "policy", "it_guide", "skill_lookup", "help_status", "request_help", "chitchat"]
 RETRIEVAL_INTENTS = ("case_sop", "policy", "it_guide")
 HISTORY_MESSAGES = 6
 HISTORY_CHARS = 500
@@ -35,7 +36,7 @@ HISTORY_CHARS = 500
 PLANNER_PROMPT = """你是企业知识库的检索规划器，只负责规划，不回答问题。根据对话调用 QueryPlan：
 - rewritten：把最后一条用户问题改写成可以独立检索的查询；用前文补全“它”“上次那个”等指代；编号、告警码、机型保持原样。
 - sub_queries：问题包含几个彼此独立的问题时，拆成最多 3 个子查询；否则留空。
-- intent：case_sop（设备操作、故障、SOP、现场案例）、policy（HR、财务制度）、it_guide（IT 指南、VPN、账号）、skill_lookup（问谁会做某项技能）、help_status（查询求助或转交进度）、chitchat（问候、闲聊）。
+- intent：case_sop（设备操作、故障、SOP、现场案例）、policy（HR、财务制度）、it_guide（IT 指南、VPN、账号）、skill_lookup（问谁会做某项技能）、help_status（查询已有求助单或转交的进度）、request_help（用户要发起、新建或提交一张求助单，不论是否已经说了机台或故障细节；与只是查询进度的 help_status、询问制度或指南的 it_guide 严格区分）、chitchat（问候、闲聊）。
 - confidence：对 intent 的把握，0 到 1。
 - machine_model：用户明确提到的机型（WX-38、WX-P、ST-250），没提到就留空，不要推测。
 - skill_item：intent 为 skill_lookup 时，填用户要找的技能项（如 golden check、chamber teaching），否则留空。"""
@@ -141,7 +142,26 @@ def postprocess(plan: QueryPlan, messages: list[AnyMessage]) -> PlanResult:
                       machine_model=model, route_kbs=route, skill_item=skill, notes=notes)
 
 
-_POOL = ThreadPoolExecutor(max_workers=4, thread_name_prefix="query-plan")
+_POOL: ThreadPoolExecutor | None = None
+_POOL_LOCK = threading.Lock()
+
+
+def _get_pool() -> ThreadPoolExecutor:
+    """Created on first use; shutdown_pool() resets it so the next call starts a fresh pool."""
+    global _POOL
+    with _POOL_LOCK:
+        if _POOL is None:
+            _POOL = ThreadPoolExecutor(max_workers=4, thread_name_prefix="query-plan")
+        return _POOL
+
+
+def shutdown_pool() -> None:
+    """Idempotent. Safe to call at application shutdown and run again in the same process."""
+    global _POOL
+    with _POOL_LOCK:
+        pool, _POOL = _POOL, None
+    if pool is not None:
+        pool.shutdown(wait=False, cancel_futures=True)
 
 
 def plan_query(planner: BaseChatModel, messages: list[AnyMessage]) -> tuple[PlanResult | None, dict]:
@@ -156,7 +176,7 @@ def plan_query(planner: BaseChatModel, messages: list[AnyMessage]) -> tuple[Plan
         runnable = planner.with_structured_output(QueryPlan, method="function_calling")
     except (TypeError, ValueError, NotImplementedError):
         runnable = planner.with_structured_output(QueryPlan)
-    future = _POOL.submit(runnable.invoke, prompt)
+    future = _get_pool().submit(runnable.invoke, prompt)
     try:
         raw = future.result(timeout=settings.query_plan_timeout_s)
     except FutureTimeout:
