@@ -5,6 +5,7 @@ import Chat from './pages/Chat'
 import Login from './pages/Login'
 import Escalations from './pages/Escalations'
 import HelpRequests from './pages/HelpRequests'
+import Memory from './pages/Memory'
 
 function useHash() {
   const [h, setH] = useState({ hash: location.hash || '#/chat', revision: 0 })
@@ -48,6 +49,7 @@ function AuthenticatedApp({ hash }: { hash: string }) {
           <a href="#/chat" className={hash.startsWith('#/chat') ? 'on' : ''}>问答</a>
           <a href="#/escalations" className={hash.startsWith('#/escalations') ? 'on' : ''}>转交记录</a>
           <a href="#/help" className={hash.startsWith('#/help') ? 'on' : ''}>我的求助单</a>
+          <a href="#/memory" className={hash.startsWith('#/memory') ? 'on' : ''}>我的记忆</a>
           {(me.engineer_name || me.role === 'admin') &&
             <a href="#/workbench" className={hash.startsWith('#/workbench') ? 'on' : ''}>专家工作台</a>}
           {me.role === 'admin' && <a href="#/admin" className={hash.startsWith('#/admin') ? 'on' : ''}>资料管理</a>}
@@ -59,6 +61,7 @@ function AuthenticatedApp({ hash }: { hash: string }) {
       </header>
       {hash.startsWith('#/admin') && me.role === 'admin' ? <Admin />
         : hash.startsWith('#/escalations') ? <Escalations key={me.id} />
+        : hash.startsWith('#/memory') ? <Memory key={`${me.id}-memory`} />
         : hash.startsWith('#/help') ? <HelpRequests key={`${me.id}-mine`} mode="mine" isAdmin={me.role === 'admin'} />
         : hash.startsWith('#/workbench') && (me.engineer_name || me.role === 'admin')
           ? <HelpRequests key={`${me.id}-bench`} mode="workbench" isAdmin={me.role === 'admin'} />

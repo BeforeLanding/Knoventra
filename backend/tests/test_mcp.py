@@ -311,3 +311,25 @@ def test_agent_without_a_credential_cannot_use_mcp_tools(server, sessions, peopl
         graph.invoke({"messages": [HumanMessage("我的转交进度")], "evidence": {}, "sources": [], "error_code": None},
                      {"configurable": {"thread_id": thread, "user_id": people["sg-ops"]}})
     assert exc.value.code == "UNAUTHENTICATED"
+
+
+def test_dns_rebinding_protection_follows_allowed_hosts(engine):
+    from starlette.testclient import TestClient
+
+    @contextmanager
+    def sessions():
+        with Session(engine) as s:
+            yield s
+    body = {"jsonrpc": "2.0", "id": 1, "method": "tools/list"}
+    # A valid identity, so the request gets past the bearer check and reaches the Host check.
+    headers = {"Accept": "application/json, text/event-stream", "Content-Type": "application/json",
+               "Authorization": "Bearer " + issue_tool_token("someone", "t", "r")}
+    local = build_app(session_factory=sessions, encoder=HashEncoder())  # bound to 127.0.0.1
+    with TestClient(local, base_url="http://mcp:58765") as client:
+        assert client.post("/mcp", json=body, headers=headers).status_code == 421  # foreign Host refused
+    def compose():  # each app runs its session manager once
+        return build_app(session_factory=sessions, encoder=HashEncoder(), host="0.0.0.0", allowed_hosts=["mcp:*"])
+    with TestClient(compose(), base_url="http://mcp:58765") as client:
+        assert client.post("/mcp", json=body, headers=headers).status_code == 200  # allowed Host
+    with TestClient(compose(), base_url="http://evil.example:58765") as client:
+        assert client.post("/mcp", json=body, headers=headers).status_code == 421

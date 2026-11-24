@@ -76,6 +76,9 @@ class Settings(BaseSettings):
     mcp_url: str = ""
     mcp_host: str = "127.0.0.1"
     mcp_port: int = 58765
+    # Host headers the MCP server accepts (DNS-rebinding protection). Empty: the SDK default,
+    # which allows only localhost when bound to 127.0.0.1. In Compose, e.g. ["mcp:*"].
+    mcp_allowed_hosts: list[str] = []
     mcp_timeout_s: float = Field(default=30.0, gt=0)
     # Per-run identity tokens for the MCP server: own secret, short life (one HTTP request).
     tool_token_secret: str = "dev-only-tool-token-secret-change-me"

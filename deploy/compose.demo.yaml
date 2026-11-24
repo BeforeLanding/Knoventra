@@ -1,5 +1,25 @@
 # Isolated local demonstration: scripted answers, fictional data, no LLM calls.
+# Full v4 stack: PostgreSQL (source of truth), Elasticsearch keyword channel, Redis working
+# memory, the MCP tool server (every tool call goes API -> MCP with a per-run identity
+# token), the API with a fixed-answer model, and the web frontend.
 name: knoventra-demo
+
+x-demo-backend-env: &demo-backend-env
+  KNV_DATABASE_URL: postgresql+psycopg://knoventra:knoventra-demo-only@db:5432/knoventra_demo
+  KNV_ENCODER: hash
+  KNV_RERANK: 'off'
+  KNV_ENV: dev
+  KNV_LLM_API_KEY: ''
+  KNV_LLM_BASE_URL: ''
+  KNV_LLM_MODEL: ''
+  HF_HUB_OFFLINE: '1'
+  KNV_ES_URL: http://es:9200
+  # Demo-only secret shared by the API (signs) and the MCP server (verifies).
+  KNV_TOOL_TOKEN_SECRET: knoventra-demo-only-tool-token-secret
+  # Hash-encoder evidence gate. mock_server.py sets this in code for the API process;
+  # retrieval runs in the MCP process here, so it needs the same values.
+  KNV_GATE_THRESHOLD: '0.1'
+  KNV_GATE_SPARSE_THRESHOLD: '1e9'
 
 services:
   db:
@@ -16,28 +36,76 @@ services:
       timeout: 5s
       retries: 20
 
+  es:
+    build: ./elasticsearch
+    image: knoventra-es:8.15.3-ik
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    # A derived index rebuilt from PostgreSQL on every API start: no volume needed.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=2s"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+
+  redis:
+    # Working memory only; no persistence (see deploy/compose.yaml).
+    image: redis:7.4-alpine@sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "64mb",
+              "--maxmemory-policy", "volatile-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
   api:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.demo-api
+    image: knoventra-demo-api:local
     environment:
-      KNV_DATABASE_URL: postgresql+psycopg://knoventra:knoventra-demo-only@db:5432/knoventra_demo
-      KNV_ENCODER: hash
-      KNV_RERANK: 'off'
-      KNV_ENV: dev
-      KNV_LLM_API_KEY: ''
-      KNV_LLM_BASE_URL: ''
-      KNV_LLM_MODEL: ''
-      HF_HUB_OFFLINE: '1'
+      <<: *demo-backend-env
+      KNV_REDIS_URL: redis://redis:6379/0
+      KNV_MCP_URL: http://mcp:58765/mcp
     depends_on:
       db:
+        condition: service_healthy
+      es:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/openapi.json', timeout=3).close()"]
       interval: 3s
       timeout: 5s
+      retries: 40
+      start_period: 20s
+
+  mcp:
+    # Same image as the API; started once the API has migrated, seeded and indexed.
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.demo-api
+    image: knoventra-demo-api:local
+    command: ["python", "-m", "knoventra.mcp_server"]
+    environment:
+      <<: *demo-backend-env
+      KNV_MCP_HOST: 0.0.0.0
+      KNV_MCP_PORT: '58765'
+      KNV_MCP_ALLOWED_HOSTS: '["mcp:*"]'
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      # Up when an unauthenticated call is refused with 401 by the bearer middleware.
+      test: ["CMD", "python", "-c", "import urllib.request as u, urllib.error as e\ntry:\n    u.urlopen(u.Request('http://127.0.0.1:58765/mcp', data=b'{}', method='POST'), timeout=3)\nexcept e.HTTPError as x:\n    raise SystemExit(0 if x.code == 401 else 1)\nraise SystemExit(1)"]
+      interval: 3s
+      timeout: 5s
       retries: 30
-      start_period: 15s
+      start_period: 10s
 
   web:
     build:
@@ -47,6 +115,8 @@ services:
       - "127.0.0.1:${KNV_DEMO_PORT:-8088}:80"
     depends_on:
       api:
+        condition: service_healthy
+      mcp:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]

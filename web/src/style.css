@@ -36,6 +36,8 @@ header a.on { color: #1d4ed8; font-weight: 600 }
 .card .snippet { display: block; margin: 4px 0 0; color: #3e4c59 }
 .confirm { margin-top: 8px; padding: 8px 12px; border: 1px dashed #1d4ed8; border-radius: 8px }
 .confirm button { margin-right: 8px }
+.help-updates { margin-bottom: 12px; padding: 8px 12px; border: 1px solid #f59e0b; border-radius: 8px; background: #fffbeb }
+.help-updates ul { margin: 4px 0; padding-left: 18px }
 .chat form { display: flex; gap: 8px; padding: 12px 24px; background: #fff; border-top: 1px solid #e1e5ea }
 .chat form input { flex: 1; padding: 6px 10px; border: 1px solid #c4ccd6; border-radius: 6px }
 .modal { position: fixed; inset: 0; background: #0006; display: flex; align-items: center; justify-content: center }
@@ -54,7 +56,7 @@ td, th { border: 1px solid #e1e5ea; padding: 4px 10px; text-align: left }
 .rev.RETIRED { color: #9aa5b1 }
 .rev.DRAFT { color: #b45309 }
 .rev button { margin-left: 4px; padding: 0 6px }
-.escalations { padding: 16px 24px; overflow: auto; width: min(100%, 960px); margin: 0 auto }
+.escalations, .memory { padding: 16px 24px; overflow: auto; width: min(100%, 960px); margin: 0 auto }
 .escalation-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap }
 .escalation-list { list-style: none; padding: 0; display: grid; gap: 12px }
 .escalation-list li { background: #fff; border: 1px solid #e1e5ea; border-radius: 8px; padding: 12px 16px }

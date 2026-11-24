@@ -144,3 +144,46 @@ def test_visibility_and_queue_permissions(client, db, users):
     assert client.get("/api/v1/help-requests?scope=queue", headers=h(users["sg-ops"])).status_code == 403
     assert client.get(f"/api/v1/help-requests/{req.id}/recommendation", headers=h(users["sg-ops"])).status_code == 403
     assert client.get(f"/api/v1/help-requests/{req.id}", headers=h(users["admin"])).status_code == 200
+
+
+def test_returning_to_the_conversation_shows_request_updates(client, db, enc, users):
+    from knoventra.api.chat import get_graph
+    from knoventra.db.models import Conversation, Message
+
+    requester, expert = users["sg-ops"], users["lin.boyu"]
+
+    def agent(messages):
+        last = messages[-1]
+        if isinstance(last, ToolMessage):
+            return AIMessage("已处理。")
+        return call("request_help", {"machine_id": "610101", "symptom": "pump 不转", "tried_steps": "重启过"}, "h1")
+    graph = build_graph(AgentDeps(session_factory_for(db), enc, None, ScriptedModel(script=agent), InMemorySaver()))
+    conv = Conversation(user_id=requester.id, title="现场求助")
+    db.add(conv)
+    db.flush()
+    cfg = {"configurable": {"thread_id": conv.thread_id, "user_id": requester.id}}
+    graph.invoke({"messages": [HumanMessage("610101 pump 不转，帮我提单")], "evidence": {}, "sources": [],
+                  "error_code": None}, cfg)
+    record_decision(db, graph, cfg, True)
+    graph.invoke(Command(resume={"approve": True}), cfg)
+    db.add(Message(conversation_id=conv.id, role="assistant", content="已创建求助单。"))
+    db.flush()
+    req = db.scalar(select(HelpRequest).where(HelpRequest.user_id == requester.id, HelpRequest.kind == "field_help"))
+    app.dependency_overrides[get_graph] = lambda: graph
+
+    def updates():
+        state = client.get(f"/api/v1/conversations/{conv.id}/state", headers=h(requester)).json()
+        return state["help_updates"]
+    assert updates() == []  # nothing changed since the last message
+    transition(db, req.id, users["admin"], "assign", assignee_id=expert.id)
+    transition(db, req.id, expert, "start")
+    transition(db, req.id, expert, "progress", note="已远程查看 alarm log")
+    got = updates()
+    assert [(u["id"], u["status"], u["action"], u["note"]) for u in got] == [
+        (req.id, "IN_PROGRESS", "progress", "已远程查看 alarm log")]
+
+    db.add(Message(conversation_id=conv.id, role="user", content="好的"))  # the user has seen it
+    db.flush()
+    assert updates() == []
+    transition(db, req.id, requester, "cancel")  # the requester's own change is not news to them
+    assert updates() == []

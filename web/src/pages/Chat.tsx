@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { api, stream, type Source, type Confirmation, type ConversationState, type EvidencePreview } from '../api'
+import { api, stream, type Source, type Confirmation, type ConversationState, type EvidencePreview, type HelpUpdate } from '../api'
+import { HELP_STATUS } from '../help'
 
 type Preview = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; source: EvidencePreview }
 
@@ -53,6 +54,7 @@ export default function Chat({ maxMessageChars = 4000 }: { maxMessageChars?: num
   const [retryCheckpoint, setRetryCheckpoint] = useState<string | null>(null)
   const [recoverCheckpoint, setRecoverCheckpoint] = useState<string | null>(null)
   const [notice, setNotice] = useState('')
+  const [helpUpdates, setHelpUpdates] = useState<HelpUpdate[]>([])
   const [preview, setPreview] = useState<Preview | null>(null)
   const bottom = useRef<HTMLDivElement>(null)
   const active = useRef<AbortController | null>(null)
@@ -131,12 +133,14 @@ export default function Chat({ maxMessageChars = 4000 }: { maxMessageChars?: num
     setBlocked(state.blocked)
     setRetryCheckpoint(state.retry_checkpoint_id ?? null)
     setRecoverCheckpoint(state.recover_checkpoint_id ?? null)
+    setHelpUpdates(state.help_updates ?? [])
   }
 
   const open = async (id: string | null) => {
     if (active.current) return
     closePreview(false)
     setNotice('')
+    setHelpUpdates([])
     if (!id) { setCid(null); setMsgs([]); setBlocked(false); setRetryCheckpoint(null); setRecoverCheckpoint(null); return }
     const controller = new AbortController()
     active.current = controller
@@ -276,6 +280,15 @@ export default function Chat({ maxMessageChars = 4000 }: { maxMessageChars?: num
       <main inert={previewOpen}>
         <div className="msgs">
           {notice && <p role="alert" className="err">{notice}</p>}
+          {helpUpdates.length > 0 && <div className="help-updates" role="status">
+            <b>你的求助单已更新</b>
+            <ul>{helpUpdates.map(u => <li key={u.id}>
+              {u.kind === 'field_help' ? `机台 ${u.machine_id ?? '—'}：${u.symptom}` : u.summary.split('\n')[0]}
+              {' · '}{HELP_STATUS[u.status] ?? u.status}{u.note ? `：${u.note}` : ''}
+              {' '}<small>{new Date(u.at).toLocaleString()}</small>
+            </li>)}</ul>
+            <a href="#/help">查看我的求助单</a>
+          </div>}
           {blocked && <p className="hint">{recoverCheckpoint ? '上次回答已完成但尚未保存，可直接恢复，无需重新生成。'
             : retryCheckpoint ? '上次请求未完成，可继续处理。' : '请先处理待确认的转交；若状态未同步，请重新打开会话。'}</p>}
           {retryCheckpoint && <button disabled={busy} onClick={retry}>继续未完成请求</button>}

@@ -125,5 +125,12 @@ def build_server(session_factory: Callable[[], AbstractContextManager[Session]] 
     return server
 
 
-def build_app(**kw):
-    return build_server(**kw).streamable_http_app(stateless_http=True, json_response=True)
+def build_app(*, host: str = "127.0.0.1", allowed_hosts: list[str] | None = None, **kw):
+    security = None
+    if allowed_hosts:
+        from mcp.server.transport_security import TransportSecuritySettings
+
+        security = TransportSecuritySettings(enable_dns_rebinding_protection=True, allowed_hosts=allowed_hosts,
+                                             allowed_origins=[])
+    return build_server(**kw).streamable_http_app(stateless_http=True, json_response=True, host=host,
+                                                  transport_security=security)

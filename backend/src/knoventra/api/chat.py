@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
 from langgraph.types import Command
 from pydantic import BaseModel, Field, field_validator
-from sqlalchemy import and_, or_, select, update
+from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
@@ -22,7 +22,8 @@ from knoventra.agent.model import chat_model_kwargs
 from knoventra.api.deps import current_user, get_db
 from knoventra.api.run_lock import ConversationLease, ConversationStreamingResponse
 from knoventra.config import settings
-from knoventra.db.models import Chunk, Confirmation, Conversation, Document, Escalation, Message, Revision, User
+from knoventra.db.models import (Chunk, Confirmation, Conversation, Document, Escalation, HelpEvent, HelpRequest,
+                                 Message, Revision, User)
 from knoventra.db.session import SessionLocal
 from knoventra.ingestion.encoder import get_encoder
 from knoventra.memory.working import get_working_memory
@@ -351,6 +352,27 @@ def messages(cid: str, user: User = Depends(current_user), db: Session = Depends
     return _history(db, conv)
 
 
+def _help_updates(db: Session, conv: Conversation, user: User) -> list[dict]:
+    """Requests filed from this conversation that someone else (expert, admin or the system)
+    changed after the conversation's last message: the "your request was updated" notice."""
+    last = db.scalar(select(func.max(Message.created_at)).where(Message.conversation_id == conv.id))
+    if last is None:
+        return []
+    ops = select(Confirmation.operation_id).where(Confirmation.thread_id == conv.thread_id,
+                                                  Confirmation.user_id == user.id)
+    rows = db.execute(
+        select(HelpRequest, HelpEvent).join(HelpEvent, HelpEvent.request_id == HelpRequest.id)
+        .where(HelpRequest.user_id == user.id, HelpRequest.operation_id.in_(ops), HelpEvent.at > last,
+               or_(HelpEvent.actor_id.is_(None), HelpEvent.actor_id != user.id))
+        .order_by(HelpEvent.at.desc(), HelpEvent.id.desc())).all()
+    out: dict[str, dict] = {}
+    for req, event in rows:  # newest event per request
+        out.setdefault(req.id, {"id": req.id, "kind": req.kind, "status": req.status, "summary": req.summary[:80],
+                                "machine_id": req.machine_id, "symptom": req.symptom[:80],
+                                "action": event.action, "note": event.note[:200], "at": event.at})
+    return list(out.values())
+
+
 @router.get("/conversations/{cid}/state")
 def conversation_state(cid: str, user: User = Depends(current_user), db: Session = Depends(get_db),
                        graph=Depends(get_graph)):
@@ -370,7 +392,7 @@ def conversation_state(cid: str, user: User = Depends(current_user), db: Session
                 pending = _confirmation_card(conf)
                 break
     delivery = _delivery_pending(db, conv, snapshot)
-    return {"conversation_id": conv.id, "messages": _history(db, conv),
+    return {"conversation_id": conv.id, "messages": _history(db, conv), "help_updates": _help_updates(db, conv, user),
             "blocked": bool(snapshot.next) or delivery, "pending_confirmation": pending,
             "recover_checkpoint_id": _checkpoint_id(snapshot) if delivery else None,
             "retry_checkpoint_id": _checkpoint_id(snapshot) if snapshot.next and not _interrupts(snapshot) else None}

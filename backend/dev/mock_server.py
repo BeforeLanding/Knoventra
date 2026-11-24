@@ -19,6 +19,8 @@ from knoventra.api.chat import _session, get_graph  # noqa: E402
 from knoventra.config import settings  # noqa: E402
 from knoventra.ingestion.encoder import get_encoder  # noqa: E402
 from knoventra.main import app  # noqa: E402
+from knoventra.memory.working import get_working_memory  # noqa: E402
+from knoventra.tools.backend import McpTools  # noqa: E402
 
 
 def script(msgs):
@@ -38,7 +40,10 @@ def script(msgs):
 settings.gate_threshold = 0.1  # hash-encoder cosine scale (the BGE-M3 default is 0.60)
 settings.gate_sparse_threshold = 1e9
 saver, _ = make_checkpointer(settings.database_url)
-graph = build_graph(AgentDeps(_session, get_encoder(), None, ScriptedModel(script=script), saver))
+# Same transports as the real API: Redis working memory and MCP tools when configured.
+tools = McpTools(settings.mcp_url, settings.mcp_timeout_s) if settings.mcp_url else None
+graph = build_graph(AgentDeps(_session, get_encoder(), None, ScriptedModel(script=script), saver,
+                              memory=get_working_memory(), tools=tools))
 app.dependency_overrides[get_graph] = lambda: graph
 
 if __name__ == "__main__":

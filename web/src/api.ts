@@ -25,8 +25,15 @@ export type ConversationPage = { items: ConversationSummary[]; next_cursor: stri
 export type AdminDocuments = { kbs: string[]; upload_max_bytes?: number
   upload_rules?: { title_max_chars: number; languages: string[] }; documents: { kb: string; title: string; lang: string
   revisions: { id: string; version: number; status: string }[] }[] }
+export type HelpUpdate = { id: string; kind: string; status: string; summary: string; machine_id: string | null; symptom: string
+  action: string; note: string; at: string }
+export type MemoryEpisode = { id: string; kind: 'answer' | 'help_request'; text: string; created_at: string; updated_at: string }
+export type MemoryProfile = { department: string; region: string | null; preferred_script: 'zh-Hans' | 'zh-Hant' | null
+  models: [string, number][]; machines: [string, number][] }
+export type MemoryState = { profile: MemoryProfile; episodes: MemoryEpisode[] }
 export type ConversationState = {
   conversation_id: string
+  help_updates?: HelpUpdate[]
   messages: { role: 'user' | 'assistant'; content: string; sources: Source[]; error_code: string | null }[]
   blocked: boolean
   pending_confirmation: Confirmation | null
@@ -125,6 +132,11 @@ export const api = {
       { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(body), signal })).json(),
   helpCandidates: async (id: string, signal?: AbortSignal): Promise<{ reason: string; candidates: HelpCandidate[] }> =>
     (await req(`/help-requests/${encodeURIComponent(id)}/recommendation`, { signal })).json(),
+  memory: async (signal?: AbortSignal): Promise<MemoryState> => (await req('/memory', { signal })).json(),
+  forgetEpisode: async (id: string, signal?: AbortSignal): Promise<void> => {
+    await req(`/memory/episodes/${encodeURIComponent(id)}`, { method: 'DELETE', signal })
+  },
+  forgetAll: async (signal?: AbortSignal): Promise<void> => { await req('/memory', { method: 'DELETE', signal }) },
   adminDocs: async (signal?: AbortSignal): Promise<AdminDocuments> => (await req('/admin/documents', { signal })).json(),
   upload: async (form: FormData, signal?: AbortSignal): Promise<{ version: number }> =>
     (await req('/admin/documents', { method: 'POST', body: form, signal })).json(),

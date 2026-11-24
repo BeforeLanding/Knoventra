@@ -16,11 +16,23 @@ import httpx
 
 from check_demo import (
     check_answer_and_boundaries, check_publication, check_resumed_confirmation,
-    events, login_all, records, require, start_confirmation,
+    events, login_all, records, request, require, start_confirmation,
 )
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def check_v4_services(compose, client, auth):
+    """The stack must not only run but be used: ES ranks, Redis is read, tools run on MCP."""
+    found = request(client, "GET", "debug/search", auth["sg-ops"], params={"q": "E17-42 排查"}).json()
+    require(found["stages"].get("es") and "es_unavailable" not in (found.get("degraded") or []),
+            "Elasticsearch must contribute candidates without degrading")
+    stats = compose("exec", "-T", "redis", "redis-cli", "info", "stats", capture=True).stdout
+    lookups = sum(int(n) for n in re.findall(r"^keyspace_(?:hits|misses):(\d+)", stats, re.M))
+    require(lookups > 0, "the API must read Redis working memory")
+    log = compose("logs", "--no-color", "mcp", capture=True).stdout
+    require(len(re.findall(r'"POST /mcp HTTP/1\.1" 200', log)) > 0, "tools must have run on the MCP server")
 
 
 def main():
@@ -52,12 +64,14 @@ def main():
             auth = login_all(client)
             source = check_answer_and_boundaries(client, auth)
             check_publication(client, auth, source)
+            check_v4_services(compose, client, auth)
             cid, confirmation_id = start_confirmation(client, auth["sg-ops"])
-            compose("restart", "api")
+            # Both processes restart: the confirmation lives in PostgreSQL, not in either.
+            compose("restart", "api", "mcp")
             # Some Compose versions reconcile/recreate services on a general up,
             # reallocating web's random published port. Only wait for this API.
             compose("up", "--detach", "--no-build", "--no-recreate", "--no-deps",
-                    "--wait", "--wait-timeout", "120", "api")
+                    "--wait", "--wait-timeout", "120", "api", "mcp")
             require(compose("ps", "--quiet", "web", capture=True).stdout.strip() == web_id
                     and compose("port", "web", "80", capture=True).stdout.strip() == binding,
                     "API restart unexpectedly replaced the frontend or its published port")
@@ -83,7 +97,8 @@ def main():
             require(replay["meta"].get("status") == "APPROVED", "approval lost after API recreation")
             require([item["id"] for item in records(client, auth["sg-ops"])] == [eid], "handoff duplicated after API recreation")
         print("Container demo acceptance passed: locked fresh builds, static assets, nginx HTTP/SSE, "
-              "permissions, publication and persistent confirmation across restart/recreation.")
+              "permissions, publication, ES ranking, Redis working memory, tools on the MCP server, "
+              "and persistent confirmation across API + MCP restart and API recreation.")
     except Exception:
         # Logs contain fictional demo data; do not dump inherited environment.
         subprocess.run([*command, "logs", "--no-color", "--tail", "80"], cwd=ROOT, env=env, timeout=30)

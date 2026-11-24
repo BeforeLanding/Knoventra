@@ -9,6 +9,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 import json
 import os
+import re
 from pathlib import Path
 import socket
 import subprocess
@@ -86,6 +87,50 @@ def server(env, directory):
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait(timeout=5)
+
+
+@contextmanager
+def mcp_server(env, directory, port, calls):
+    """The real MCP entrypoint (`python -m knoventra.mcp_server`); appends its access-log
+    status codes for POST /mcp to `calls` when it stops."""
+    with tempfile.TemporaryFile() as log:
+        process = subprocess.Popen(
+            [sys.executable, "-m", "knoventra.mcp_server"], cwd=directory,
+            env={**env, "KNV_MCP_PORT": str(port)}, stdout=log, stderr=subprocess.STDOUT,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+        )
+        try:
+            deadline = time.monotonic() + 30
+            while time.monotonic() < deadline:
+                require(process.poll() is None, "MCP server exited during startup")
+                try:
+                    # No identity token: the bearer middleware must refuse before any tool runs.
+                    if httpx.post(f"http://127.0.0.1:{port}/mcp", json={}, timeout=1,
+                                  trust_env=False).status_code == 401:
+                        break
+                except httpx.TransportError:
+                    pass
+                time.sleep(0.1)
+            else:
+                raise RuntimeError("MCP server did not become ready within 30 seconds")
+            yield
+        finally:
+            if os.name == "nt" and process.poll() is None:
+                subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
+            elif process.poll() is None:
+                process.terminate()
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=5)
+            log.seek(0)
+            text_log = log.read().decode("utf-8", errors="replace")
+            codes = [int(code) for code in re.findall(r'"POST /mcp HTTP/1\.1" (\d{3})', text_log)]
+            if 401 in codes:
+                codes.remove(401)  # the one readiness probe above, sent without a token on purpose
+            calls.extend(codes)
 
 
 def request(client, method, path, headers=None, *, status=200, **kwargs):
@@ -214,11 +259,37 @@ def check_resumed_confirmation(client, auth, cid, confirmation_id):
     return eid
 
 
+def free_port():
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]
+
+
 def main():
+    # --mcp: every tool call goes API -> MCP server over HTTP with a per-run identity token,
+    # and the MCP server is restarted together with the API between phases.
+    use_mcp = "--mcp" in sys.argv[1:]
     admin_url = make_url(os.environ.get("KNV_TEST_ADMIN_URL", DEFAULT_ADMIN_URL))
     require(admin_url.get_backend_name() == "postgresql", "demo acceptance requires PostgreSQL")
     database = "knoventra_demo_check_" + uuid.uuid4().hex
     env = offline_environment(admin_url.set(database=database).render_as_string(hide_password=False))
+    mcp_calls: list[int] = []
+    mcp_port = free_port()
+    if use_mcp:
+        env.update(KNV_MCP_URL=f"http://127.0.0.1:{mcp_port}/mcp",
+                   KNV_TOOL_TOKEN_SECRET="acceptance-only-tool-secret-" + uuid.uuid4().hex,
+                   # Retrieval runs in the MCP process: give it the demo's hash-encoder gate,
+                   # which mock_server.py sets in code for its own process.
+                   KNV_GATE_THRESHOLD="0.1", KNV_GATE_SPARSE_THRESHOLD="1e9")
+
+    @contextmanager
+    def stack():
+        if not use_mcp:
+            with server(env, directory) as client:
+                yield client
+            return
+        with mcp_server(env, directory, mcp_port, mcp_calls), server(env, directory) as client:
+            yield client
     admin = create_engine(admin_url, isolation_level="AUTOCOMMIT", connect_args={"connect_timeout": 5})
     created = False
     try:
@@ -231,22 +302,27 @@ def main():
                          f"c.set_main_option('script_location', {str(BACKEND / 'alembic')!r}); command.upgrade(c, 'head')")
             for args in (["-c", migration], ["-m", "knoventra.db.seed"]):
                 subprocess.run([sys.executable, *args], cwd=directory, env=env, check=True, timeout=90)
-            with server(env, directory) as client:
+            with stack() as client:
                 auth = login_all(client)
                 source = check_answer_and_boundaries(client, auth)
                 check_publication(client, auth, source)
                 cid, confirmation_id = start_confirmation(client, auth["sg-ops"])
             # No in-memory graph/pool survives this boundary; reuse the stored JWT.
-            with server(env, directory) as client:
+            with stack() as client:
                 eid = check_resumed_confirmation(client, auth, cid, confirmation_id)
-            with server(env, directory) as client:
+            with stack() as client:
                 replay = events(client, "chat/confirm", auth["sg-ops"],
                                 {"confirmation_id": confirmation_id, "approve": True})
                 require(replay["meta"].get("status") == "APPROVED", "approval lost after second restart")
                 require([item["id"] for item in records(client, auth["sg-ops"])] == [eid],
                         "record was duplicated or lost after second restart")
+        if use_mcp:
+            require(mcp_calls and all(code == 200 for code in mcp_calls),
+                    f"tools must have run on the MCP server, got statuses {sorted(set(mcp_calls))}")
         print("Offline HTTP acceptance passed: six logins, evidence/isolation/refusal, publication, "
-              "confirmation across two server restarts, approval replay and rejection. No model calls.")
+              "confirmation across two server restarts, approval replay and rejection. No model calls."
+              + (f" Tools ran on the MCP server ({len(mcp_calls)} authenticated calls, restarted with the API)."
+                 if use_mcp else ""))
     finally:
         try:
             if created:

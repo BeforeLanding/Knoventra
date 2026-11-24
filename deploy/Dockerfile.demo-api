@@ -19,4 +19,5 @@ COPY data/demo /app/data/demo
 RUN useradd --create-home --uid 10001 knoventra
 USER knoventra
 EXPOSE 8000
-CMD ["sh", "-ec", "python -m alembic upgrade head\npython -m knoventra.db.seed\nexec python -m uvicorn mock_server:app --app-dir /app/backend/dev --host 0.0.0.0 --port 8000"]
+# The ES index is derived from PostgreSQL: rebuild it after seeding when ES is configured.
+CMD ["sh", "-ec", "python -m alembic upgrade head\npython -m knoventra.db.seed\nif [ -n \"$KNV_ES_URL\" ]; then python -m knoventra.search_es.sync rebuild; fi\nexec python -m uvicorn mock_server:app --app-dir /app/backend/dev --host 0.0.0.0 --port 8000"]

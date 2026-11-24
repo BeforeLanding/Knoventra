@@ -8,11 +8,13 @@
 
 - Ubuntu 24.04、Python 3.12、uv 0.12.13。
 - PostgreSQL 16 + pgvector 服务，仅使用 job 内的演示账号和测试数据库。
-- Elasticsearch：`docker compose -f deploy/compose.yaml up -d --build --wait es` 构建固定 digest、校验 IK 插件 SHA-256 的镜像（端口 59200）。job 设置 `KNV_TEST_ES_URL` 和 `KNV_REQUIRE_ES=1`，ES 不可达时 ES 相关测试直接失败，不会被跳过。
+- Elasticsearch 和 Redis：`docker compose -f deploy/compose.yaml up -d --build --wait es redis` 构建固定 digest、校验 IK 插件 SHA-256 的 ES 镜像（端口 59200），并启动固定 digest 的 Redis（端口 56379）。job 设置 `KNV_REQUIRE_ES=1` 和 `KNV_REQUIRE_REDIS=1`，任一不可达时相关测试直接失败，不会被跳过。
+- MCP：`tests/test_mcp.py` 在测试进程内启动真实的 MCP 服务（uvicorn 线程），覆盖身份 token、两段式提交和服务重启；`dev/check_demo.py --mcp` 另外启动 `python -m knoventra.mcp_server` 子进程，让整套 HTTP 验收的每次工具调用都经过 MCP，并在每个阶段与 API 一起重启。
 - `uv sync --locked --group dev`，不启用可选 `ml` 依赖，不下载 BGE 模型。
 - `KNV_ENCODER=hash`、`KNV_RERANK=off`，LLM 配置显式为空、HuggingFace 离线。测试的模型使用脚本替身。
 - `uv run --no-sync python dev/check_migrations.py`，然后 `uv run --no-sync pytest -q --tb=short`。
 - `uv run --no-sync python dev/check_demo.py`：启动真实 HTTP 子进程，执行离线演示与两次服务重启验收，具体范围见下文。
+- `uv run --no-sync python dev/check_demo.py --mcp`：同一套验收，工具改由独立 MCP 服务执行，并核对 MCP 日志中的工具调用全部通过鉴权。
 
 迁移检查脚本从 `KNV_TEST_ADMIN_URL` 连接测试管理库，创建随机命名的 `knoventra_migrations_<uuid>` 库。依次执行：空库升至 head、检查 ORM 结构差异、降至 base、再次升级和检查、导入种子两次并核对主要表行数。最后删除该临时库。脚本不使用应用库执行迁移，不接受任意目标库名；测试管理账号需要创建 / 删除测试库权限。
 
