@@ -23,7 +23,7 @@ from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, SystemM
 from pydantic import BaseModel, ConfigDict, Field
 
 from knoventra.config import settings
-from knoventra.ingestion.cases import MODEL_ALIASES, models_from_text
+from knoventra.ingestion.cases import MODEL_ALIASES, models_from_text, strip_models
 from knoventra.retrieval.identifiers import extract_query_identifiers
 
 QUERY_PLAN_POLICY = "plan-v1"
@@ -116,6 +116,15 @@ def postprocess(plan: QueryPlan, messages: list[AnyMessage]) -> PlanResult:
     if missing:  # a rewrite must never drop the user's codes
         queries = [f"{q} {' '.join(missing)}" for q in queries]
         notes.append(f"restored_identifiers:{','.join(missing)}")
+    compared = [m for m in models_from_text(question) if m in MODEL_ALIASES]
+    if 2 <= len(compared) <= 3 and not all(any(models_from_text(q) == [m] for q in queries) for m in compared):
+        # A comparison needs every model's own section: one query per model, so a section that
+        # ranks lower for the combined question (dev run a1-04: WX-P) is still retrieved.
+        topic = strip_models(rewritten) or rewritten
+        # Restore dropped codes, but never a model name: each query must name only its own model.
+        codes = [c for c in missing if not models_from_text(c)]
+        queries = [f"{m} {topic}" + (f" {' '.join(codes)}" if codes else "") for m in compared]
+        notes.append("split_by_model")
     named = models_from_text(conversation)
     model = plan.machine_model if plan.machine_model in named else None
     if plan.machine_model and model is None:

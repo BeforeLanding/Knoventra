@@ -73,7 +73,7 @@ def test_confirmed_card_shows_reason_and_auto_assigns(db, enc, users, skills):
         return call("request_help", {"machine_id": "610101", "symptom": f"{SKILL} 偏差", "tried_steps": "重启过"}, "h1")
     graph = build_graph(AgentDeps(session_factory_for(db), enc, None, ScriptedModel(script=agent), InMemorySaver()))
     cfg = {"configurable": {"thread_id": uuid.uuid4().hex, "user_id": users["cn-ops"].id}}
-    pending = graph.invoke({"messages": [HumanMessage("610101 校准偏差，帮我提求助单")], "evidence": {}, "sources": [],
+    pending = graph.invoke({"messages": [HumanMessage(f"610101 {SKILL} 偏差，重启过，帮我提求助单")], "evidence": {}, "sources": [],
                             "error_code": None}, cfg)
     assert "推荐专家：Zhou Lan" in pending["__interrupt__"][0].value["summary"]
     record_decision(db, graph, cfg, True)
@@ -162,7 +162,7 @@ def test_returning_to_the_conversation_shows_request_updates(client, db, enc, us
     db.add(conv)
     db.flush()
     cfg = {"configurable": {"thread_id": conv.thread_id, "user_id": requester.id}}
-    graph.invoke({"messages": [HumanMessage("610101 pump 不转，帮我提单")], "evidence": {}, "sources": [],
+    graph.invoke({"messages": [HumanMessage("610101 pump 不转，重启过，帮我提单")], "evidence": {}, "sources": [],
                   "error_code": None}, cfg)
     record_decision(db, graph, cfg, True)
     graph.invoke(Command(resume={"approve": True}), cfg)

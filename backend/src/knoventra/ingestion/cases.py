@@ -82,6 +82,13 @@ def models_from_text(text: str) -> list[str]:
     return sorted(hits)
 
 
+def strip_models(text: str) -> str:
+    """The text without any machine-model alias (for building one query per model)."""
+    for _, pattern in _MODEL_PATTERNS:
+        text = pattern.sub(" ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
 @dataclass(frozen=True)
 class Machine:
     serial: str

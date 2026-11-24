@@ -154,3 +154,30 @@ def test_explicit_escalation_skips_planning(db, enc, users):
     out = run(db, enc, users["sg-ops"], "转人工", RuntimeError("planner must not be called"),
               lambda m: AIMessage("ok"))
     assert out["query_plan"] == {"status": "skipped", "reason": "explicit_escalation"}
+
+
+def test_a_comparison_gets_one_query_per_model():
+    plan = QueryPlan(rewritten="WX-38 和 WX-P 的 spindle 扭矩有什么区别", sub_queries=[], intent="case_sop",
+                     confidence=0.9, machine_model=None)
+    r = postprocess(plan, human("WX-38 和 WX-P 的 spindle 扭矩有什么区别"))
+    assert [q.split()[0] for q in r.queries] == ["WX-38", "WX-P"] and "split_by_model" in r.notes
+    assert all("spindle 扭矩" in q and q.count("WX") == 1 for q in r.queries)
+
+
+def test_planner_sub_queries_already_per_model_are_kept():
+    plan = QueryPlan(rewritten="对比扭矩", sub_queries=["WX-38 spindle 扭矩", "WX-P spindle 扭矩"], intent="case_sop",
+                     confidence=0.9, machine_model=None)
+    r = postprocess(plan, human("单面机和双面机 spindle 扭矩差多少"))
+    assert r.queries == ["WX-38 spindle 扭矩", "WX-P spindle 扭矩"] and "split_by_model" not in r.notes
+
+
+def test_one_model_is_not_a_comparison():
+    plan = QueryPlan(rewritten="WX-38 spindle 扭矩", sub_queries=[], intent="case_sop", confidence=0.9,
+                     machine_model="WX-38")
+    assert postprocess(plan, human("WX-38 spindle 扭矩多少")).queries == ["WX-38 spindle 扭矩"]
+
+
+def test_a_split_never_appends_the_other_model_as_a_restored_code():
+    plan = QueryPlan(rewritten="spindle 扭矩", sub_queries=[], intent="case_sop", confidence=0.9, machine_model=None)
+    r = postprocess(plan, human("WX-38 和 WX-P 的 spindle 扭矩有什么区别，E17-42 也有关系吗"))
+    assert r.queries == ["WX-38 spindle 扭矩 E17-42", "WX-P spindle 扭矩 E17-42"]

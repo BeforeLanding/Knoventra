@@ -29,6 +29,7 @@ from knoventra.config import settings
 from knoventra.agent.language import answer_script, format_answer
 from knoventra.agent.escalation_intent import direct_escalation_summary
 from knoventra.agent.model_variants import clarification_text, stated_models
+from knoventra.ingestion.cases import models_from_text
 from knoventra.agent.query_plan import RETRIEVAL_INTENTS, plan_query
 from knoventra.help import slots as help_slots
 from knoventra.db.models import User
@@ -55,7 +56,7 @@ SYSTEM_PROMPT = """你是示例精密设备公司的内部知识助手。
 4. 用户明确要求转人工/转交专家时，立即调用 escalate_to_expert，即使信息不全也不要先追问；summary 依据已有对话写成可直接交给专家的问题摘要（确认卡会让用户核对）。其他情况不要调用。
 5. 查询转交进度用 get_escalation_status。只报告工具实际返回的记录和状态；转交工具仅创建待处理记录，不代表已通知、已受理或已分派到特定团队，不承诺响应时间。没有执行相应工具时，不承诺能修改已提交的转交，也不要让用户在已完成的确认卡中补充内容。
 6. 严格保留用户问题中的时间、频率、对象和编码约束，不自行增加条件（例如“日常”不等于“每日”）。用户未明确要求全部项目或完整清单时，不擅自增加完整性要求。章节标题给出的类别与正文频率可以同时成立，例如“日常检查”章节中的“每周检查”仍属于该类检查；回答时保留原频率，不因它不是每日而判作无关。资料只支持问题的一部分时，先引用并回答可证实的范围，对其余部分拒绝推断，不因无法证明清单完整就整体拒答。
-8. 现场故障查不到可行方案、或用户要发起求助单时，调用 request_help，把对话中已知的机台号、告警、现象、已尝试步骤填进去；工具会告诉你还缺什么，一次只向用户追问一项，不要编造。
+8. 现场故障查不到可行方案、或用户要发起求助单时，调用 request_help，只填用户在对话中亲口说过的机台号、告警、现象、已尝试步骤；检索到的资料和历史案例里的处理步骤不是用户已尝试的步骤，不能填进去。工具会告诉你还缺什么，一次只向用户追问一项，不要编造。
 7. 用户问谁会做某项技能、该找谁时，调用 lookup_skills，只报告工具返回的人员、掌握程度和作业次数，不推测其他人选。
 9. 下方的“历史记忆”是该用户以往对话和求助单的记录，可以用来回答“上次那个问题后来怎么解决的”，回答时说明来自以往记录；涉及操作步骤或参数时，仍须调用 search_knowledge 并引用资料。“用户画像”只用于理解指代，不要据此假设本轮问的是哪台机台。"""
 
@@ -143,6 +144,36 @@ def _valid_tool_batch(calls: list[dict]) -> bool:
     return True
 
 
+def describe_rejected_calls(response: AIMessage) -> list[dict]:
+    """Why a model response's tool calls were refused, without any argument values:
+    tool names, argument field names, and validation error locations and types only."""
+    out: list[dict] = []
+    ids: set[str] = set()
+    escalations = 0
+    for call in response.tool_calls:
+        name, args = call.get("name"), call.get("args")
+        item: dict = {"name": name, "arg_keys": sorted(args) if isinstance(args, dict) else None, "errors": []}
+        call_id = call.get("id")
+        schema = _TOOL_SCHEMAS.get(name)
+        if schema is None:
+            item["errors"].append({"type": "unknown_tool"})
+        if not isinstance(call_id, str) or not call_id.strip() or call_id in ids:
+            item["errors"].append({"type": "missing_or_duplicate_id"})
+        ids.add(call_id if isinstance(call_id, str) else "")
+        if schema is not None:
+            try:
+                schema.model_validate(args)
+            except ValidationError as exc:
+                item["errors"] += [{"loc": [str(p) for p in e["loc"]], "type": e["type"]} for e in exc.errors()]
+        escalations += name == "escalate_to_expert"
+        if name == "escalate_to_expert" and escalations > 1:
+            item["errors"].append({"type": "second_escalation_in_one_response"})
+        out.append(item)
+    for bad in response.invalid_tool_calls:  # arguments that were not valid JSON at all
+        out.append({"name": bad.get("name"), "arg_keys": None, "errors": [{"type": "unparseable_arguments"}]})
+    return out
+
+
 def _invalid_tool_response(response: AIMessage) -> dict:
     return {"messages": [AIMessage("模型返回的工具调用不符合要求，本轮已停止。若已确认转交，请先查看转交记录。", id=response.id)],
             "error_code": "MODEL_TOOL_CALL_INVALID", "sources": [], "pending": None,
@@ -165,6 +196,7 @@ class State(TypedDict, total=False):
     context_window: dict | None  # per turn: {"summary", "from_id"} when older turns are compressed
     memory_trace: list[dict]  # per-turn working-memory diagnostics; never added to model messages
     memory_context: dict | None  # per turn: profile snapshot and re-validated episodes (D12)
+    tool_rejection: list[dict] | None  # per turn: why the model's tool calls were refused (no values)
     route_kbs: list[str] | None  # server-chosen KB names for this turn's searches (narrowing only)
 
 
@@ -252,7 +284,7 @@ def build_graph(deps: AgentDeps):
         # turns work on them (memory.drafts), so an unrelated turn ends the draft by itself.
         return {"retrieval_trace": [], "model_declared_refusal": False, "model_finish_reason": None,
                 "query_plan": None, "route_kbs": None, "clarification": None,
-                "context_window": None, "memory_trace": [], "memory_context": None}
+                "context_window": None, "memory_trace": [], "memory_context": None, "tool_rejection": None}
 
     def recall(state: State, config: RunnableConfig):
         if not deps.long_term_memory:
@@ -365,9 +397,12 @@ def build_graph(deps: AgentDeps):
         if error:
             # A partial call must never reach tools, even if another call parsed successfully.
             # Keep evidence/trace for diagnostics, but never present it as support for this failure.
+            rejected = describe_rejected_calls(response) if error == "MODEL_TOOL_CALL_INVALID" else None
+            if rejected:
+                log.warning("tool calls rejected: %s", rejected)
             return {"messages": [AIMessage(text, id=response.id)], "error_code": error,
                     "sources": [], "pending": None, "model_declared_refusal": False,
-                    "model_finish_reason": reason, "memory_trace": memory_trace}
+                    "model_finish_reason": reason, "memory_trace": memory_trace, "tool_rejection": rejected}
         return {"messages": [response], "model_finish_reason": reason, "memory_trace": memory_trace}
 
     def after_agent(state: State):
@@ -405,8 +440,13 @@ def build_graph(deps: AgentDeps):
                 # The planner's route applies to its own searches only; the answer model's
                 # follow-up searches keep the user's full readable scope.
                 route = state.get("route_kbs") if c["id"].startswith("plan-") else None
+                # In a comparison (two stated models), a query naming one of them searches that
+                # model's sections only; otherwise the single stated model applies, if any.
+                in_query = models_from_text(c["args"].get("query", ""))
+                search_model = in_query[0] if len(stated) > 1 and len(in_query) == 1 and in_query[0] in stated \
+                    else model
                 res = backend.search(who, query=c["args"].get("query", ""), original_query=original_query,
-                                     route_kbs=route, machine_model=model, stated_models=stated,
+                                     route_kbs=route, machine_model=search_model, stated_models=stated,
                                      want_clarification=clarification is None)
                 if res["status"] == OK and clarification is None:
                     clarification = res.get("clarification")
@@ -417,7 +457,7 @@ def build_graph(deps: AgentDeps):
                               "required_identifiers": res["required_identifiers"],
                               "missing_identifiers": res["missing_identifiers"],
                               "returned_chunk_ids": [e["chunk_id"] for e in res["evidence"]],
-                              "degraded": res["degraded"], "route": res["route"], "machine_model": model})
+                              "degraded": res["degraded"], "route": res["route"], "machine_model": search_model})
                 if res["status"] != OK:
                     if not evidence:
                         error = res["status"]
@@ -439,14 +479,17 @@ def build_graph(deps: AgentDeps):
             elif c["name"] == "lookup_skills":
                 out.append(ToolMessage(backend.skills(who, c["args"]["skill"]), tool_call_id=c["id"]))
             elif c["name"] == "request_help" and pending is None:
-                draft = help_slots.merge(draft, c["args"], state["messages"])
+                draft, unsupported = help_slots.merge_checked(draft, c["args"], state["messages"])
                 need = help_slots.missing(draft)
+                # Values the user never said (e.g. steps copied from evidence) are dropped: say so.
+                ignored = ("以下内容在用户的消息里没有出现，已忽略：" + "、".join(help_slots.LABELS[k] for k in unsupported)
+                           + "。只能填写用户亲口说过的内容。") if unsupported else ""
                 if need:
                     # The artifact is the checkpoint's durable copy; Redis holds the working copy.
                     anchor = f"help-{uuid.uuid4().hex}"
                     hint = user_profile.machine_hint((state.get("memory_context") or {}).get("profile")) \
                         if "machine_id" in need else ""
-                    out.append(ToolMessage("求助单草稿已更新。还缺："
+                    out.append(ToolMessage("求助单草稿已更新。" + ignored + "还缺："
                                            + "、".join(help_slots.LABELS[k] for k in need)
                                            + "。请一次只向用户追问一项，不要编造。" + hint, tool_call_id=c["id"],
                                            id=anchor, artifact={drafts.ARTIFACT_KEY: draft}))

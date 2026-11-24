@@ -196,7 +196,12 @@ def _turn_view(values: dict) -> dict:
             "queries": list(plan.get("queries") or []) if plan.get("status") == "ok" else [],
             "rewritten": plan.get("rewritten"),
             "clarified": values.get("clarification") is not None, "missing": missing,
-            "error_code": values.get("error_code"), "answer": str(answer)[:400]}
+            "error_code": values.get("error_code"), "answer": str(answer)[:400],
+            # Why the server refused the model's tool calls (names, field names, error types; no values).
+            "tool_rejection": values.get("tool_rejection"),
+            # What the answer cited, so a wrong-but-passing answer (e.g. a missed section) is visible.
+            "sources": [f'{s.get("document_title", "")} > {s.get("section_path", "")}'
+                        for s in values.get("sources") or []]}
 
 
 def score_turn(exp: dict, got: dict, card: bool) -> dict[str, bool]:

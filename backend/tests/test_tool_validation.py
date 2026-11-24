@@ -65,3 +65,36 @@ def test_legacy_tools_checkpoint_is_validated_before_execution():
     assert result["error_code"] == "MODEL_TOOL_CALL_INVALID" and not graph.get_state(cfg).next
     assert not result["messages"][-1].tool_calls
     factory.assert_not_called()
+
+
+def test_rejected_calls_are_described_without_argument_values():
+    """Dev run a6-04: a refused request_help call left nothing to diagnose it with."""
+    from knoventra.agent.graph import describe_rejected_calls
+
+    secret = "LS-2 口令 hunter2"
+    bad = AIMessage("", tool_calls=[
+        {"name": "request_help", "args": {"machine_id": "610101", "alarm_codes": ["A-1301"], "tried_steps": secret},
+         "id": "h1", "type": "tool_call"},
+        {"name": "make_coffee", "args": {}, "id": "h2", "type": "tool_call"}],
+        invalid_tool_calls=[{"name": "search_knowledge", "args": "{not json", "id": "h3", "error": "x",
+                             "type": "invalid_tool_call"}])
+    described = describe_rejected_calls(bad)
+    assert described[0]["name"] == "request_help"
+    assert described[0]["arg_keys"] == ["alarm_codes", "machine_id", "tried_steps"]
+    assert {"loc": ["alarm_codes"], "type": "extra_forbidden"} in described[0]["errors"]
+    assert described[1]["errors"] == [{"type": "unknown_tool"}]
+    assert described[2] == {"name": "search_knowledge", "arg_keys": None, "errors": [{"type": "unparseable_arguments"}]}
+    assert secret not in repr(described) and "A-1301" not in repr(described)  # never argument values
+
+
+def test_graph_records_the_rejection_for_the_turn():
+    response = AIMessage("", tool_calls=[{"name": "request_help", "args": {"machine": "610101"}, "id": "h1",
+                                          "type": "tool_call"}])
+    llm = Mock()
+    llm.bind_tools.return_value.invoke.return_value = response
+    graph = build_graph(AgentDeps(Mock(), None, None, llm, InMemorySaver(), long_term_memory=False))
+    out = graph.invoke({"messages": [HumanMessage("610101 帮我提单")], "evidence": {}, "sources": [], "error_code": None},
+                       {"configurable": {"thread_id": uuid.uuid4().hex, "user_id": "u"}})
+    assert out["error_code"] == "MODEL_TOOL_CALL_INVALID"
+    assert out["tool_rejection"] == [{"name": "request_help", "arg_keys": ["machine"],
+                                      "errors": [{"loc": ["machine"], "type": "extra_forbidden"}]}]

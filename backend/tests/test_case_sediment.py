@@ -52,7 +52,7 @@ def file_request(db, enc, user):
                                      "tried_steps": "重新校零无效"}, "h1")
     graph = build_graph(AgentDeps(session_factory_for(db), enc, None, ScriptedModel(script=agent), InMemorySaver()))
     cfg = {"configurable": {"thread_id": uuid.uuid4().hex, "user_id": user.id}}
-    graph.invoke({"messages": [HumanMessage("630301 传感器漂移，帮我提求助单")], "evidence": {}, "sources": [],
+    graph.invoke({"messages": [HumanMessage(f"630301 {TOKEN} 传感器漂移，读数跳变，重新校零无效，帮我提求助单")], "evidence": {}, "sources": [],
                   "error_code": None}, cfg)
     record_decision(db, graph, cfg, True)
     graph.invoke(Command(resume={"approve": True}), cfg)

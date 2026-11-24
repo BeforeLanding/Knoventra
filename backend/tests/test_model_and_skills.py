@@ -114,7 +114,9 @@ def test_naming_two_models_is_a_comparison_not_a_question(db, enc, users, monkey
                         lambda db_, enc_, rr, user, query, **kw: real(db_, enc_, rr, user, "SOP-WCL-380120-002 " + query,
                                                                        **kw))
     out = ask(graph(db, enc, [plan()]), users["sg-ops"], "WX-38 和 WX-P 的 spindle 扭矩有什么区别", "t2")
-    assert out["clarification"] is None and out["retrieval_trace"][0]["machine_model"] is None
+    # A comparison is never a clarifying question; each model gets its own filtered search.
+    assert out["clarification"] is None
+    assert sorted(t["machine_model"] for t in out["retrieval_trace"]) == ["WX-38", "WX-P"]
 
 
 # ------------------------------------------------------------------ skills
@@ -178,3 +180,25 @@ def test_planner_route_does_not_narrow_the_model_follow_up(db, enc, users):
     out = ask(graph(db, enc, [plan("policy", rewritten="VPN 报修")], agent), users["sg-ops"], "VPN 连不上去哪报修", "t10")
     routes = {t["tool_call_id"]: t["route"] for t in out["retrieval_trace"]}
     assert routes["plan-1"]["requested"] == settings.intent_kbs["policy"] and routes["c1"] is None
+
+
+def test_a_comparison_searches_each_model_in_its_own_sections(db, enc, users, monkeypatch):
+    """Dev run a1-04: one combined query ranked only WX-38 content and missed the WX-P section."""
+    import knoventra.tools.service as tool_service
+
+    seen = []
+    real = tool_service.retrieve
+
+    def retrieve(db_, enc_, rr, user, query, **kw):
+        seen.append((query, kw.get("machine_model")))
+        return real(db_, enc_, rr, user, query, **kw)
+    monkeypatch.setattr(tool_service, "retrieve", retrieve)
+    g = graph(db, enc, [plan(rewritten="WX-38 和 WX-P 的 spindle 扭矩有什么区别")])
+    out = ask(g, users["sg-ops"], "WX-38 和 WX-P 的 spindle 扭矩有什么区别", "t-cmp")
+    assert "split_by_model" in out["query_plan"]["notes"]
+    # One search per model, each filtered to that model's sections and naming only that model.
+    assert sorted(m for _, m in seen) == ["WX-38", "WX-P"]
+    for query, model in seen:
+        other = {"WX-38": "WX-P", "WX-P": "WX-38"}[model]
+        assert query.startswith(model) and other not in query and "spindle 扭矩" in query
+    assert out["clarification"] is None  # two models named: a comparison, never a question

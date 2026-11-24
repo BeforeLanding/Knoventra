@@ -154,7 +154,8 @@ def test_cancel_clears_the_draft_without_calling_the_model(db, enc, users):
 
 
 def test_declined_card_files_nothing_and_ends_the_draft(db, enc, users):
-    out = run_turns(db, enc, users["sg-ops"], ["机台 610101 pump 不转", "已经重启过", {"approve": False}], slot_agent)
+    out = run_turns(db, enc, users["sg-ops"], ["机台 610101 切换 tank 时报 A-1301，pump 不转", "已经重启过",
+                                               {"approve": False}], slot_agent)
     assert open_draft(out) is None
     assert db.scalar(select(func.count()).select_from(HelpRequest)
                      .where(HelpRequest.user_id == users["sg-ops"].id, HelpRequest.kind == "field_help")) == 0
@@ -173,9 +174,49 @@ def test_cancel_phrases(text, cancels):
 def test_symptom_contributes_only_real_alarm_codes():
     from knoventra.help.slots import merge
 
+    said = "WX-38 pump 不转，按 SOP-WCL-380110-001 复位无效，报 alarm A-1301，另外还有 E17-42"
     draft = merge(None, {"symptom": "WX-38 pump 不转，按 SOP-WCL-380110-001 复位无效，报 alarm A-1301", "alarm": "E17-42"},
-                  [HumanMessage("x")])
+                  [HumanMessage(said)])
     assert draft["alarm_codes"] == ["A-1301", "E17-42"]
+
+
+def test_slot_values_must_come_from_the_user_not_the_evidence():
+    """Dev run a6-03: the model filled tried steps from a retrieved historical case."""
+    from knoventra.help.slots import merge_checked
+
+    said = [HumanMessage("630302 chuck 高速段报 A-3105 wafer 偏移，要提求助单")]
+    draft, rejected = merge_checked(None, {
+        "machine_id": "630302", "symptom": "chuck 高速段报 A-3105，wafer 偏移",
+        "tried_steps": "1. 清洁 chuck pin；2. 降低 ramp 速率；3. 临时措施：该 recipe 高速段转速降低 10%",
+        "alarm": "A-3105 E99-01"}, said)
+    assert rejected == ["tried_steps", "alarm_codes"] and "tried_steps" not in draft
+    assert (draft["machine_id"], draft["alarm_codes"]) == ("630302", ["A-3105"])  # only codes the user wrote
+
+    # The user's own answer, paraphrased by the model, is accepted.
+    said.append(HumanMessage("清洁过 chuck pin，也降过 ramp 速率"))
+    draft, rejected = merge_checked(draft, {"tried_steps": "清洁 chuck pin；降低 ramp 速率"}, said)
+    assert rejected == [] and draft["tried_steps"] == "清洁 chuck pin；降低 ramp 速率"
+
+
+def test_machine_number_must_appear_in_the_conversation():
+    from knoventra.help.slots import merge_checked
+
+    draft, rejected = merge_checked(None, {"machine_id": "610101", "symptom": "pump 不转"},
+                                    [HumanMessage("pump 不转，帮我提单")])
+    assert rejected == ["machine_id"] and "machine_id" not in draft
+
+
+def test_rejected_values_are_reported_to_the_model(db, enc, users):
+    def agent(messages):
+        last = messages[-1]
+        if isinstance(last, ToolMessage):
+            return AIMessage("请问你已经做过哪些处理？")
+        return call("request_help", {"machine_id": "630302", "symptom": "chuck 高速段 wafer 偏移",
+                                     "tried_steps": "按历史案例降低高速段转速 10%"}, "h1")
+    out = run_turns(db, enc, users["sg-ops"], ["630302 chuck 高速段 wafer 偏移，要提求助单"], agent)
+    tool = next(m for m in out["messages"] if isinstance(m, ToolMessage))
+    assert "已忽略：已尝试的步骤" in tool.content and "还缺：已尝试的步骤" in tool.content
+    assert "__interrupt__" not in out  # no card: the user has not said what they tried
 
 
 def test_assignee_must_be_an_engineer(db, users):
