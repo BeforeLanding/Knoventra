@@ -17,7 +17,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from sqlalchemy import func
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
@@ -211,6 +211,22 @@ def upsert_skills(db: Session, records: list[SkillRecord]) -> int:
     return len(latest)
 
 
+def input_digest(files: list[Path], registry_path: Path | None = None) -> str:
+    """Content digest of one import's inputs (file names and bytes, order-independent)."""
+    import hashlib
+
+    parts = sorted((p.name, hashlib.sha256(p.read_bytes()).hexdigest()) for p in [*files, *filter(None, [registry_path])])
+    return hashlib.sha256(repr(parts).encode()).hexdigest()
+
+
+def already_imported(db: Session, digest: str) -> bool:
+    from knoventra.db.models import IngestAudit
+
+    return db.scalar(select(IngestAudit.id).where(IngestAudit.kind == "journal",
+                                                  IngestAudit.counts["input_digest"].as_string() == digest)
+                     .limit(1)) is not None
+
+
 def import_workbooks(db: Session, files: list[Path], registry_path: Path | None = None) -> dict:
     """Parse, redact, dedup and store one batch; skills, cases and the audit row commit together."""
     from knoventra.ingestion.cases import build_cases, load_registry, store_cases, write_audit
@@ -228,7 +244,8 @@ def import_workbooks(db: Session, files: list[Path], registry_path: Path | None 
     counts = {"journal_rows": len(parsed.journals), "skill_rows": len(parsed.skills), "skills_stored": skills,
               "rejected": len(parsed.rejected), "exact_merged": stats.exact_merged,
               "near_merged": stats.near_merged, "unknown_model": stats.unknown_model,
-              "cases_created": created, "cases_updated": updated}
+              "cases_created": created, "cases_updated": updated,
+              "input_digest": input_digest(files, registry_path)}
     audit = write_audit(db, files=[p.name for p in files], counts=counts, stats=stats)
     return {"counts": counts, "redactions": audit.redactions,
             "rejected": [f"{r.source.file}:{r.source.sheet}:{r.source.row} {r.reason}" for r in parsed.rejected]}
@@ -243,7 +260,14 @@ def main() -> None:
     ap.add_argument("files", nargs="+", type=Path)
     ap.add_argument("--registry", type=Path, help="machines.json asset registry (serial -> model)")
     ap.add_argument("--publish-kb", help="also publish every case as a document in this knowledge base")
+    ap.add_argument("--skip-if-imported", action="store_true",
+                    help="do nothing when these exact files (same bytes) were already imported, e.g. on every start")
     args = ap.parse_args()
+    if args.skip_if_imported:
+        with SessionLocal() as db:
+            if already_imported(db, input_digest(args.files, args.registry)):
+                print(json.dumps({"skipped": "these journal files were already imported"}, ensure_ascii=False))
+                return
     with SessionLocal() as db, db.begin():
         report = import_workbooks(db, args.files, args.registry)
         if args.publish_kb:

@@ -36,7 +36,8 @@ def sections(*, draft: str | None, profile: str | None, episodes: list[str], sum
     if profile:
         out.append(PROFILE_HEADER + profile)
     if episodes:
-        out.append(EPISODES_HEADER + "\n".join(f"- {e}" for e in episodes))
+        # Continuation lines are indented so each record stays one bullet ("- 问：…" / "  答：…").
+        out.append(EPISODES_HEADER + "\n".join("- " + e.replace("\n", "\n  ") for e in episodes))
     if summary:
         out.append(SUMMARY_HEADER + summary)
     return "\n\n".join(out)

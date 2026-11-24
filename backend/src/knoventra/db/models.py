@@ -294,7 +294,7 @@ class Episode(Base):
     thread_id: Mapped[str | None] = mapped_column(String(64))
     text: Mapped[str] = mapped_column(Text)
     refs: Mapped[list] = mapped_column(JSON, default=list, server_default="[]")  # cited chunk ids (answer)
-    dense = mapped_column(Vector(settings.dense_dim))
+    dense = mapped_column(Vector(settings.dense_dim), nullable=False)
     created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())
     updated_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())
     __table_args__ = (UniqueConstraint("user_id", "source_kind", "source_id", name="uq_knv_episode_source"),

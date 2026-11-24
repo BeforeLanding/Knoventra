@@ -10,6 +10,9 @@ const DEMO = [
   ['hr@example.test', 'SG · HR'],
   ['fin@example.test', 'CN · FIN'],
   ['admin@example.test', 'IT · 管理员'],
+  // Fictional field engineers from the skill matrix: they see the 专家工作台.
+  ['tan.wei.ming@example.test', 'SG · 现场工程师 Tan Wei Ming'],
+  ['zhou.lan@example.test', 'CN · 现场工程师 Zhou Lan'],
 ]
 
 export default function Login() {

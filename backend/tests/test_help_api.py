@@ -182,8 +182,32 @@ def test_returning_to_the_conversation_shows_request_updates(client, db, enc, us
     assert [(u["id"], u["status"], u["action"], u["note"]) for u in got] == [
         (req.id, "IN_PROGRESS", "progress", "已远程查看 alarm log")]
 
+    transition(db, req.id, expert, "resolve", resolution="更换 LS-2 传感器后恢复")
+    resolved = updates()  # a resolved request shows the fix, not the case-draft bookkeeping event
+    assert [(u["status"], u["action"], u["note"]) for u in resolved] == [("RESOLVED", "resolve", "更换 LS-2 传感器后恢复")]
+
     db.add(Message(conversation_id=conv.id, role="user", content="好的"))  # the user has seen it
     db.flush()
     assert updates() == []
-    transition(db, req.id, requester, "cancel")  # the requester's own change is not news to them
+    transition(db, req.id, requester, "reopen", note="又出现了")  # their own change is not news to them
     assert updates() == []
+
+
+def test_confirmation_card_reports_the_stored_kind(db, users):
+    import datetime as dt
+
+    from knoventra.api.chat import _confirmation_card
+    from knoventra.db.models import Confirmation
+
+    later = dt.datetime.now(dt.UTC) + dt.timedelta(minutes=5)
+
+    def card(payload, summary):
+        conf = Confirmation(user_id=users["sg-ops"].id, thread_id="t", operation_id=uuid.uuid4().hex,
+                            summary=summary, status="PENDING", expires_at=later, payload=payload)
+        db.add(conf)
+        db.flush()
+        return _confirmation_card(conf)
+    assert card({"kind": "field_help"}, "现场求助单\n机台号：610101")["kind"] == "field_help"
+    # The user's own words cannot make a handoff look like a help request.
+    assert card({"kind": "expert_escalation"}, "现场求助单，WX-38 门打不开")["kind"] == "expert_escalation"
+    assert card(None, "pre-D13 confirmation")["kind"] == "expert_escalation"

@@ -259,6 +259,94 @@ def check_resumed_confirmation(client, auth, cid, confirmation_id):
     return eid
 
 
+def answer_text(result):
+    return result.get("done", {}).get("answer", "")
+
+
+def check_v4_stories(client, auth):
+    """The v4 stories the fixed-answer server can show: skill lookup, a multi-turn help request
+    with expert recommendation, machine-model clarification, and memory recall. Only the choice
+    of tool is scripted; slots, recommendation, clarification and recall are server code."""
+    ops = auth["sg-ops"]
+    skills = events(client, "chat", ops, {"message": "谁会做 golden check"})
+    require("golden check" in answer_text(skills) and "掌握" in answer_text(skills),
+            "skill lookup must list engineers from the skill matrix")
+    hidden = events(client, "chat", auth["hr"], {"message": "谁会做 golden check"})
+    require("只对 Ops 部门开放" in answer_text(hidden), "the skill matrix must stay Ops-only")
+
+    first = events(client, "chat", ops, {"message": "WX-38 机台 630101 切换 tank 时报 A-1301，pump 不转，帮我提个求助单"})
+    require("已尝试的步骤" in answer_text(first) and "confirm" not in first,
+            "a help request with missing slots must ask for them, not file")
+    cid = first["meta"]["conversation_id"]
+    card = events(client, "chat", ops, {"conversation_id": cid, "message": "已经重新插紧 LS-2，还是不行"})
+    summary = card.get("confirm", {}).get("summary", "")
+    require(card.get("confirm", {}).get("kind") == "field_help", "the card must say it files a help request")
+    for label in ("机台号：630101", "机型：WX-38", "告警码：A-1301", "已尝试的步骤：已经重新插紧 LS-2"):
+        require(label in summary, f"confirmation card must show every slot: {label}")
+    require("推荐专家" in summary or "派单" in summary, "the card must show the routing decision")
+    filed = events(client, "chat/confirm", ops, {"confirmation_id": card["confirm"]["confirmation_id"], "approve": True})
+    require("已创建求助单" in answer_text(filed), "an approved card must file the help request")
+    mine = request(client, "GET", "help-requests", ops).json()["items"]
+    item = next((i for i in mine if i["kind"] == "field_help" and i["machine_id"] == "630101"), None)
+    require(item is not None and item["assignee_id"], "the filed request must be assigned from the skill matrix")
+
+    # Story 6: the recommended expert resolves; the requester sees it; the case is reviewed first.
+    manifest = json.loads((BACKEND.parent / "data/demo/manifest.json").read_text(encoding="utf-8"))
+    expert = auth[next(u["email"].split("@")[0] for u in manifest["users"]
+                       if u.get("engineer_name") == item["assignee"])]
+    fix = "更换 LS-2 液位传感器并重新校准后恢复，切换 tank 不再报 A-1301"
+    for body in ({"action": "start"}, {"action": "progress", "note": "远程查看 alarm log"},
+                 {"action": "resolve", "resolution": fix}):
+        request(client, "POST", f'help-requests/{item["id"]}/actions', expert, json=body)
+    notice = request(client, "GET", f"conversations/{cid}/state", ops).json()["help_updates"]
+    require([(u["status"], u["note"]) for u in notice] == [("RESOLVED", fix)],
+            "returning to the conversation must show the resolution")
+    question = {"message": "WX-38 机台 630101 切换 tank 时报 A-1301，pump 不转"}
+    titles = lambda r: [s["document_title"] for s in r.get("sources") or []]  # noqa: E731
+    require(not any(t.startswith("HELP-") for t in titles(events(client, "chat", ops, question))),
+            "an unreviewed case draft must not be searchable")
+    docs = request(client, "GET", "admin/documents", auth["admin"]).json()["documents"]
+    case = next(d for d in docs if d["kb"] == "field-cases" and d["title"].startswith("HELP-"))
+    draft = next(r for r in case["revisions"] if r["status"] == "DRAFT")
+    request(client, "POST", f'admin/revisions/{draft["id"]}/publish', auth["admin"])
+    require(any(t.startswith("HELP-") for t in titles(events(client, "chat", ops, question))),
+            "the published case must answer the same question")
+
+    # Story 7: the fix is recalled in a new conversation.
+    recall = events(client, "chat", ops, {"message": "上次 630101 切换 tank 时报 A-1301、pump 不转的求助单后来怎么解决的"})
+    require("根据你以往的记录" in answer_text(recall) and fix in answer_text(recall),
+            "a resolved help request must be recalled with its fix: " + answer_text(recall)[:400])
+
+    asked = events(client, "chat", ops, {"message": "spindle 更换扭矩多少"})
+    require("哪个机型" in answer_text(asked) and not asked.get("sources"),
+            "a model-specific procedure without a model must ask first, with no sources")
+    told = events(client, "chat", ops, {"conversation_id": asked["meta"]["conversation_id"], "message": "WX-38"})
+    require(told.get("sources") and all("WX-P" not in s["section_path"] for s in told["sources"]),
+            "after the model is given, only that model's sections may be cited")
+
+    # The earlier E17 answer cited v1, which check_publication has since retired: re-validation
+    # must drop it. A new answer citing the published v2 is then recalled.
+    stale = events(client, "chat", ops, {"message": "上次 E17 设备报代码 42 先查什么来着"})
+    require("根据你以往的记录" not in answer_text(stale), "a memory citing a retired revision must not be reused")
+    require("求助单还需要" not in answer_text(stale), "a recall question must never open a help request draft")
+    events(client, "chat", ops, {"message": "E17 设备报代码 42 先查什么"})
+    recalled = events(client, "chat", ops, {"message": "上次 E17 设备报代码 42 先查什么来着"})
+    require("根据你以往的记录" in answer_text(recalled) and "E17" in answer_text(recalled),
+            "an earlier cited answer must be recalled in a new conversation")
+    require("答：" in answer_text(recalled), "a recalled answer memory must keep its answer, not just the question")
+
+    # Tried steps in any wording fill the slot (no keyword needed); decline the card afterwards.
+    loose = events(client, "chat", ops, {"message": "机台 610102 门锁报警，帮我提单"})
+    other = events(client, "chat", ops, {"conversation_id": loose["meta"]["conversation_id"], "message": "LS-2 插紧了"})
+    require("已尝试的步骤：LS-2 插紧了" in other.get("confirm", {}).get("summary", ""),
+            "an answer to the tried-steps question must fill that slot")
+    events(client, "chat/confirm", ops, {"confirmation_id": other["confirm"]["confirmation_id"], "approve": False})
+
+    status = events(client, "chat", ops, {"message": "我的求助单进度"})
+    require("（现场求助）" in answer_text(status) and "没有可靠依据" not in answer_text(status),
+            "a status question must list the user's requests")
+
+
 def free_port():
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
@@ -300,12 +388,16 @@ def main():
             migration = ("from alembic import command; from alembic.config import Config; "
                          f"c=Config({str(BACKEND / 'alembic.ini')!r}); "
                          f"c.set_main_option('script_location', {str(BACKEND / 'alembic')!r}); command.upgrade(c, 'head')")
-            for args in (["-c", migration], ["-m", "knoventra.db.seed"]):
+            journals = BACKEND.parent / "data/demo/journals"
+            journal_import = ["-m", "knoventra.ingestion.journal", *map(str, sorted(journals.glob("*.xlsx"))),
+                              "--registry", str(journals / "machines.json"), "--publish-kb", "field-cases"]
+            for args in (["-c", migration], ["-m", "knoventra.db.seed"], journal_import):
                 subprocess.run([sys.executable, *args], cwd=directory, env=env, check=True, timeout=90)
             with stack() as client:
                 auth = login_all(client)
                 source = check_answer_and_boundaries(client, auth)
                 check_publication(client, auth, source)
+                check_v4_stories(client, auth)
                 cid, confirmation_id = start_confirmation(client, auth["sg-ops"])
             # No in-memory graph/pool survives this boundary; reuse the stored JWT.
             with stack() as client:
@@ -320,6 +412,8 @@ def main():
             require(mcp_calls and all(code == 200 for code in mcp_calls),
                     f"tools must have run on the MCP server, got statuses {sorted(set(mcp_calls))}")
         print("Offline HTTP acceptance passed: six logins, evidence/isolation/refusal, publication, "
+              "skill lookup, help request slots and recommendation, expert resolution with case review and publication, "
+              "model clarification, memory recall and its revocation, "
               "confirmation across two server restarts, approval replay and rejection. No model calls."
               + (f" Tools ran on the MCP server ({len(mcp_calls)} authenticated calls, restarted with the API)."
                  if use_mcp else ""))

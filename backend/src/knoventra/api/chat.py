@@ -72,7 +72,9 @@ def _public(card: dict) -> dict:
 
 
 def _confirmation_card(conf: Confirmation) -> dict:
-    return {"confirmation_id": conf.id, "summary": conf.summary, "status": conf.status,
+    # kind comes from what prepare stored (D13); older confirmations are expert handoffs.
+    kind = (conf.payload or {}).get("kind") or "expert_escalation"
+    return {"confirmation_id": conf.id, "summary": conf.summary, "status": conf.status, "kind": kind,
             "expires_at": conf.expires_at.isoformat(),
             "expired": conf.status == "PENDING" and conf.expires_at <= dt.datetime.now(dt.UTC)}
 
@@ -367,9 +369,13 @@ def _help_updates(db: Session, conv: Conversation, user: User) -> list[dict]:
         .order_by(HelpEvent.at.desc(), HelpEvent.id.desc())).all()
     out: dict[str, dict] = {}
     for req, event in rows:  # newest event per request
+        action, note = event.action, event.note
+        if req.status == "RESOLVED" and event.action in ("resolve", "case_draft") and req.resolution:
+            # The news is the fix itself, not the case-draft bookkeeping event written after it.
+            action, note = "resolve", req.resolution
         out.setdefault(req.id, {"id": req.id, "kind": req.kind, "status": req.status, "summary": req.summary[:80],
                                 "machine_id": req.machine_id, "symptom": req.symptom[:80],
-                                "action": event.action, "note": event.note[:200], "at": event.at})
+                                "action": action, "note": note[:200], "at": event.at})
     return list(out.values())
 
 

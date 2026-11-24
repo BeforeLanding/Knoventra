@@ -301,13 +301,15 @@ export default function Chat({ maxMessageChars = 4000 }: { maxMessageChars?: num
               <div className="text">{m.content}{m.status && <em className="status"> {m.status}</em>}</div>
               {m.confirm && (
                 <div className="confirm">
-                  <b>转交专家确认</b>
+                  <b>{m.confirm.kind === 'field_help' ? '求助单确认' : '转交专家确认'}</b>
                   <p>{m.confirm.summary}</p>
                   <small>有效期至 {new Date(m.confirm.expires_at).toLocaleString()}</small>
                   {m.confirm.expired && <p className="err">确认已过期，请关闭此确认后继续。</p>}
                   {m.confirm.status !== 'PENDING' ? <span>已保存决定，点击恢复处理。</span> : null}
                   <div>
-                    <button disabled={busy || m.confirm.expired || m.confirm.status !== 'PENDING'} onClick={() => decide(m.confirm!.confirmation_id, true)}>确认转交</button>
+                    <button disabled={busy || m.confirm.expired || m.confirm.status !== 'PENDING'} onClick={() => decide(m.confirm!.confirmation_id, true)}>
+                      {m.confirm.kind === 'field_help' ? '确认提交求助单' : '确认转交'}
+                    </button>
                     <button disabled={busy} onClick={() => decide(m.confirm!.confirmation_id, false)}>{m.confirm.expired ? '关闭过期确认' : m.confirm.status !== 'PENDING' ? '恢复处理' : '取消'}</button>
                   </div>
                 </div>

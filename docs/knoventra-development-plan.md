@@ -385,6 +385,8 @@ Java 上游目录在 MVP 期间保持不动。MVP 完成后再决定是移入 `r
 
 ## 12. 明确不做（以及以后怎么做）
 
+> **v4 已部分取代（2026-11-24）**：长期记忆和 MCP 服务化已在 v4 实现，Elasticsearch 和 Redis 也已加入，见 [v4 计划](knoventra-v4-plan.md) 和 [DECISIONS](DECISIONS.md) 第 66–77 条。下表为 v3 时的原文，保留不删。
+
 | 不做 | 原因 | 扩展方向 |
 |---|---|---|
 | IM 通道（企业微信 / Teams / Line / WhatsApp） | 需真实企业资质与账号 | 统一知识层 + 通道适配器；先做一个 Webhook 适配器示例 |

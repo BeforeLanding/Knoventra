@@ -74,3 +74,30 @@ it('returning to a conversation shows help request updates', async () => {
   fireEvent.click(screen.getByRole('button', { name: '＋ 新会话' }))
   await waitFor(() => expect(screen.queryByText('你的求助单已更新')).toBeNull())
 })
+
+it('a help request card says so instead of handoff wording', async () => {
+  vi.mocked(api.conversationPage).mockResolvedValue({ items: [{ id: 'c2', title: '求助' }], next_cursor: null })
+  vi.mocked(api.conversationState).mockResolvedValue({
+    conversation_id: 'c2', blocked: true, messages: [],
+    pending_confirmation: { confirmation_id: 'k1', summary: '现场求助单\n机台号：610101', status: 'PENDING',
+                            expires_at: '2099-01-01T00:00:00Z', expired: false, kind: 'field_help' },
+  })
+  render(<Chat />)
+  fireEvent.click(await screen.findByRole('button', { name: '求助' }))
+  await screen.findByText('求助单确认')
+  expect(screen.getByRole('button', { name: '确认提交求助单' })).toBeTruthy()
+  expect(screen.queryByRole('button', { name: '确认转交' })).toBeNull()
+})
+
+it('a handoff whose text mentions 现场求助单 keeps handoff wording', async () => {
+  vi.mocked(api.conversationPage).mockResolvedValue({ items: [{ id: 'c3', title: '转人工' }], next_cursor: null })
+  vi.mocked(api.conversationState).mockResolvedValue({
+    conversation_id: 'c3', blocked: true, messages: [],
+    pending_confirmation: { confirmation_id: 'k2', summary: '现场求助单，WX-38 门打不开', status: 'PENDING',
+                            expires_at: '2099-01-01T00:00:00Z', expired: false, kind: 'expert_escalation' },
+  })
+  render(<Chat />)
+  fireEvent.click(await screen.findByRole('button', { name: '转人工' }))
+  await screen.findByText('转交专家确认')
+  expect(screen.getByRole('button', { name: '确认转交' })).toBeTruthy()
+})

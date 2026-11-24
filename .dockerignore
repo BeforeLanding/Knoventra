@@ -23,6 +23,8 @@ data/demo/**
 !data/demo/manifest.json
 !data/demo/docs/
 !data/demo/docs/**
+!data/demo/journals/
+!data/demo/journals/**
 !web/
 web/**
 !web/package.json

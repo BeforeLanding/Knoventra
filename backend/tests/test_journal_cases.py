@@ -197,3 +197,21 @@ def test_cases_publish_as_documents_idempotently(db, enc):
     assert "LS-2" in chunks[0].text and "适用机型：WX-38" in chunks[0].text
     stored = " ".join(c.text for c in db.scalars(select(Chunk).where(Chunk.kb_id == kb.id)))
     assert "Fake-Eng-0420" not in stored and "13800138000" not in stored
+
+
+def test_same_inputs_are_recognised_but_changed_bytes_are_not(db, tmp_path):
+    import shutil
+
+    from knoventra.ingestion.journal import already_imported, input_digest
+
+    files = sorted(JOURNALS.glob("*.xlsx"))
+    registry = JOURNALS / "machines.json"
+    digest = input_digest(files, registry)
+    assert input_digest(list(reversed(files)), registry) == digest  # order does not matter
+    assert not already_imported(db, digest)
+    import_workbooks(db, files, registry)
+    assert already_imported(db, digest)
+    copy = tmp_path / files[0].name
+    shutil.copy(files[0], copy)
+    copy.write_bytes(copy.read_bytes() + b"\0")  # same name, different bytes: must be imported again
+    assert not already_imported(db, input_digest([copy, *files[1:]], registry))

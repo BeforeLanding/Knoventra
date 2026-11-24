@@ -9,6 +9,7 @@ export type EvidencePreview = { chunk_id: string; document_title: string; revisi
 export type SseEvent = { event: string; data: any }
 export type Confirmation = {
   confirmation_id: string; summary: string; status: string; expires_at: string; expired: boolean
+  kind?: 'field_help' | 'expert_escalation'  // from the server's stored confirmation; absent on older APIs
 }
 export type EscalationRecord = { id: string; summary: string; status: string; created_at: string | null; evidence_refs: string[] }
 export type EscalationPage = { items: EscalationRecord[]; next_cursor: string | null }
